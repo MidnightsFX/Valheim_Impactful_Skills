@@ -1,7 +1,7 @@
 #!/bin/bash
 
-DLL=JotunnModStub/bin/Release/net48/JotunnModStub.dll
-PLUGINS=JotunnModStub/Package/plugins
+DLL=ImpactfulSkills/bin/Release/net48/ImpactfulSkills.dll
+PLUGINS=ImpactfulSkills/Package/plugins
 README=README.md
 #TRANSLATIONS=Translations
 
@@ -34,7 +34,7 @@ cp -f "$DLL" "$PLUGINS" || { echo "Error: Failed to copy $DLL"; exit 1; }
 cp -f "$README" "$PLUGINS/../README.md" || { echo "Error: Failed to copy $README"; exit 1; }
 #cp -rf "$TRANSLATIONS" "$PLUGINS/"  || { echo "Error: Failed to copy Translations"; exit 1; }
 
-ZIPDESTINATION="../bin/Release/JotunnModStub.$VERSION.zip"
+ZIPDESTINATION="../bin/Release/ImpactfulSkills.$VERSION.zip"
 
 cd "$PLUGINS/.."
 if [ ! -z "$VERSION" ]; then
