@@ -1,10 +1,12 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using ImpactfulSkills.patches;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System.Reflection;
+using System.Security.AccessControl;
 using UnityEngine;
 
 namespace ImpactfulSkills
@@ -30,6 +32,10 @@ namespace ImpactfulSkills
             Log = this.Logger;
             cfg = new ValConfig(Config);
             EmbeddedResourceBundle = AssetUtils.LoadAssetBundleFromResources("ImpactfulSkills.AssetsEmbedded.impactfulskills", typeof(ImpactfulSkills).Assembly);
+
+            Gathering.SetupGatherables();
+            AnimalWhisper.SetupAnimalSkill();
+            Voyaging.SetupSailingSkill();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             Harmony harmony = new(PluginGUID);

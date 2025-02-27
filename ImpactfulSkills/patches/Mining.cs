@@ -27,14 +27,14 @@ namespace ImpactfulSkills.patches
             }
         }
 
-        [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.Destroy))]
+        [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.RPC_SetAreaHealth))]
         public static class Minerock5DestroyPatch
         {
-            private static void Postfix(MineRock5 __instance, HitData hitData)
+            private static void Postfix(MineRock5 __instance, long sender, int index, float health)
             {
-                if (hitData != null && Player.m_localPlayer != null)
+                if (Player.m_localPlayer != null && health <= 0)
                 {
-                    IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position, hitData);
+                    IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
                 }
             }
         }
@@ -44,13 +44,41 @@ namespace ImpactfulSkills.patches
             if (hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
             {
                 float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
-                float player_pickaxe_bonus = (ValConfig.MiningDmgMod.Value * (player_skill_factor) / 100f);
+                float player_pickaxe_bonus = 1 + (ValConfig.MiningDmgMod.Value * (player_skill_factor * 100f) / 100f);
                 Logger.LogDebug($"Player mining dmg multiplier: {player_pickaxe_bonus}");
-                hit.m_damage.m_chop *= player_pickaxe_bonus;
+                hit.m_damage.m_pickaxe *= player_pickaxe_bonus;
+
+                if (hit.m_damage.m_pickaxe <= 0f) { return; }
+
+                // Trigger AOE mining if the player has the required skill level
+                if ((player_skill_factor * 100f) >= ValConfig.MiningAOELevel.Value) {
+                    Logger.LogDebug("Player mining aoe activated");
+                    Vector3 position = hit.m_point;
+                    float hitdmg = hit.m_damage.m_pickaxe;
+                    HitData aoedmg = hit;
+                    foreach (Collider obj_collider in Physics.OverlapSphere(position, (ValConfig.MiningAOERangePerLevel.Value * (player_skill_factor * 100f)), rockmask)) {
+                        Logger.LogDebug($"AOE hit on: {obj_collider.name}");
+                        MineRock minerock = obj_collider.gameObject.GetComponentInParent<MineRock>();
+                        aoedmg.m_point = obj_collider.bounds.center;
+                        aoedmg.m_hitCollider = obj_collider;
+                        if (minerock != null) {
+                            Logger.LogDebug($"AOE Damage applying to minerock");
+                            minerock.Damage(aoedmg);
+                        } else {
+                            MineRock5 minerock5 = obj_collider.gameObject.GetComponentInParent<MineRock5>();
+                            if (minerock5 != null) {
+                                Logger.LogDebug($"AOE Damage applying to minerock5");
+                                int index = minerock5.GetAreaIndex(obj_collider);
+                                Logger.LogDebug($"AOE Damage applying to minerock5 index: {index}");
+                                minerock5.DamageArea(index, aoedmg);
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata)
+        public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata = null)
         {
             float distance_to_rock = Vector3.Distance(Player.m_localPlayer.transform.position, position);
             if (distance_to_rock > 15f) {
@@ -66,8 +94,8 @@ namespace ImpactfulSkills.patches
             }
             int drop_amount = 0;
             
-            float min_drop = (drops.m_dropMin * (ValConfig.MiningLootFactor.Value * player_skill_factor)) - drops.m_dropMin;
-            float max_drop = (drops.m_dropMax * (ValConfig.MiningLootFactor.Value * player_skill_factor)) - drops.m_dropMax;
+            float min_drop = drops.m_dropMin * (ValConfig.MiningLootFactor.Value * (player_skill_factor * 100f)) / 100f;
+            float max_drop = drops.m_dropMax * (ValConfig.MiningLootFactor.Value * (player_skill_factor * 100f)) / 100f;
             if (min_drop > 0 && max_drop > 0 && min_drop != max_drop) {
                 drop_amount = UnityEngine.Random.Range((int)min_drop, (int)max_drop);
             } else if (min_drop == max_drop) {
@@ -92,32 +120,6 @@ namespace ImpactfulSkills.patches
                 {
                     var extra_drop = UnityEngine.Object.Instantiate(drop.Key, position, rotation);
                     extra_drop.GetComponent<ItemDrop>().m_itemData.m_stack = drop_amount;
-                }
-            }
-
-            // Trigger AOE mining if the player has the required skill level
-            if (player_skill_factor >= ValConfig.MiningAOELevel.Value)
-            {
-                // Don't apply AOE damage if there was no hitdata in the first place- this happens when the rock is destroyed by gravity etc
-                if (hitdata == null) { return; }
-
-                float hitdmg = hitdata.m_damage.m_pickaxe * (player_skill_factor / 100f);
-                if (hitdmg <= 0) { hitdmg = 1f; }
-                HitData aoedmg = new HitData() { m_damage = new HitData.DamageTypes() { m_pickaxe = hitdmg } };
-                foreach (Collider obj_collider in Physics.OverlapSphere(position, 3f, rockmask))
-                {
-                    MineRock minerock = obj_collider.GetComponent<MineRock>() ?? obj_collider.transform.parent?.GetComponent<MineRock>();
-                    if (minerock != null)
-                    {
-                        minerock.Damage(aoedmg);
-                    } else {
-                        MineRock5 minerock5 = obj_collider.GetComponent<MineRock5>() ?? obj_collider.transform.parent?.GetComponent<MineRock5>();
-                        if (minerock5 != null)
-                        {
-                            minerock.Damage(aoedmg);
-                        }
-                    }
-
                 }
             }
         }

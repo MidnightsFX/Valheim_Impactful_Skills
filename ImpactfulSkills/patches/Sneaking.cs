@@ -1,31 +1,43 @@
 ﻿using HarmonyLib;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection.Emit;
 
 namespace ImpactfulSkills.patches
 {
     public static class Sneaking
     {
-        [HarmonyPatch(typeof(Character), nameof(Character.IsCrouching))]
-        public static class MovespeedWhenCrouchingPatch
+
+        [HarmonyPatch(typeof(Character))]
+        public static class DamageHandler_Apply_Patch
         {
-            private static void Postfix(Character __instance, bool __result)
+            [HarmonyTranspiler]
+            [HarmonyPatch(nameof(Character.UpdateWalking))]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
-                if (Player.m_localPlayer != null && __instance == Player.m_localPlayer) {
+                var codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_crouchSpeed)))
+                    ).RemoveInstruction().InsertAndAdvance(
+                    Transpilers.EmitDelegate(ModifyMovementSpeedBySkill)
+                    ).ThrowIfNotMatch("Unable to patch Sneak skill movement increase.");
+
+                return codeMatcher.Instructions();
+            }
+
+            public static float ModifyMovementSpeedBySkill(Character __instance)
+            {
+                if (Player.m_localPlayer != null && __instance == Player.m_localPlayer)
+                {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
-                    if (__result) {
-                        // Sneaking
-                        Player.m_localPlayer.m_crouchSpeed += 0.5f;
-                    } else {
-                        // Not sneaking
-                        Player.m_localPlayer.m_crouchSpeed -= 1f;
-                    }
+                    // Sneaking
+                    float sneak_speed_bonus = ValConfig.SneakSpeedFactor.Value * (player_skill_factor * 100f);
+                    Logger.LogDebug($"Setting sneak speed bonus {sneak_speed_bonus}");
+                    float modified_sneak_speed = __instance.m_crouchSpeed + sneak_speed_bonus;
+                    return modified_sneak_speed;
                 }
+                return __instance.m_crouchSpeed;
             }
         }
-        
+
     }
 }

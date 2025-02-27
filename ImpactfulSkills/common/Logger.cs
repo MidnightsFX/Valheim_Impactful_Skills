@@ -1,5 +1,4 @@
 ﻿using BepInEx.Logging;
-using ImpactfulSkills;
 using System;
 
 
@@ -20,6 +19,15 @@ namespace ImpactfulSkills
                 Level = LogLevel.Info;
             }
             // set log level
+        }
+
+        public static void setDebugLogging(bool state)
+        {
+            if (state) {
+                Level = LogLevel.Debug;
+            } else {
+                Level = LogLevel.Info;
+            }
         }
 
         public static void LogDebug(string message)

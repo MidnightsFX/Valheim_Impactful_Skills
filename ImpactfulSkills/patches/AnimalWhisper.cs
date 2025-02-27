@@ -31,7 +31,7 @@ namespace ImpactfulSkills.patches
                     time *= ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value)/100f + 1f);
 
                     // Gain a little XP for the skill
-                    Player.m_localPlayer.RaiseSkill(AnimalHandling, (ValConfig.AnimalTamingSkillGainRate.Value * 1f));
+                    Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
                 }
             }
         }
