@@ -20,18 +20,39 @@ namespace ImpactfulSkills.patches
         }
 
         [HarmonyPatch(typeof(Tameable), nameof(Tameable.DecreaseRemainingTime))]
-        public static class TamableSpeed
+        public static class IncreaseTamingSpeed
         {
             private static void Prefix(Tameable __instance, ref float time)
             {
                 // Check if the player is close enough to the animal
-                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f )
+                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f)
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
                     time *= ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value)/100f + 1f);
 
                     // Gain a little XP for the skill
                     Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
+                }
+            }
+        }
+
+        //[HarmonyPatch(typeof(Tameable), nameof(Tameable.DecreaseRemainingTime))]
+        //public static class IncreaseTamingEatFrequency
+        //{
+        //    private static void Postfix()
+        //    {
+
+        //    }
+        //}
+
+        
+        [HarmonyPatch(typeof(Tameable), nameof(Tameable.OnDeath))]
+        public static class IncreaseTamedAnimalYield
+        {
+            private static void Postfix(Tameable __instance)
+            {
+                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
+
                 }
             }
         }

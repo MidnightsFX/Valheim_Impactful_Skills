@@ -6,14 +6,13 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System.Reflection;
-using System.Security.AccessControl;
 using UnityEngine;
 
 namespace ImpactfulSkills
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
-    //[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
+    [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "com.jotunn.jotunnmodstub";
