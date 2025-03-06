@@ -25,7 +25,8 @@ namespace ImpactfulSkills
 
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
         public static ConfigEntry<float> VoyagerSkillGainRate;
-        public static ConfigEntry<float> SkillLevelExpertiseGainRate;
+        public static ConfigEntry<float> SharedKnowledgeSkillBonusRate;
+        public static ConfigEntry<float> SharedKnowledgeCap;
 
         public ValConfig(ConfigFile cf)
         {
@@ -63,7 +64,8 @@ namespace ImpactfulSkills
 
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
-            SkillLevelExpertiseGainRate = BindServerConfig("SkillRates", "SkillLevelExpertiseGainRate", 1.5f, "How much high skill knowledge will at a maximum improve skill gain rate.");
+            SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 1f, 10f);
+            SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
         }
 
         /// <summary>

@@ -26,7 +26,10 @@ namespace ImpactfulSkills.patches
                 // Logger.LogDebug($"Comparing skill levels {skill_level} < {highest_skill_level} {skill.ToString()}");
                 if (skill_level < highest_skill_level) {
                     // Logger.LogDebug($"Skill factors {skill_level} to {highest_skill_level}");
-                    float skill_bonus = ValConfig.SkillLevelExpertiseGainRate.Value * (Mathf.Lerp(0, (highest_skill_level- skill_level), highest_skill_factor)/ 100f);
+                    float lower_skill_bound = highest_skill_level - skill_level;
+                    float highest_skill_bound = highest_skill_factor;
+                    float skill_bonus = ValConfig.SharedKnowledgeSkillBonusRate.Value * (Mathf.Lerp(0, lower_skill_bound, highest_skill_bound) / 100f);
+                    if (highest_skill_bound <= (lower_skill_bound + ValConfig.SharedKnowledgeCap.Value)) { skill_bonus = 0f; }
                     Logger.LogDebug($"Bonus skill gain from Knowledge {skill_bonus} for {skill.ToString()}");
                     value = +skill_bonus;
                 }

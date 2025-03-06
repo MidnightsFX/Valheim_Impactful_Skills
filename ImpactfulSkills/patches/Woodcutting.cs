@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 
@@ -43,8 +44,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(TreeLog __instance, HitData hitData)
             {
-                if (hitData != null && Player.m_localPlayer != null && hitData.m_attacker == Player.m_localPlayer.GetZDOID())
-                {
+                if (hitData != null && Player.m_localPlayer != null && hitData.m_attacker == Player.m_localPlayer.GetZDOID()) {
                     IncreaseTreeLogDrops(__instance);
                 }
             }
@@ -53,29 +53,30 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Destructible), nameof(Destructible.Destroy))]
         public static class IncreaseDropsFromDestructibleTree
         {
-            private static void Prefix(Destructible __instance)
+            private static void Prefix(Destructible __instance, HitData hit)
             {
                 Logger.LogDebug($"{__instance.m_destructibleType} == {DestructibleType.Tree} | {__instance.m_destructibleType == DestructibleType.Tree}");
-                if (__instance.m_destructibleType == DestructibleType.Tree)
+                if (__instance.m_destructibleType == DestructibleType.Tree && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
                 {
                     IncreaseDestructibleTreeDrops(__instance);
                 }
             }
         }
 
+        // [HarmonyEmitIL("./dumps")]
         [HarmonyPatch(typeof(TreeBase))]
         public static class DamageHandler_Apply_Patch
         {
+            // [HarmonyDebug]
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(TreeBase.RPC_Damage))]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
                 codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldarg_0),
-                    new CodeMatch(OpCodes.Ldfld),
-                    new CodeMatch(OpCodes.Callvirt)
-                    ).Advance(1).InsertAndAdvance(
+                    new CodeMatch(OpCodes.Ldloc_0),
+                    new CodeMatch(OpCodes.Ldc_R4)
+                    ).Advance(3).InsertAndAdvance(
                     new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
                     Transpilers.EmitDelegate(IncreaseTreeDrops)
                     ).ThrowIfNotMatch("Unable to patch drop increase for trees.");
