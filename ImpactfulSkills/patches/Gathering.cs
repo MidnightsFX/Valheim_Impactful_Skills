@@ -30,8 +30,8 @@ namespace ImpactfulSkills.patches
                         Logger.LogDebug($"Pickable is not a gathering item.");
                         return;
                     }
-                        // Increase item drops based on luck, and the gathering skill
-                        float player_skill = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
+                    // Increase item drops based on luck, and the gathering skill
+                    float player_skill = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
                     float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill * 100f) / 100f;
                     float luck_roll = UnityEngine.Random.Range(0f, 50f) + player_luck;
                     int extra_drops = 0;
@@ -44,9 +44,10 @@ namespace ImpactfulSkills.patches
                     }
                     // Create the lucky effect to show that the player got extra drops
                     if (extra_drops > 0) {
-                        Vector3 spawnp = __instance.transform.position;
-                        spawnp.y += 0.1f;
+                        Vector3 spawnp = __instance.transform.position + Vector3.up * __instance.m_spawnOffset;
                         Logger.LogDebug($"Spawning extra drops {extra_drops}");
+                        // Show bonus text amount
+                        DamageText.instance.ShowText(DamageText.TextType.Bonus, __instance.transform.position + Vector3.up * __instance.m_spawnOffset, $"+{extra_drops}", player: true);
                         for (int i = 0; i < extra_drops; i++) {
                             __instance.m_bonusEffect.Create(spawnp, Quaternion.identity);
                             UnityEngine.Object.Instantiate(__instance.m_itemPrefab, spawnp, __instance.transform.rotation);

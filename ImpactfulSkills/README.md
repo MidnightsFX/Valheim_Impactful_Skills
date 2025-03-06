@@ -22,7 +22,16 @@ Woodcutting also gives you increased _chop_ damage, which makes it faster to cut
 
 ### Mining (Pickaxes)
 
-Pickaxes now improves the amount of ore and stone you get from mining things. Along with providing an AOE mining effect when you get to the requisite level (default 50).
+Pickaxes now improves the amount of ore and stone you get from mining things. Along with providing an AOE mining effect (which strengthens as you level up) when you get to the requisite level (default 50).
+
+
+| Pickaxes 0 | Pickaxes 50 | Pickaxes 100 |
+| ------------- | ------------- | ------------- |
+| ![stone_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/pickaxe_0.gif?raw=true) | ![stone_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/pickaxe_50.gif?raw=true) | ![stone_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/pickaxe_100.gif?raw=true) |
+
+
+### Gathering (Farming)
+
 
 
 ## Features
