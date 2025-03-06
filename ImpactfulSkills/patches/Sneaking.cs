@@ -31,7 +31,7 @@ namespace ImpactfulSkills.patches
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
                     // Sneaking
                     float sneak_speed_bonus = ValConfig.SneakSpeedFactor.Value * (player_skill_factor * 100f);
-                    Logger.LogDebug($"Setting sneak speed bonus {sneak_speed_bonus}");
+                    // Logger.LogDebug($"Setting sneak speed bonus {sneak_speed_bonus}");
                     float modified_sneak_speed = __instance.m_crouchSpeed + sneak_speed_bonus;
                     return modified_sneak_speed;
                 }

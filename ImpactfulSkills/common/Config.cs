@@ -21,9 +21,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> VoyagerReduceCuttingStart;
         public static ConfigEntry<float> VoyagerSailingSpeedFactor;
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
+        public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
 
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
         public static ConfigEntry<float> VoyagerSkillGainRate;
+        public static ConfigEntry<float> SkillLevelExpertiseGainRate;
 
         public ValConfig(ConfigFile cf)
         {
@@ -49,7 +51,8 @@ namespace ImpactfulSkills
             MiningAOERangePerLevel = BindServerConfig("Mining", "MiningAOERangePerLevel", 0.04f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.01f, 0.1f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
-            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 2f, "How much your animal handling skill impacts taming speed. Each level will apply this increase amount eg: 2% faster per level in taming", false, 0.1f, 5f);
+            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 2f, "How much your animal handling skill impacts taming speed. 2 is 2x taming speed at level 100", false, 1f, 10f);
+            TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
             GatheringLuckFactor = BindServerConfig("Gathering", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 0.02f, "How much gathering range is increased based on your gathering level. Amount applied per level, 0.5 will make level 100 gathering give 50% more range.", false, 0.001f, 1f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
@@ -60,6 +63,7 @@ namespace ImpactfulSkills
 
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
+            SkillLevelExpertiseGainRate = BindServerConfig("SkillRates", "SkillLevelExpertiseGainRate", 1.5f, "How much high skill knowledge will at a maximum improve skill gain rate.");
         }
 
         /// <summary>

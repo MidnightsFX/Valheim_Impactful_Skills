@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Managers;
+using System;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -25,16 +26,19 @@ namespace ImpactfulSkills.patches
             private static void Prefix(Tameable __instance, ref float time)
             {
                 // Check if the player is close enough to the animal
-                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f)
+                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 30f)
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
-                    time *= ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value)/100f + 1f);
-
+                    float modified_time = time * ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value) + 1f);
+                    Logger.LogDebug($"original remaining time {time}, modified: {modified_time}");
+                    time = modified_time;
                     // Gain a little XP for the skill
                     Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
                 }
             }
         }
+
+        // Should we patch the UI to display more precise information on taming time remaining? or leave that to other mods?
 
         //[HarmonyPatch(typeof(Tameable), nameof(Tameable.DecreaseRemainingTime))]
         //public static class IncreaseTamingEatFrequency
@@ -52,7 +56,30 @@ namespace ImpactfulSkills.patches
             private static void Postfix(Tameable __instance)
             {
                 if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
+                    CharacterDrop tamechardrop = __instance.gameObject.GetComponent<CharacterDrop>();
+                    if (tamechardrop != null) {
+                        float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
+                        foreach (var drop in tamechardrop.m_drops){
+                            int drop_amount = 0;
+                            float min_drop = drop.m_amountMin * (ValConfig.TamedAnimalLootIncreaseFactor.Value * (player_skill_factor * 100f)) / 100f;
+                            float max_drop = drop.m_amountMax * (ValConfig.TamedAnimalLootIncreaseFactor.Value * (player_skill_factor * 100f)) / 100f;
+                            if (min_drop > 0 && max_drop > 0 && min_drop != max_drop) {
+                                drop_amount = UnityEngine.Random.Range((int)min_drop, (int)max_drop);
+                            } else if (min_drop == max_drop) {
+                                drop_amount = (int)Math.Round(min_drop, 0);
+                            }
+                            if (drop.m_chance != 1 && UnityEngine.Random.Range(0f, 1f) > drop.m_chance) {
+                                // This drop failed its chance to spawn
+                                continue;
+                            }
 
+                            Logger.LogDebug($"AnimalWhisper extra drops {drop_amount} {drop.m_prefab.name}");
+                            Quaternion rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0, 360), 0f);
+                            for (int i = 0; i < drop_amount; i++) {
+                                UnityEngine.Object.Instantiate(drop.m_prefab, __instance.transform.position, rotation);
+                            }
+                        }
+                    }
                 }
             }
         }
