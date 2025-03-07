@@ -20,16 +20,15 @@ namespace ImpactfulSkills.patches
                 if (time_since_start > last_skill_level_check || highest_skill_level == 0) {
                     highest_skill_level = UpdateHighestSkillLevel(Player.m_localPlayer);
                     last_skill_level_check = time_since_start + (Time.deltaTime * 100);
-                    Logger.LogDebug($"Setting highest skill level {highest_skill_level}");
+                    Logger.LogDebug($"Setting highest skill level {highest_skill_level} factor {highest_skill_factor}");
                 }
                 float skill_level = Player.m_localPlayer.GetSkillLevel(skill);
-                // Logger.LogDebug($"Comparing skill levels {skill_level} < {highest_skill_level} {skill.ToString()}");
+                //Logger.LogDebug($"Comparing skill levels {skill_level} < {highest_skill_level} {skill.ToString()}");
                 if (skill_level < highest_skill_level) {
-                    // Logger.LogDebug($"Skill factors {skill_level} to {highest_skill_level}");
-                    float lower_skill_bound = highest_skill_level - skill_level;
-                    float highest_skill_bound = highest_skill_factor;
-                    float skill_bonus = ValConfig.SharedKnowledgeSkillBonusRate.Value * (Mathf.Lerp(0, lower_skill_bound, highest_skill_bound) / 100f);
-                    if (highest_skill_bound <= (lower_skill_bound + ValConfig.SharedKnowledgeCap.Value)) { skill_bonus = 0f; }
+                    float bonus_xp_curved = Mathf.Lerp(0, highest_skill_level, highest_skill_factor) / 100f;
+                    float skill_bonus = ValConfig.SharedKnowledgeSkillBonusRate.Value * bonus_xp_curved;
+                    //Logger.LogDebug($"Skill factors {highest_skill_level} <= {skill_level} + {ValConfig.SharedKnowledgeCap.Value} for bonus ({bonus_xp_curved}) {skill_bonus}");
+                    if (highest_skill_level <= (skill_level + ValConfig.SharedKnowledgeCap.Value)) { skill_bonus = 0f; }
                     Logger.LogDebug($"Bonus skill gain from Knowledge {skill_bonus} for {skill.ToString()}");
                     value = +skill_bonus;
                 }
