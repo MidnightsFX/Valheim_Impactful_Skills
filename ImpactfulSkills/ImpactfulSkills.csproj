@@ -29,10 +29,12 @@
 
   <ItemGroup>
     <None Remove="AssetsEmbedded\impactfulskills" />
+    <None Remove="Localizations\English.json" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="AssetsEmbedded\impactfulskills" />
+    <EmbeddedResource Include="Localizations\English.json" />
   </ItemGroup>
 
   <ItemGroup>

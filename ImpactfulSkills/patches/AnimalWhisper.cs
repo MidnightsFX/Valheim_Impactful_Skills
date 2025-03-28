@@ -12,8 +12,8 @@ namespace ImpactfulSkills.patches
         public static void SetupAnimalSkill()
         {
             SkillConfig animalh = new SkillConfig();
-            animalh.Name = "AnimalHandling";
-            animalh.Description = "Your knowledge of animals.";
+            animalh.Name = "$skill_AnimalHandling";
+            animalh.Description = "$skill_AnimalHandling_description";
             animalh.Icon = ImpactfulSkills.EmbeddedResourceBundle.LoadAsset<Sprite>("Assets/Custom/Icons/skill_icons/animalWhisper.png");
             animalh.Identifier = "midnightsfx.animalwhisper";
             animalh.IncreaseStep = 0.1f;
@@ -26,7 +26,7 @@ namespace ImpactfulSkills.patches
             private static void Prefix(Tameable __instance, ref float time)
             {
                 // Check if the player is close enough to the animal
-                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 30f)
+                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 30f)
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
                     float modified_time = time * ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value) + 1f);
@@ -55,7 +55,9 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(Tameable __instance)
             {
-                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
+                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
+                    // Only increase drops of the character is also tamed
+                    if (__instance.gameObject.GetComponent<Character>()?.m_tamed != true) { return; }
                     CharacterDrop tamechardrop = __instance.gameObject.GetComponent<CharacterDrop>();
                     if (tamechardrop != null) {
                         float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);

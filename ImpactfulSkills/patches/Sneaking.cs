@@ -8,7 +8,7 @@ namespace ImpactfulSkills.patches
     {
 
         [HarmonyPatch(typeof(Character))]
-        public static class DamageHandler_Apply_Patch
+        public static class SneakSpeedPatch
         {
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Character.UpdateWalking))]
@@ -26,7 +26,7 @@ namespace ImpactfulSkills.patches
 
             public static float ModifyMovementSpeedBySkill(Character __instance)
             {
-                if (Player.m_localPlayer != null && __instance == Player.m_localPlayer)
+                if (ValConfig.EnableMining.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer)
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
                     // Sneaking
@@ -36,6 +36,29 @@ namespace ImpactfulSkills.patches
                     return modified_sneak_speed;
                 }
                 return __instance.m_crouchSpeed;
+            }
+        }
+
+        public static class SneakingReducedNoisePatch
+        {
+            [HarmonyPatch(typeof(Character), nameof(Character.AddNoise))]
+            public static class AddNoisePatch
+            {
+                public static void Prefix(Character __instance, ref float range)
+                {
+                    if (ValConfig.EnableStealth.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer)
+                    {
+                        float sneak_skill_level = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Sneak);
+                        if (sneak_skill_level >= ValConfig.SneakNoiseReductionLevel.Value) {
+                            // Sneaking
+                            float noise_reduction_percent = ValConfig.SneakNoiseReductionFactor.Value * sneak_skill_level;
+                            float reduced_noise = (100 - noise_reduction_percent) / 100 * range;
+                            Logger.LogDebug($"Setting reduced noise {reduced_noise} from {range}");
+                            range = reduced_noise;
+                        }
+
+                    }
+                }
             }
         }
 

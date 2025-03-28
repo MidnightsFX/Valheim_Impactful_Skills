@@ -6,23 +6,44 @@ namespace ImpactfulSkills
     {
         public static ConfigFile cfg;
         public static ConfigEntry<bool> EnableDebugMode;
+
+        public static ConfigEntry<bool> EnableWoodcutting;
         public static ConfigEntry<float> WoodCuttingDmgMod;
         public static ConfigEntry<float> WoodCuttingLootFactor;
+
+        public static ConfigEntry<bool> EnableMining;
         public static ConfigEntry<float> MiningDmgMod;
         public static ConfigEntry<float> MiningLootFactor;
         public static ConfigEntry<float> MiningAOERangePerLevel;
         public static ConfigEntry<float> MiningAOELevel;
+
+        public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
+        public static ConfigEntry<float> SneakNoiseReductionLevel;
+        public static ConfigEntry<float> SneakNoiseReductionFactor;
+
+        public static ConfigEntry<bool> EnableAnimalWhisper;
         public static ConfigEntry<float> AnimalTamingSpeedFactor;
+        public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
+
+        public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<float> GatheringLuckFactor;
         public static ConfigEntry<float> GatheringRangeFactor;
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;
+        public static ConfigEntry<string> GatheringDisallowedItems;
+
+        public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<float> VoyagerReduceCuttingStart;
         public static ConfigEntry<float> VoyagerSailingSpeedFactor;
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
-        public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
 
+        public static ConfigEntry<bool> EnableWeaponSkill;
+        public static ConfigEntry<float> WeaponSkillStaminaReduction;
+        public static ConfigEntry<float> WeaponSkillBowDrawStaminaCostReduction;
+        public static ConfigEntry<float> WeaponSkillParryBonus;
+
+        public static ConfigEntry<bool> EnableKnowledgeSharing;
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
         public static ConfigEntry<float> VoyagerSkillGainRate;
         public static ConfigEntry<float> SharedKnowledgeSkillBonusRate;
@@ -45,23 +66,43 @@ namespace ImpactfulSkills
                 null,
                 new ConfigurationManagerAttributes { IsAdvanced = true }));
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
+            EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
             WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 2 is 2x the loot at level 100.", false, 1f, 10f);
+
+            EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
             MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
             MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 2 is 2x the loot at level 100.");
             MiningAOERangePerLevel = BindServerConfig("Mining", "MiningAOERangePerLevel", 0.04f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.01f, 0.1f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
+
+            EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
+            SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
+            SneakNoiseReductionFactor = BindServerConfig("Sneak", "SneakNoiseReductionFactor", 0.5f, "How much noise is reduced based on your sneak level. Amount applied per level, 0.5 will make level 100 sneak give 50% less noise.", false, 0.1f, 1f);
+
+            EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 2f, "How much your animal handling skill impacts taming speed. 2 is 2x taming speed at level 100", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
-            GatheringLuckFactor = BindServerConfig("Gathering", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
+
+            EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
+            GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 0.02f, "How much gathering range is increased based on your gathering level. Amount applied per level, 0.5 will make level 100 gathering give 50% more range.", false, 0.001f, 1f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
-            GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "20,40,60,80,100", "The Luck levels that you can roll additional loot at. These should be between 0-100. But can be assigned in any way or number- such as 0,10,10,10,100.");
+            GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "30,50,70,90,100", "The Luck levels that you can roll additional loot at. These should be between 0-100. But can be assigned in any way or number- such as 0,10,10,10,100.");
+            GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
+
+            EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
 
+            EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
+            WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);
+            WeaponSkillParryBonus = BindServerConfig("WeaponSkills", "WeaponSkillParryBonus", 1f, "How much extra XP you get for parrying an attack", false, 0f, 10f);
+            WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
+
+            EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);

@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using JetBrains.Annotations;
 using Jotunn.Configs;
 using Jotunn.Managers;
 using UnityEngine;
@@ -14,8 +13,8 @@ namespace ImpactfulSkills.patches
         public static void SetupSailingSkill()
         {
             SkillConfig voyage = new SkillConfig();
-            voyage.Name = "Voyager";
-            voyage.Description = "The speed and skill that you can maneuver your boat.";
+            voyage.Name = "$skill_Voyager";
+            voyage.Description = "$skill_Voyager_description";
             voyage.Icon = ImpactfulSkills.EmbeddedResourceBundle.LoadAsset<Sprite>("Assets/Custom/Icons/skill_icons/voyager.png");
             voyage.Identifier = "midnightsfx.voyager";
             voyage.IncreaseStep = 0.1f;
@@ -26,7 +25,7 @@ namespace ImpactfulSkills.patches
         public static class VoyagerSpeedPatch
         {
             private static void Postfix(ref Vector3 __result, float dt) {
-                if (Player.m_localPlayer == null) { return; }
+                if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 current_update_time += dt;
                 if (update_timer > current_update_time) {
@@ -48,7 +47,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(ref float __result)
             {
-                if (Player.m_localPlayer == null) { return; }
+                if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
                 if (player_skill > ValConfig.VoyagerReduceCuttingStart.Value) {
@@ -64,11 +63,9 @@ namespace ImpactfulSkills.patches
         }
 
         [HarmonyPatch(typeof(Minimap), nameof(Minimap.Explore), typeof(Vector3), typeof(float))]
-        private class VoyagerNotSoBlindWhileSailingPatch
-        {
-            private static void Prefix(ref float radius)
-            {
-                if (Player.m_localPlayer != null && Player.m_localPlayer.m_attachedToShip == true) {
+        private class VoyagerNotSoBlindWhileSailingPatch {
+            private static void Prefix(ref float radius) {
+                if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null && Player.m_localPlayer.m_attachedToShip == true) {
                     radius *= (Player.m_localPlayer.GetSkillFactor(VoyagingSkill) * ValConfig.VoyagerIncreaseExplorationRadius.Value) + 1f;
                 }
             }

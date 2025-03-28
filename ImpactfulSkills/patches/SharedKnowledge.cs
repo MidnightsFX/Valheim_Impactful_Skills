@@ -14,7 +14,7 @@ namespace ImpactfulSkills.patches
         public static class PatchSkillIncreaseHigherGainsForLowerSkills {
 
             private static void Prefix(Skills.SkillType skill,ref float value) {
-                if (Player.m_localPlayer == null) { return; }
+                if (ValConfig.EnableKnowledgeSharing.Value != true || Player.m_localPlayer == null) { return; }
                 time_since_start += Time.deltaTime;
                 // Set the current highest skill
                 if (time_since_start > last_skill_level_check || highest_skill_level == 0) {

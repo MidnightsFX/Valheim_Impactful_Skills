@@ -32,7 +32,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(MineRock5 __instance, long sender, int index, float health)
             {
-                if (Player.m_localPlayer != null && health <= 0)
+                if (ValConfig.EnableMining.Value == true && Player.m_localPlayer != null && health <= 0)
                 {
                     IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
                 }
@@ -41,7 +41,7 @@ namespace ImpactfulSkills.patches
 
         public static void ModifyPickaxeDmg(HitData hit)
         {
-            if (hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
+            if (ValConfig.EnableMining.Value == true && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
             {
                 float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
                 float player_pickaxe_bonus = 1 + (ValConfig.MiningDmgMod.Value * (player_skill_factor * 100f) / 100f);

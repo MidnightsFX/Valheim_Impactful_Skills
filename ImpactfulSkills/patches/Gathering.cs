@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -9,13 +10,93 @@ namespace ImpactfulSkills.patches
     public static class Gathering
     {
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
-        static readonly List<String> UnallowedPickables = new List<String>() { "SurtlingCore", "Flint", "Wood", "Stone", "Amber", "AmberPearl", "Coins", "Ruby" };
+        static readonly List<String> UnallowedPickables = new List<String>() { };
         private static List<float> luck_levels = new List<float> { };
 
-        public static void SetupGatherables()
+
+        private static void PickableLuckLevelsChanged(object s, EventArgs e)
         {
+            try {
+                List<float> tluck_levels = new List<float> { };
+                foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
+                    tluck_levels.Add(float.Parse(item));
+                }
+                if (tluck_levels.Count > 0) {
+                    luck_levels = tluck_levels;
+                }
+            }
+            catch (Exception ex) {
+                Logger.LogWarning($"Error parsing GatheringLuckLevels: {ex}");
+            }
+        }
+
+        private static void UnallowedPickablesChanged(object s, EventArgs e) {
+            try {
+                List<String> tunallowed = new List<String>() { };
+                foreach (var item in ValConfig.GatheringDisallowedItems.Value.Split(',')) {
+                    tunallowed.Add(item);
+                }
+                if (tunallowed.Count > 0) {
+                    UnallowedPickables.Clear();
+                    UnallowedPickables.AddRange(tunallowed);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Error parsing GatheringDisallowedItems: {ex}");
+            }
+        }
+
+        public static void SetupGatherables() {
             foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
                 luck_levels.Add(float.Parse(item));
+            }
+            ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
+            foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Split(','))
+            {
+                UnallowedPickables.Add(unallowed);
+            }
+            ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedPickablesChanged;
+        }
+
+        [HarmonyPatch(typeof(Pickable))]
+        public static class DisableVanillaGatheringLuck
+        {
+            // [HarmonyDebug]
+            [HarmonyTranspiler]
+            [HarmonyPatch(nameof(Pickable.Interact))]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
+            {
+                var codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldloc_1),
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Ldfld),
+                    new CodeMatch(OpCodes.Callvirt),
+                    new CodeMatch(OpCodes.Stloc_2)
+                    ).RemoveInstructions(43)
+                    .ThrowIfNotMatch("Unable remove vanilla pickable luckydrop.");
+
+                return codeMatcher.Instructions();
+            }
+        }
+
+        [HarmonyPatch(typeof(Attack))]
+        public static class HarvestRangeIncreasesScythe
+        {
+            // [HarmonyDebug]
+            [HarmonyTranspiler]
+            [HarmonyPatch(nameof(Attack.DoMeleeAttack))]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
+            {
+                var codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Attack), nameof(Attack.m_harvestRadiusMaxLevel)))
+                    ).Advance(1).InsertAndAdvance(
+                    Transpilers.EmitDelegate(IncreaseHarvestWeaponRange))
+                    .ThrowIfNotMatch("Unable to increase vanilla harvest max range.");
+
+                return codeMatcher.Instructions();
             }
         }
 
@@ -24,7 +105,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(ref bool __result, Humanoid character, Pickable __instance)
             {
-                if (Player.m_localPlayer != null && character == Player.m_localPlayer)
+                if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer)
                 {
                     if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
                         Logger.LogDebug($"Pickable is not a gathering item.");
@@ -78,6 +159,13 @@ namespace ImpactfulSkills.patches
                     Player.m_localPlayer.RaiseSkill(Skills.SkillType.Farming, (1 + extra_drops));
                 }
             }
+        }
+
+        private static float IncreaseHarvestWeaponRange(float max_harvest_range) {
+            if (ValConfig.EnableGathering.Value == true) {
+                return ValConfig.GatheringRangeFactor.Value + max_harvest_range;
+            }
+            return max_harvest_range;
         }
 
         // Coroutine to handle the AOE gathering of large sets of pickables

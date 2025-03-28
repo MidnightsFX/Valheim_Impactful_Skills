@@ -21,8 +21,7 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(TreeBase), nameof(TreeBase.Damage))]
         public static class IncreaseTreeBaseDamage
         {
-            private static void Prefix(HitData hit)
-            {
+            private static void Prefix(HitData hit) {
                 ModifyChop(hit);
             }
         }
@@ -32,7 +31,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Prefix(Destructible __instance, HitData hit) {
                 // Why o why is shrub_2 not a tree?
-                if (__instance.m_destructibleType == DestructibleType.Tree || __instance.m_destructibleType == DestructibleType.Default && __instance.gameObject.name == "shrub_2")
+                if (ValConfig.EnableWoodcutting.Value == true && __instance.m_destructibleType == DestructibleType.Tree || __instance.m_destructibleType == DestructibleType.Default && __instance.gameObject.name == "shrub_2")
                 {
                     ModifyChop(hit);
                 }
@@ -42,9 +41,8 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(TreeLog), nameof(TreeLog.Destroy))]
         public static class IncreaseDropsFromTree
         {
-            private static void Postfix(TreeLog __instance, HitData hitData)
-            {
-                if (hitData != null && Player.m_localPlayer != null && hitData.m_attacker == Player.m_localPlayer.GetZDOID()) {
+            private static void Postfix(TreeLog __instance, HitData hitData) {
+                if (ValConfig.EnableWoodcutting.Value == true && hitData != null && Player.m_localPlayer != null && hitData.m_attacker == Player.m_localPlayer.GetZDOID()) {
                     IncreaseTreeLogDrops(__instance);
                 }
             }
@@ -53,10 +51,9 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Destructible), nameof(Destructible.Destroy))]
         public static class IncreaseDropsFromDestructibleTree
         {
-            private static void Prefix(Destructible __instance, HitData hit)
-            {
-                Logger.LogDebug($"{__instance.m_destructibleType} == {DestructibleType.Tree} | {__instance.m_destructibleType == DestructibleType.Tree}");
-                if (__instance.m_destructibleType == DestructibleType.Tree && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
+            private static void Prefix(Destructible __instance, HitData hit) {
+                // Logger.LogDebug($"{__instance.m_destructibleType} == {DestructibleType.Tree} | {__instance.m_destructibleType == DestructibleType.Tree}");
+                if (ValConfig.EnableWoodcutting.Value == true && __instance.m_destructibleType == DestructibleType.Tree && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
                 {
                     IncreaseDestructibleTreeDrops(__instance);
                 }
@@ -85,9 +82,8 @@ namespace ImpactfulSkills.patches
             }
         }
 
-        public static void ModifyChop(HitData hit)
-        {
-            if (hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID()) {
+        public static void ModifyChop(HitData hit) {
+            if (ValConfig.EnableWoodcutting.Value == true && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID()) {
                 float player_woodcutting_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
                 Logger.LogDebug($"Player skillfactor: {player_woodcutting_skill_factor}");
                 float player_chop_bonus = 1 + (ValConfig.WoodCuttingDmgMod.Value * (player_woodcutting_skill_factor * 100f) / 100f);
@@ -110,8 +106,8 @@ namespace ImpactfulSkills.patches
             IncreaseWoodDrops(drops, position);
         }
 
-        public static void IncreaseTreeDrops(TreeBase tree)
-        {
+        public static void IncreaseTreeDrops(TreeBase tree) {
+            if (ValConfig.EnableWoodcutting.Value == false) { return; }
             Vector3 position = tree.transform.position;
             DropTable drops = tree.m_dropWhenDestroyed;
             IncreaseWoodDrops(drops, position);
