@@ -51,10 +51,20 @@ All weapon skills now give a corresponding reduction to their stamina cost that 
 Vanilla provides a bonus of 33% at level 100, which is somewhat hidden. This makes it configurable and visibile on item tooltips.
 Parrying provides a tiny bit of bonus XP.
 
+| WeaponSkill 0 | WeaponSkill 50 | WeaponSkill 100 |
+| ------------- | ------------- | ------------- |
+| ![weapon_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sword_0.png?raw=true) | ![weapon_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sword_50.png?raw=true) | ![weapon_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sword_100.png?raw=true) |
+
+
 ### Sneaking
 
 Increases speed based on your sneaking skill.
 Level 50 (configurable) of sneaking starts applying a reduction to your noise generated (similar to how the troll armor works).
+
+| Sneak 0 | Sneak 50 | Sneak 100 |
+| ------------- | ------------- | ------------- |
+| ![sneak_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_0.gif?raw=true) | ![sneak_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_50.gif?raw=true) | ![sneak_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_100.gif?raw=true) |
+
 
 ### Voyager (new skill)
 
