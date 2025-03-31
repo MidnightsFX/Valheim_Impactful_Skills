@@ -70,6 +70,21 @@ Level 50 (configurable) of sneaking starts applying a reduction to your noise ge
 
 The run skill now increases your movement speed when running. Instead of only reducing stamina cost to run.
 
+| Run 0 | Run 50 | Run 100 |
+| ------------- | ------------- | ------------- |
+| ![run_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_0.gif?raw=true) | ![run_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_50.gif?raw=true) | ![run_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_100.gif?raw=true) |
+
+
+### Voyager (new skill)
+
+Voyager increases your potential speed when sailing in a boat. Along with increasing your ability to handle close hauling, when sailing almost against the wind.
+Provides a bonus to your rowing speed that scales with player skill also.
+
+| Voyager 0 | Voyager 50 | Voyager 100 |
+| ------------- | ------------- | ------------- |
+| ![voyager_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_0.gif?raw=true) | ![voyager_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_50.gif?raw=true) | ![voyager_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_100.gif?raw=true) |
+
+
 ### Cooking
 
 Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
@@ -78,10 +93,6 @@ Cooking now causes eaten food to decay slower, allowing it to provide its full b
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.
 
-### Voyager (new skill)
-
-Voyager increases your potential speed when sailing in a boat. Along with increasing your ability to handle close hauling, when sailing almost against the wind.
-Provides a bonus to your rowing speed that scales with player skill also.
 
 ### Animal Whisper (new skill)
 
