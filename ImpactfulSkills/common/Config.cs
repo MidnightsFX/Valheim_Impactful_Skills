@@ -1,4 +1,5 @@
 ﻿using BepInEx.Configuration;
+using ImpactfulSkills.patches;
 
 namespace ImpactfulSkills
 {
@@ -22,6 +23,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> SneakNoiseReductionLevel;
         public static ConfigEntry<float> SneakNoiseReductionFactor;
 
+        public static ConfigEntry<bool> EnableRun;
+        public static ConfigEntry<float> RunSpeedFactor;
+
         public static ConfigEntry<bool> EnableAnimalWhisper;
         public static ConfigEntry<float> AnimalTamingSpeedFactor;
         public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
@@ -37,11 +41,20 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> VoyagerReduceCuttingStart;
         public static ConfigEntry<float> VoyagerSailingSpeedFactor;
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
+        public static ConfigEntry<float> VoyagerPaddleSpeedBonus;
+        public static ConfigEntry<float> VoyagerPaddleSpeedBonusLevel;
 
         public static ConfigEntry<bool> EnableWeaponSkill;
         public static ConfigEntry<float> WeaponSkillStaminaReduction;
         public static ConfigEntry<float> WeaponSkillBowDrawStaminaCostReduction;
         public static ConfigEntry<float> WeaponSkillParryBonus;
+
+        public static ConfigEntry<bool> EnableCooking;
+        public static ConfigEntry<float> CookingBurnReduction;
+
+        public static ConfigEntry<bool> EnableBloodMagic;
+        public static ConfigEntry<float> BloodMagicXPForShieldDamageRatio;
+        public static ConfigEntry<float> BloodMagicXP;
 
         public static ConfigEntry<bool> EnableKnowledgeSharing;
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
@@ -76,13 +89,23 @@ namespace ImpactfulSkills
             MiningAOERangePerLevel = BindServerConfig("Mining", "MiningAOERangePerLevel", 0.04f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.01f, 0.1f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
 
+            EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
+            RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
+
+            EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
+            CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", false, 0.1f, 1f);
+
+            EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
+            BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
+            BloodMagicXP = BindServerConfig("BloodMagic", "BloodMagicXP", 1f, "How much XP is gained, used by other blood magic skill settings.", false, 0.1f, 10f);
+
             EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
             SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
             SneakNoiseReductionFactor = BindServerConfig("Sneak", "SneakNoiseReductionFactor", 0.5f, "How much noise is reduced based on your sneak level. Amount applied per level, 0.5 will make level 100 sneak give 50% less noise.", false, 0.1f, 1f);
 
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
-            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 2f, "How much your animal handling skill impacts taming speed. 2 is 2x taming speed at level 100", false, 1f, 10f);
+            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
@@ -96,6 +119,8 @@ namespace ImpactfulSkills
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
+            VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);
+            VoyagerPaddleSpeedBonusLevel = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonusLevel", 25f, "The level that the player starts to get a bonus to paddle speed.", false, 0f, 100f);
 
             EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);

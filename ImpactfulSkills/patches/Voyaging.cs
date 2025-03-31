@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Managers;
+using System.Collections.Generic;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -42,6 +44,48 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        [HarmonyPatch(typeof(Ship))]
+        public static class PaddlingIsFasterPatch
+        {
+            //[HarmonyDebug]
+            [HarmonyTranspiler]
+            [HarmonyPatch(nameof(Ship.CustomFixedUpdate))]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
+            {
+                var codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Ldarg_1),
+                    new CodeMatch(OpCodes.Call), // , AccessTools.DeclaredPropertyGetter(typeof(Vector3), "op_multiply")
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Ldc_I4_2),
+                    new CodeMatch(OpCodes.Callvirt), // , AccessTools.Method(typeof(Rigidbody), nameof(Rigidbody.AddForceAtPosition))
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Ldarg_1),
+                    new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Ship), nameof(Ship.ApplyEdgeForce)))
+                    ).Advance(1).InsertAndAdvance(
+                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
+                    )
+                    .ThrowIfNotMatch("Unable to patch ship paddle speed improvement.");
+
+                return codeMatcher.Instructions();
+            }
+
+            public static Vector3 PaddleSpeedImprovement(Vector3 ship_motion) {
+                if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
+                    float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
+                    if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
+                        Vector3 ship_modified_motion = ship_motion * (ValConfig.VoyagerPaddleSpeedBonus.Value * (1 + (player_skill/100)));
+                        //Logger.LogDebug($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
+                        return ship_modified_motion;
+                    }
+                }
+                // fallback to the default modification for the method
+                return ship_motion;
+            }
+        }
+
+
         [HarmonyPatch(typeof(Ship), nameof(Ship.GetWindAngleFactor))]
         public static class VoyagerAnglePatch
         {
@@ -49,13 +93,13 @@ namespace ImpactfulSkills.patches
             {
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
-                float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
-                if (player_skill > ValConfig.VoyagerReduceCuttingStart.Value) {
+                    float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
+                    if (player_skill >= ValConfig.VoyagerReduceCuttingStart.Value) {
                     // Reduce the penalty of not having the wind at your back
                     if (__result < 1f) {
                         float max_skill_increase = player_skill * 0.02f;
                         float sailingAngleFactor = Mathf.Clamp((__result + max_skill_increase), __result, 1f);
-                        Logger.LogDebug($"Improving sail angle due to skill: ({__result}) vs {sailingAngleFactor}");
+                        // Logger.LogDebug($"Improving sail angle due to skill: ({__result}) vs {sailingAngleFactor}");
                         __result = sailingAngleFactor;
                     }
                 }

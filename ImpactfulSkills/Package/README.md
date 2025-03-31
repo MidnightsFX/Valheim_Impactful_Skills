@@ -13,7 +13,7 @@ Got a bug to report or just want to chat about the mod? Drop by the discord or g
 
 ## Skills and Effects
 
-All of the below effects are configurable! Want it to be more powerful or less power? Its easy to modify through the config file or an in-game config editor!
+All of the below effects are **configurable**! Want it to be more powerful or less powerful? Its easy to modify through the config file or an in-game config editor!
 
 ### Woodcutting
 
@@ -66,9 +66,22 @@ Level 50 (configurable) of sneaking starts applying a reduction to your noise ge
 | ![sneak_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_0.gif?raw=true) | ![sneak_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_50.gif?raw=true) | ![sneak_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sneak_100.gif?raw=true) |
 
 
+### Run
+
+The run skill now increases your movement speed when running. Instead of only reducing stamina cost to run.
+
+### Cooking
+
+Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
+
+### Blood Magic
+
+Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.
+
 ### Voyager (new skill)
 
 Voyager increases your potential speed when sailing in a boat. Along with increasing your ability to handle close hauling, when sailing almost against the wind.
+Provides a bonus to your rowing speed that scales with player skill also.
 
 ### Animal Whisper (new skill)
 
@@ -85,10 +98,7 @@ Changing your primary weapon type now takes considerably less time.
 Please note these are not ordered or guaranteed to be implemented, but are ideas that are being considered.
 I am also always happy to talk ideas and suggestions in the discord!
 - Skill announcements, when gaining a skill level that gives you a specific bonus
-- Paddling gives a faster speed when sailing
 - Crafting can refund costs partially
-- Make blood magic leveling not insanely painful
-- Cooking increases the optimal food duration for your character
 - Animal whisper allows taming 1 creature permenantly for your character (lvl 100?)
 - Localization for all languages
 

@@ -26,7 +26,7 @@ namespace ImpactfulSkills.patches
 
             public static float ModifyMovementSpeedBySkill(Character __instance)
             {
-                if (ValConfig.EnableMining.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer)
+                if (ValConfig.EnableStealth.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer)
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
                     // Sneaking
@@ -53,7 +53,7 @@ namespace ImpactfulSkills.patches
                             // Sneaking
                             float noise_reduction_percent = ValConfig.SneakNoiseReductionFactor.Value * sneak_skill_level;
                             float reduced_noise = (100 - noise_reduction_percent) / 100 * range;
-                            Logger.LogDebug($"Setting reduced noise {reduced_noise} from {range}");
+                            // Logger.LogDebug($"Setting reduced noise {reduced_noise} from {range}");
                             range = reduced_noise;
                         }
 
