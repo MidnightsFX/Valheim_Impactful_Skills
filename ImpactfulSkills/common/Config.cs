@@ -15,7 +15,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableMining;
         public static ConfigEntry<float> MiningDmgMod;
         public static ConfigEntry<float> MiningLootFactor;
-        public static ConfigEntry<float> MiningAOERangePerLevel;
+        public static ConfigEntry<float> MiningAOERange;
         public static ConfigEntry<float> MiningAOELevel;
 
         public static ConfigEntry<bool> EnableStealth;
@@ -38,6 +38,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<string> GatheringDisallowedItems;
 
         public static ConfigEntry<bool> EnableVoyager;
+        public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
         public static ConfigEntry<float> VoyagerReduceCuttingStart;
         public static ConfigEntry<float> VoyagerSailingSpeedFactor;
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
@@ -61,6 +62,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> VoyagerSkillGainRate;
         public static ConfigEntry<float> SharedKnowledgeSkillBonusRate;
         public static ConfigEntry<float> SharedKnowledgeCap;
+        public static ConfigEntry<string> SharedKnowledgeSkillsToIgnore;
 
         public ValConfig(ConfigFile cf)
         {
@@ -86,7 +88,7 @@ namespace ImpactfulSkills
             EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
             MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
             MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 2 is 2x the loot at level 100.");
-            MiningAOERangePerLevel = BindServerConfig("Mining", "MiningAOERangePerLevel", 0.04f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.01f, 0.1f);
+            MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.5f, 10f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
 
             EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
@@ -116,6 +118,7 @@ namespace ImpactfulSkills
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
+            VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 50, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
@@ -132,6 +135,8 @@ namespace ImpactfulSkills
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
+            SharedKnowledgeSkillsToIgnore = BindServerConfig("SkillRates", "SharedKnowledgeSkillsToIgnore", "Tenacity", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in.");
+            SharedKnowledgeSkillsToIgnore.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
         }
 
         /// <summary>

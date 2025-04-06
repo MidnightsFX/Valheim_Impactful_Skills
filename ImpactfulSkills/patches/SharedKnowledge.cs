@@ -1,4 +1,6 @@
 ﻿using HarmonyLib;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -8,6 +10,29 @@ namespace ImpactfulSkills.patches
         private static float highest_skill_factor = 0;
         private static float time_since_start = 0;
         private static float last_skill_level_check = 0;
+        private static List<Skills.SkillType> skill_types_to_avoid_shared_xp = new List<Skills.SkillType> {};
+
+        public static void UnallowedSharedXPSkillTypesChanged(object s, EventArgs e)
+        {
+            SetupUnallowedSharedXPSkills();
+        }
+
+        public static void SetupUnallowedSharedXPSkills()
+        {
+            List<Skills.SkillType> tunallowed = new List<Skills.SkillType>() { };
+            foreach (var item in ValConfig.SharedKnowledgeSkillsToIgnore.Value.Split(',')) {
+                Logger.LogDebug($"Checking {item} as skill enum");
+                bool parsed = Enum.TryParse(item, true, out Skills.SkillType skillType);
+                if (parsed == false) { continue; }
+                tunallowed.Add(skillType);
+            }
+            if (tunallowed.Count > 0)
+            {
+                skill_types_to_avoid_shared_xp.Clear();
+                skill_types_to_avoid_shared_xp.AddRange(tunallowed);
+            }
+            Logger.LogDebug($"Unallowed shared xp skills: {string.Join(", ", skill_types_to_avoid_shared_xp)}");
+        }
 
 
         [HarmonyPatch(typeof(Player), nameof(Player.RaiseSkill))]
@@ -15,6 +40,7 @@ namespace ImpactfulSkills.patches
 
             private static void Prefix(Skills.SkillType skill,ref float value) {
                 if (ValConfig.EnableKnowledgeSharing.Value != true || Player.m_localPlayer == null) { return; }
+                if (skill_types_to_avoid_shared_xp.Contains(skill)) { return; }
                 time_since_start += Time.deltaTime;
                 // Set the current highest skill
                 if (time_since_start > last_skill_level_check || highest_skill_level == 0) {

@@ -111,6 +111,9 @@ namespace ImpactfulSkills.patches
                         Logger.LogDebug($"Pickable is not a gathering item.");
                         return;
                     }
+                    if (__instance.m_picked == true) {
+                        return;
+                    }
                     // Increase item drops based on luck, and the gathering skill
                     float player_skill = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
                     float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill * 100f) / 100f;

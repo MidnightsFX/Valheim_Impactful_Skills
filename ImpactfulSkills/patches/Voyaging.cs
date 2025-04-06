@@ -30,9 +30,10 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 current_update_time += dt;
-                if (update_timer > current_update_time) {
-                    Logger.LogDebug($"Raising player voyager skill: {dt} > {update_timer}");
-                    update_timer += (dt * 5);
+                // Logger.LogInfo($"Checking to raise voyager: {update_timer} <= {current_update_time}");
+                if (Player.m_localPlayer.IsAttachedToShip() && update_timer <= current_update_time) {
+                    Logger.LogDebug($"Raising player voyager skill: {update_timer} <= {current_update_time}");
+                    update_timer += (dt * ValConfig.VoyagerSkillXPCheckFrequency.Value);
                     Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
                 }
                 float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);

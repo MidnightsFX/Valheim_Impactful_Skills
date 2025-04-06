@@ -111,7 +111,7 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Attack))]
         public static class ModifyStaimaDrainWeapons
         {
-            // [HarmonyDebug]
+            [HarmonyDebug]
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Attack.GetAttackStamina))]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
@@ -126,7 +126,8 @@ namespace ImpactfulSkills.patches
                     new CodeMatch(OpCodes.Mul),
                     new CodeMatch(OpCodes.Sub),
                     new CodeMatch(OpCodes.Stloc_0)
-                    ).Advance(2).RemoveInstructions(5).InsertAndAdvance(
+                    ).Advance(1).RemoveInstructions(6).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldloc_1),
                     Transpilers.EmitDelegate(ModifyWeaponStaminaCostBySkillLevels)
                     ).ThrowIfNotMatch("Unable to patch tooltip display for stamina cost reduction.");
 
@@ -137,7 +138,7 @@ namespace ImpactfulSkills.patches
         private static void BuildStringForItemDescription(StringBuilder sb, ItemDrop.ItemData instance) {
             // Need a toggle for enable here and a return of the default otherwise
             if (ValConfig.EnableWeaponSkill.Value == true) {
-                sb.Append("\n$item_staminause: <color=orange>" + instance.m_shared.m_attack.m_attackStamina + " (" + (ModifyWeaponStaminaCostBySkillLevels(instance.m_shared.m_attack.m_attackStamina, Player.m_localPlayer.GetSkillFactor(instance.m_shared.m_skillType))) + ")</color>");
+                sb.Append("\n$item_staminause: <color=orange>" + instance.m_shared.m_attack.m_attackStamina + " (" + (ModifyWeaponStaminaCostBySkillLevels(instance.m_shared.m_attack.m_attackStamina, Player.m_localPlayer.GetSkillFactor(instance.m_shared.m_skillType)) * -1) + ")</color>");
             } else {
                 sb.Append("\n$item_staminause: <color=orange>" + instance.m_shared.m_attack.m_attackStamina + "</color>");
             }
@@ -152,9 +153,15 @@ namespace ImpactfulSkills.patches
 
         private static float ModifyWeaponStaminaCostBySkillLevels(float stam_cost, float skillfactor) {
             // Note even when disabled the stamina cost will be reduced because this is the vanilla formula
-            if (ValConfig.EnableWeaponSkill.Value != true || Player.m_localPlayer == null) { return stam_cost -= stam_cost * 0.33f * skillfactor; }
+            if (ValConfig.EnableWeaponSkill.Value != true || Player.m_localPlayer == null) { 
+                float vanilla_stam_reduction = stam_cost * 0.33f * skillfactor;
+               //  Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} r:{vanilla_stam_reduction}");
+                return (stam_cost - vanilla_stam_reduction);
+            }
 
-            return stam_cost -= stam_cost * ValConfig.WeaponSkillStaminaReduction.Value * skillfactor;
+            float stam_cost_reduction = stam_cost * ValConfig.WeaponSkillStaminaReduction.Value * skillfactor;
+            // Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} r:{stam_cost_reduction} s:{skillfactor}");
+            return (stam_cost - stam_cost_reduction);
         }
 
         private static void ExtraXPForParryBlock() {

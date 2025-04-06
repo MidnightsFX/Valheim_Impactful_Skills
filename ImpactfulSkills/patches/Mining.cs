@@ -56,7 +56,7 @@ namespace ImpactfulSkills.patches
                     Vector3 position = hit.m_point;
                     float hitdmg = hit.m_damage.m_pickaxe;
                     HitData aoedmg = hit;
-                    foreach (Collider obj_collider in Physics.OverlapSphere(position, (ValConfig.MiningAOERangePerLevel.Value * (player_skill_factor * 100f)), rockmask)) {
+                    foreach (Collider obj_collider in Physics.OverlapSphere(position, (ValConfig.MiningAOERange.Value * player_skill_factor), rockmask)) {
                         Logger.LogDebug($"AOE hit on: {obj_collider.name}");
                         MineRock minerock = obj_collider.gameObject.GetComponentInParent<MineRock>();
                         aoedmg.m_point = obj_collider.bounds.center;
