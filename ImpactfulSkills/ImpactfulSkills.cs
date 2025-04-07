@@ -19,7 +19,7 @@ namespace ImpactfulSkills
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.3.4";
+        public const string PluginVersion = "0.3.5";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
@@ -37,7 +37,6 @@ namespace ImpactfulSkills
             Gathering.SetupGatherables();
             AnimalWhisper.SetupAnimalSkill();
             Voyaging.SetupSailingSkill();
-            SharedKnowledge.SetupUnallowedSharedXPSkills();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             Harmony harmony = new(PluginGUID);

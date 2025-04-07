@@ -111,7 +111,7 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Attack))]
         public static class ModifyStaimaDrainWeapons
         {
-            [HarmonyDebug]
+            // [HarmonyDebug]
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Attack.GetAttackStamina))]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)

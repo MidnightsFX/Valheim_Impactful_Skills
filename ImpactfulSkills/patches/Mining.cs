@@ -51,7 +51,7 @@ namespace ImpactfulSkills.patches
                 if (hit.m_damage.m_pickaxe <= 0f) { return; }
 
                 // Trigger AOE mining if the player has the required skill level
-                if ((player_skill_factor * 100f) >= ValConfig.MiningAOELevel.Value) {
+                if (ValConfig.EnableMiningAOE.Value && (player_skill_factor * 100f) >= ValConfig.MiningAOELevel.Value) {
                     Logger.LogDebug("Player mining aoe activated");
                     Vector3 position = hit.m_point;
                     float hitdmg = hit.m_damage.m_pickaxe;

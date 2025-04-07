@@ -1,3 +1,10 @@
+**0.3.5**
+---
+```
+- Increases flexibility of disallow list for shared XP
+- Adds config to optionally disable AOE mining
+```
+
 **0.3.4**
 ---
 ```

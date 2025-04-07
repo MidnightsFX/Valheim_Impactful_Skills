@@ -17,6 +17,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> MiningLootFactor;
         public static ConfigEntry<float> MiningAOERange;
         public static ConfigEntry<float> MiningAOELevel;
+        public static ConfigEntry<bool> EnableMiningAOE;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
@@ -62,7 +63,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> VoyagerSkillGainRate;
         public static ConfigEntry<float> SharedKnowledgeSkillBonusRate;
         public static ConfigEntry<float> SharedKnowledgeCap;
-        public static ConfigEntry<string> SharedKnowledgeSkillsToIgnore;
+        public static ConfigEntry<string> SharedKnowledgeIgnoreList;
 
         public ValConfig(ConfigFile cf)
         {
@@ -88,6 +89,7 @@ namespace ImpactfulSkills
             EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
             MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
             MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 2 is 2x the loot at level 100.");
+            EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
             MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.5f, 10f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
 
@@ -135,8 +137,8 @@ namespace ImpactfulSkills
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
-            SharedKnowledgeSkillsToIgnore = BindServerConfig("SkillRates", "SharedKnowledgeSkillsToIgnore", "Tenacity", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in.");
-            SharedKnowledgeSkillsToIgnore.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
+            SharedKnowledgeIgnoreList = BindServerConfig("SkillRates", "SharedKnowledgeIgnoreList", "", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in. Invalid skill names will be ignored.");
+            SharedKnowledgeIgnoreList.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
         }
 
         /// <summary>
