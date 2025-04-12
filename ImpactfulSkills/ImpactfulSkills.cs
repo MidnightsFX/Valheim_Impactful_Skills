@@ -14,12 +14,13 @@ namespace ImpactfulSkills
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
+    [BepInIncompatibility("blacks7ar.SNEAKer")]
     [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.3.5";
+        public const string PluginVersion = "0.3.8";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game

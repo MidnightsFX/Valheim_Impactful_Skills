@@ -70,7 +70,7 @@ namespace ImpactfulSkills.patches
                             } else if (min_drop == max_drop) {
                                 drop_amount = (int)Math.Round(min_drop, 0);
                             }
-                            if (drop.m_chance != 1 && UnityEngine.Random.Range(0f, 1f) > drop.m_chance) {
+                            if (drop.m_chance != 1 && UnityEngine.Random.value > drop.m_chance) {
                                 // This drop failed its chance to spawn
                                 continue;
                             }

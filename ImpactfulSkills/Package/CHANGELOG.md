@@ -1,3 +1,22 @@
+**0.3.8**
+---
+```
+- Reduces luck when mining low chance yield rocks
+- Adds an incompatibility with the "SNEAKr" mod, both mods patch the same thing and will not work together.
+```
+
+**0.3.7**
+---
+```
+- Fixes a bug where shared would prevent skill gain in certain scenarios
+```
+
+**0.3.6**
+---
+```
+- Fixes crash when mining rocks that are excessively large
+```
+
 **0.3.5**
 ---
 ```

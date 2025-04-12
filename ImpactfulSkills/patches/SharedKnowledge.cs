@@ -103,9 +103,10 @@ namespace ImpactfulSkills.patches
                         //Logger.LogDebug($"Skill factors {highest_skill_level} <= {skill_level} + {ValConfig.SharedKnowledgeCap.Value} for bonus ({bonus_xp_curved}) {skill_bonus}");
                         if (highest_skill_level <= (skill_level + ValConfig.SharedKnowledgeCap.Value)) { skill_bonus = 0f; }
                         Logger.LogDebug($"Bonus skill gain from Knowledge {skill_bonus} for {skill.ToString()}");
-                        value = +skill_bonus;
+                        value += skill_bonus;
                     }
                 }
+                // Logger.LogDebug($"{skill.ToString()} increase value {value}");
             }
         }
 
