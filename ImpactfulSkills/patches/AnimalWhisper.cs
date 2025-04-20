@@ -30,7 +30,7 @@ namespace ImpactfulSkills.patches
                 {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
                     float modified_time = time * ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value) + 1f);
-                    Logger.LogDebug($"original remaining time {time}, modified: {modified_time}");
+                    Logger.LogDebug($"animal taming remaining time {time}, modified: {modified_time}");
                     time = modified_time;
                     // Gain a little XP for the skill
                     Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);

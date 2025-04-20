@@ -84,6 +84,7 @@ namespace ImpactfulSkills.patches
                 if (minerock != null)
                 {
                     Logger.LogDebug($"AOE Damage applying to minerock");
+                    minerock.m_nview.ClaimOwnership();
                     minerock.Damage(aoedmg);
                 }
                 else
@@ -94,6 +95,7 @@ namespace ImpactfulSkills.patches
                         Logger.LogDebug($"AOE Damage applying to minerock5");
                         int index = minerock5.GetAreaIndex(obj_collider);
                         Logger.LogDebug($"AOE Damage applying to minerock5 index: {index}");
+                        minerock5.m_nview.ClaimOwnership();
                         minerock5.DamageArea(index, aoedmg);
                     }
                 }
@@ -120,7 +122,12 @@ namespace ImpactfulSkills.patches
                     Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed drop roll");
                     continue;
                 }
-                drops_to_add.Add(drop.m_item, drop.m_stackMin);
+                if (drops_to_add.ContainsKey(drop.m_item)) {
+                    drops_to_add[drop.m_item] += drop.m_stackMin;
+                } else {
+                    drops_to_add.Add(drop.m_item, drop.m_stackMin);
+                }
+                    
             }
             int drop_amount = 0;
             Logger.LogDebug($"Mining rock drop current: {drops.m_dropMin}, max_drop: {drops.m_dropMax}");

@@ -117,7 +117,11 @@ namespace ImpactfulSkills.patches
         {
             Dictionary<GameObject, int> drops_to_add = new Dictionary<GameObject, int>();
             foreach (var drop in drops.m_drops) {
-                drops_to_add.Add(drop.m_item, drop.m_stackMin);
+                if (drops_to_add.ContainsKey(drop.m_item)) {
+                    drops_to_add[drop.m_item] += drop.m_stackMin;
+                } else {
+                    drops_to_add.Add(drop.m_item, drop.m_stackMin);
+                }
             }
             int drop_amount = 0;
             float player_woodcutting_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);

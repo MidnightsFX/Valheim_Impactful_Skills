@@ -24,11 +24,9 @@ namespace ImpactfulSkills.patches
                 return codeMatcher.Instructions();
             }
 
-            public static float ModifyMovementSpeedBySkill(Character __instance)
-            {
-                if (ValConfig.EnableStealth.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer)
-                {
-                    float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
+            public static float ModifyMovementSpeedBySkill(Character __instance) {
+                if (ValConfig.EnableStealth.Value == true && !__instance.IsEncumbered()) {
+                    float player_skill_factor = __instance.GetSkillFactor(Skills.SkillType.Sneak);
                     // Sneaking
                     float sneak_speed_bonus = ValConfig.SneakSpeedFactor.Value * (player_skill_factor * 100f);
                     // Logger.LogDebug($"Setting sneak speed bonus {sneak_speed_bonus}");

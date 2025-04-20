@@ -30,7 +30,7 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 current_update_time += dt;
-                // Logger.LogInfo($"Checking to raise voyager: {update_timer} <= {current_update_time}");
+                //Logger.LogDebug($"Checking to raise voyager: {update_timer} <= {current_update_time}");
                 if (Player.m_localPlayer.IsAttachedToShip() && update_timer <= current_update_time) {
                     Logger.LogDebug($"Raising player voyager skill: {update_timer} <= {current_update_time}");
                     update_timer += (dt * ValConfig.VoyagerSkillXPCheckFrequency.Value);
@@ -76,7 +76,7 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
                     float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
                     if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
-                        Vector3 ship_modified_motion = ship_motion * (ValConfig.VoyagerPaddleSpeedBonus.Value * (1 + (player_skill/100)));
+                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (1 + (player_skill/100)));
                         //Logger.LogDebug($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
                         return ship_modified_motion;
                     }

@@ -114,13 +114,13 @@ namespace ImpactfulSkills
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
-            GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 0.02f, "How much gathering range is increased based on your gathering level. Amount applied per level, 0.5 will make level 100 gathering give 50% more range.", false, 0.001f, 1f);
+            GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "30,50,70,90,100", "The Luck levels that you can roll additional loot at. These should be between 0-100. But can be assigned in any way or number- such as 0,10,10,10,100.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
-            VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 50, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
+            VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 25, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);

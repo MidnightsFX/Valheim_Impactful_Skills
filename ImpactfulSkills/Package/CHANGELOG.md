@@ -1,3 +1,30 @@
+**0.3.12**
+---
+```
+- Fixes a bug where if many items were triggered for AOE harvesting the async harvesting task would not re-enable AOE harvesting afterwards.
+```
+
+**0.3.11**
+---
+```
+- Improve compatibility with mods which modify ore drops
+```
+
+**0.3.10**
+---
+```
+- Prevents sneaking speed scaling from giving speed while you are over encumbered
+- Fixes chain activation of gathering AOE skill on harvestables that are planted close together
+```
+
+**0.3.9**
+---
+```
+- Improve compatibility with players who do not have the mod running
+- Fixes a bug where gathering AOE harvest would not activate
+- Reduced default frequency of Voyager skill gain
+```
+
 **0.3.8**
 ---
 ```

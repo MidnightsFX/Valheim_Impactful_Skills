@@ -2,8 +2,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace ImpactfulSkills.patches
 {
@@ -101,31 +103,46 @@ namespace ImpactfulSkills.patches
         }
 
         [HarmonyPatch(typeof(Pickable), nameof(Pickable.Interact))]
-        public static class GahteringLuckPatch
+        public static class GatheringLuckPatch
         {
-            private static void Postfix(ref bool __result, Humanoid character, Pickable __instance)
+            private static bool pickable = false;
+            public static bool enabled_aoe_gathering = true;
+
+            private static void Prefix(ref bool __result, Humanoid character, Pickable __instance)
             {
                 if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer)
+                {
+                    if (__instance.m_picked == false) { pickable = true; }
+                }
+            }
+
+            private static void Postfix(ref bool __result, Pickable __instance, Humanoid character)
+            {
+                if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
                 {
                     if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
                         Logger.LogDebug($"Pickable is not a gathering item.");
                         return;
                     }
-                    if (__instance.m_picked == true) {
+
+                    if (pickable == false) {
                         return;
                     }
+                    // We are going to pick this thing, so lets ensure it can't be repicked
+                    pickable = false;
+
                     // Increase item drops based on luck, and the gathering skill
-                    float player_skill = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
-                    float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill * 100f) / 100f;
+                    float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
+                    float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill_factor * 100f) / 100f;
                     float luck_roll = UnityEngine.Random.Range(0f, 50f) + player_luck;
                     int extra_drops = 0;
                     foreach (var level in luck_levels) {
                         Logger.LogDebug($"Gathering Luck roll: {luck_roll} > {level}");
                         if (luck_roll > level) {
                             extra_drops += 1;
-                            Logger.LogDebug($"Gathering Luck lvl ({level}) added, drop total: {extra_drops}");
-                        }
+                        } else { break; }
                     }
+                    Logger.LogDebug($"Gathering Luck, drop total: {extra_drops}");
                     // Create the lucky effect to show that the player got extra drops
                     if (extra_drops > 0) {
                         Vector3 spawnp = __instance.transform.position + Vector3.up * __instance.m_spawnOffset;
@@ -138,10 +155,12 @@ namespace ImpactfulSkills.patches
                         }
                     }
 
-                    if ((player_skill * 100f) > ValConfig.FarmingRangeRequiredLevel.Value) {
-                        Logger.LogDebug("Triggering AoE gathering");
-                        float pickable_distance = ValConfig.GatheringRangeFactor.Value * (player_skill * 100f);
+                    Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
+                    if ((player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
+                        float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
+                        Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
+                        enabled_aoe_gathering = false;
                         if (targets.Length <= 5) {
                             foreach (Collider obj_collider in targets) {
                                 Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
@@ -149,18 +168,46 @@ namespace ImpactfulSkills.patches
                                     Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
                                     if (!UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
                                         if (pickable_item.CanBePicked()) {
+                                            pickable_item.m_nview.ClaimOwnership();
                                             pickable_item.Interact(Player.m_localPlayer, false, false);
                                         }
                                     }
                                 }
                             }
                         } else {
-                            __instance.StartCoroutine(PickAOE(targets));
+                            Player.m_localPlayer.StartCoroutine(PickAOE(targets));
                         }
                     }
                     // Gain a little XP for the skill
                     Player.m_localPlayer.RaiseSkill(Skills.SkillType.Farming, (1 + extra_drops));
                 }
+            }
+
+            // Coroutine to handle the AOE gathering of large sets of pickables
+            static IEnumerator PickAOE(Collider[] targets)
+            {
+                int iterations = 0;
+                foreach (Collider obj_collider in targets)
+                {
+                    iterations++;
+                    if (iterations % 10 == 0)
+                    {
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                    if (obj_collider == null) { continue; }
+                    Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
+                    if (pickable_item != null) {
+                        //Logger.LogDebug($"Async Checking {pickable_item.gameObject.name} in harvest range.");
+                        if (!UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
+                            if (pickable_item.CanBePicked()) {
+                                pickable_item.m_nview.ClaimOwnership();
+                                pickable_item.Interact(Player.m_localPlayer, false, false);
+                            }
+                        }
+                    }
+                }
+                enabled_aoe_gathering = true;
+                yield break;
             }
         }
 
@@ -171,26 +218,6 @@ namespace ImpactfulSkills.patches
             return max_harvest_range;
         }
 
-        // Coroutine to handle the AOE gathering of large sets of pickables
-        static IEnumerator PickAOE(Collider[] targets) {
-            int iterations = 0;
-            foreach (Collider obj_collider in targets) {
-                iterations++;
-                if (iterations % 5 == 0) {
-                    yield return new WaitForSeconds(0.1f);
-                }
-                if (obj_collider == null) { continue; }
-                Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
-                if (pickable_item != null) {
-                    Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
-                    if (!UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
-                        if (pickable_item.CanBePicked()) {
-                            pickable_item.Interact(Player.m_localPlayer, false, false);
-                        }
-                    }
-                }
-            }
-            yield break;
-        }
+
     }
 }
