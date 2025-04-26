@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace ImpactfulSkills.patches
 {
@@ -14,6 +13,8 @@ namespace ImpactfulSkills.patches
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
         static readonly List<String> UnallowedPickables = new List<String>() { };
         private static List<float> luck_levels = new List<float> { };
+        private static bool pickable = false;
+        private static bool enabled_aoe_gathering = true;
 
 
         private static void PickableLuckLevelsChanged(object s, EventArgs e)
@@ -105,8 +106,6 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Pickable), nameof(Pickable.Interact))]
         public static class GatheringLuckPatch
         {
-            private static bool pickable = false;
-            public static bool enabled_aoe_gathering = true;
 
             private static void Prefix(ref bool __result, Humanoid character, Pickable __instance)
             {
@@ -160,7 +159,6 @@ namespace ImpactfulSkills.patches
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
                         Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
-                        enabled_aoe_gathering = false;
                         if (targets.Length <= 5) {
                             foreach (Collider obj_collider in targets) {
                                 Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
@@ -175,6 +173,7 @@ namespace ImpactfulSkills.patches
                                 }
                             }
                         } else {
+                            enabled_aoe_gathering = false;
                             Player.m_localPlayer.StartCoroutine(PickAOE(targets));
                         }
                     }

@@ -1,3 +1,23 @@
+**0.3.15**
+---
+```
+- Improves support for mods that modify ore drops
+```
+
+**0.3.14**
+---
+```
+- Prevents Voyager skill gains while on a boat but not moving
+- Fixes a skill gain rate bug for Voyager impacting specific hardware configurations
+- Corrects paddle speed scaling bonus
+```
+
+**0.3.13**
+---
+```
+- Fixes AOE harvesting being disabled when harvesting only a few items
+```
+
 **0.3.12**
 ---
 ```

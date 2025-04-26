@@ -30,11 +30,17 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 current_update_time += dt;
-                //Logger.LogDebug($"Checking to raise voyager: {update_timer} <= {current_update_time}");
+                
                 if (Player.m_localPlayer.IsAttachedToShip() && update_timer <= current_update_time) {
-                    Logger.LogDebug($"Raising player voyager skill: {update_timer} <= {current_update_time}");
-                    update_timer += (dt * ValConfig.VoyagerSkillXPCheckFrequency.Value);
-                    Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
+                    // update the interval
+                    update_timer += (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
+                    Vector3 pvel = Player.m_localPlayer.GetVelocity();
+                    // Only get XP if you are moving
+                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, y-vel: {pvel.y}");
+                    if (Mathf.Abs(pvel.x) > 0.5f|| Mathf.Abs(pvel.y) > 0.5f) {
+                        Logger.LogDebug($"Raising player voyager skill.");
+                        Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
+                    }
                 }
                 float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
                 if (player_skill > 0f) {
@@ -76,7 +82,7 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
                     float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
                     if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
-                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (1 + (player_skill/100)));
+                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
                         //Logger.LogDebug($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
                         return ship_modified_motion;
                     }

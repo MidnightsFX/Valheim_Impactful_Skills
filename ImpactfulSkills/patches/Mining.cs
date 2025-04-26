@@ -114,21 +114,28 @@ namespace ImpactfulSkills.patches
             float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
 
             Dictionary<GameObject, int> drops_to_add = new Dictionary<GameObject, int>();
-            foreach (var drop in drops.m_drops) {
-                float droll = UnityEngine.Random.value;
-                Logger.LogDebug($"Mining rock check roll: {droll} < {(1 - drops.m_dropChance)}");
-                // Use the drops chance to randomly roll if we get extra drops for this drop
-                if (droll < (1 - drops.m_dropChance)) {
-                    Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed drop roll");
-                    continue;
+            if (drops.m_drops != null) {
+                foreach (var drop in drops.m_drops)
+                {
+                    float droll = UnityEngine.Random.value;
+                    Logger.LogDebug($"Mining rock check roll: {droll} < {(1 - drops.m_dropChance)}");
+                    // Use the drops chance to randomly roll if we get extra drops for this drop
+                    if (droll < (1 - drops.m_dropChance)) {
+                        Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed drop roll");
+                        continue;
+                    }
+                    if (drops_to_add.ContainsKey(drop.m_item))
+                    {
+                        drops_to_add[drop.m_item] += drop.m_stackMin;
+                    }
+                    else
+                    {
+                        drops_to_add.Add(drop.m_item, drop.m_stackMin);
+                    }
+
                 }
-                if (drops_to_add.ContainsKey(drop.m_item)) {
-                    drops_to_add[drop.m_item] += drop.m_stackMin;
-                } else {
-                    drops_to_add.Add(drop.m_item, drop.m_stackMin);
-                }
-                    
             }
+            
             int drop_amount = 0;
             Logger.LogDebug($"Mining rock drop current: {drops.m_dropMin}, max_drop: {drops.m_dropMax}");
             float min_drop = drops.m_dropMin * (ValConfig.MiningLootFactor.Value * (player_skill_factor * 100f)) / 100f;
@@ -138,6 +145,7 @@ namespace ImpactfulSkills.patches
             } else if (min_drop == max_drop) {
                 drop_amount = (int)Math.Round(min_drop, 0);
             }
+            if (drops_to_add.Count == 0) { return; }
             Logger.LogDebug($"Mining rock drop increase min_drop: {min_drop}, max_drop: {max_drop} drop amount: {drop_amount}");
             foreach (var drop in drops_to_add) {
                 Quaternion rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0, 360), 0f);
