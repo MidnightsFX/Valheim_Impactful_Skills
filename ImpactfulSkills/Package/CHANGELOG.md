@@ -1,3 +1,10 @@
+**0.3.16**
+---
+```
+- Improves support for loot tables that create creatures, no longer causes errors or additional creature spawns based on luck
+- Increases Mining AOE effect speed
+```
+
 **0.3.15**
 ---
 ```

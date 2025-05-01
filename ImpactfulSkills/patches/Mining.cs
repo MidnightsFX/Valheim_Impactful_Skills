@@ -72,9 +72,9 @@ namespace ImpactfulSkills.patches
             foreach (Collider obj_collider in mine_targets)
             {
                 iterations++;
-                if (iterations % 5 == 0)
+                if (iterations % 10 == 0)
                 {
-                    yield return new WaitForSeconds(0.1f);
+                    yield return new WaitForSeconds(0.05f);
                 }
                 if (obj_collider == null) { continue; }
                 Logger.LogDebug($"AOE hit on: {obj_collider.name}");
@@ -148,8 +148,10 @@ namespace ImpactfulSkills.patches
             if (drops_to_add.Count == 0) { return; }
             Logger.LogDebug($"Mining rock drop increase min_drop: {min_drop}, max_drop: {max_drop} drop amount: {drop_amount}");
             foreach (var drop in drops_to_add) {
+                var idrop = drop.Key.GetComponent<ItemDrop>();
+                if (idrop == null) { continue; }
                 Quaternion rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0, 360), 0f);
-                int max_stack_size = drop.Key.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize;
+                int max_stack_size = idrop.m_itemData.m_shared.m_maxStackSize;
                 if (drop_amount > max_stack_size) {
                     int stacks = drop_amount / max_stack_size;
                     for (int i = 0; i < stacks; i++) {
