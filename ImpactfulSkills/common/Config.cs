@@ -18,6 +18,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> MiningAOERange;
         public static ConfigEntry<float> MiningAOELevel;
         public static ConfigEntry<bool> EnableMiningAOE;
+        public static ConfigEntry<bool> EnableMiningRockBreaker;
+        public static ConfigEntry<float> RockBreakerMaxChance;
+        public static ConfigEntry<int> RockBreakerRequiredLevel;
+        public static ConfigEntry<float> RockBreakerDamage;
+        public static ConfigEntry<int> MinehitsPerInterval;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
@@ -92,6 +97,11 @@ namespace ImpactfulSkills
             EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
             MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.5f, 10f);
             MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
+            EnableMiningRockBreaker = BindServerConfig("Mining", "EnableMiningRockBreaker", true, "Enable mining whole veins, by a (small) chance.");
+            RockBreakerMaxChance = BindServerConfig("Mining", "RockBreakerMaxChance", 0.05f, "The maximum chance to break a whole vein. 0.05 is 5% chance to break a whole vein at level 100. This is checked on each hit.", false, 0f, 1f);
+            RockBreakerRequiredLevel = BindServerConfig("Mining", "RockBreakerRequiredLevel", 75, "The level that vein breaking requires to activate. What skill level whole rocks breaking is enabled at.", false, 0, 100);
+            RockBreakerDamage = BindServerConfig("Mining", "RockBreakerDamage", 300f, "Veinbreakers damage, small damage numbers will mean triggering this will not destroy a whole vein, but massively weaken it. Large numbers will ensure the whole vein is destroyed.", false, 0f, 10000f);
+            MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1,100);
 
             EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
             RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
@@ -120,7 +130,7 @@ namespace ImpactfulSkills
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
-            VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 25, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
+            VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);

@@ -1,3 +1,27 @@
+**0.3.19**
+---
+```
+- Added the ability to explode whole ore blocks at a small chance, default starting is lvl 75 with a max chance of 5%
+- Improved compatibility for AOE mining with modified ore drops
+- Improved performance of mining extremely large rocks
+- Improved performance of mining returning drops for extremely large rocks
+```
+
+**0.3.18**
+---
+```
+- Improves network synchronization for bonus gathering yields
+- Increases vectors that are valid for triggering Voyager skill gains
+- Increased default frequency of the voyager skill gain checks
+- Increased the internal skill rate for Voyager
+```
+
+**0.3.17**
+---
+```
+- Prevents enemy shields from providing blood magic XP
+```
+
 **0.3.16**
 ---
 ```

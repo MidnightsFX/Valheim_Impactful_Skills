@@ -19,7 +19,7 @@ namespace ImpactfulSkills.patches
             voyage.Description = "$skill_Voyager_description";
             voyage.Icon = ImpactfulSkills.EmbeddedResourceBundle.LoadAsset<Sprite>("Assets/Custom/Icons/skill_icons/voyager.png");
             voyage.Identifier = "midnightsfx.voyager";
-            voyage.IncreaseStep = 0.1f;
+            voyage.IncreaseStep = 0.15f;
             VoyagingSkill = SkillManager.Instance.AddSkill(voyage);
         }
 
@@ -36,8 +36,9 @@ namespace ImpactfulSkills.patches
                     update_timer += (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
                     Vector3 pvel = Player.m_localPlayer.GetVelocity();
                     // Only get XP if you are moving
-                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, y-vel: {pvel.y}");
-                    if (Mathf.Abs(pvel.x) > 0.5f|| Mathf.Abs(pvel.y) > 0.5f) {
+                    bool skill_gain_speed = Mathf.Abs(pvel.x) > 0.5f || Mathf.Abs(pvel.y) > 0.5f || Mathf.Abs(pvel.z) > 0.5f;
+                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, y-vel: {pvel.y}, z-vel: {pvel.z} | skill gain speed? {skill_gain_speed}");
+                    if (skill_gain_speed) {
                         Logger.LogDebug($"Raising player voyager skill.");
                         Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
                     }

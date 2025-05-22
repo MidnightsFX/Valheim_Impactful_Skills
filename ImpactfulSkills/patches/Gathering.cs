@@ -13,7 +13,6 @@ namespace ImpactfulSkills.patches
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
         static readonly List<String> UnallowedPickables = new List<String>() { };
         private static List<float> luck_levels = new List<float> { };
-        private static bool pickable = false;
         private static bool enabled_aoe_gathering = true;
 
 
@@ -77,10 +76,51 @@ namespace ImpactfulSkills.patches
                     new CodeMatch(OpCodes.Ldfld),
                     new CodeMatch(OpCodes.Callvirt),
                     new CodeMatch(OpCodes.Stloc_2)
-                    ).RemoveInstructions(43)
+                    ).RemoveInstructions(43).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
+                    Transpilers.EmitDelegate(DetermineExtraDrops),
+                    new CodeInstruction(OpCodes.Stloc_0) // Store the value
+                    )
                     .ThrowIfNotMatch("Unable remove vanilla pickable luckydrop.");
 
                 return codeMatcher.Instructions();
+            }
+
+            static int DetermineExtraDrops(Pickable __instance)
+            {
+                if (Player.m_localPlayer == null) { return 0; }
+                // Increase item drops based on luck, and the gathering skill
+                float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
+                float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill_factor * 100f) / 100f;
+                float luck_roll = UnityEngine.Random.Range(0f, 50f) + player_luck;
+                int extra_drops = 0;
+                foreach (var level in luck_levels)
+                {
+                    Logger.LogDebug($"Gathering Luck roll: {luck_roll} > {level}");
+                    if (luck_roll > level)
+                    {
+                        extra_drops += 1;
+                    }
+                    else { break; }
+                }
+                Logger.LogDebug($"Gathering Luck, drop total: {extra_drops}");
+                //Create the lucky effect to show that the player got extra drops
+                if (extra_drops > 0) {
+                    Vector3 spawnp = __instance.transform.position + Vector3.up * __instance.m_spawnOffset;
+                    Logger.LogDebug($"Spawning extra drops {extra_drops}");
+                    // Show bonus text amount
+                    DamageText.instance.ShowText(DamageText.TextType.Bonus, __instance.transform.position + Vector3.up * __instance.m_spawnOffset, $"+{extra_drops}", player: true);
+                    __instance.m_bonusEffect.Create(spawnp, Quaternion.identity);
+                    //for (int i = 0; i < extra_drops; i++)
+                    //{
+                    //    __instance.m_bonusEffect.Create(spawnp, Quaternion.identity);
+                    //    UnityEngine.Object.Instantiate(__instance.m_itemPrefab, spawnp, __instance.transform.rotation);
+                    //}
+                }
+
+                // Gain a little XP for the skill
+                Player.m_localPlayer.RaiseSkill(Skills.SkillType.Farming, (1 + extra_drops));
+                return extra_drops;
             }
         }
 
@@ -107,14 +147,6 @@ namespace ImpactfulSkills.patches
         public static class GatheringLuckPatch
         {
 
-            private static void Prefix(ref bool __result, Humanoid character, Pickable __instance)
-            {
-                if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer)
-                {
-                    if (__instance.m_picked == false) { pickable = true; }
-                }
-            }
-
             private static void Postfix(ref bool __result, Pickable __instance, Humanoid character)
             {
                 if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
@@ -124,36 +156,7 @@ namespace ImpactfulSkills.patches
                         return;
                     }
 
-                    if (pickable == false) {
-                        return;
-                    }
-                    // We are going to pick this thing, so lets ensure it can't be repicked
-                    pickable = false;
-
-                    // Increase item drops based on luck, and the gathering skill
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
-                    float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill_factor * 100f) / 100f;
-                    float luck_roll = UnityEngine.Random.Range(0f, 50f) + player_luck;
-                    int extra_drops = 0;
-                    foreach (var level in luck_levels) {
-                        Logger.LogDebug($"Gathering Luck roll: {luck_roll} > {level}");
-                        if (luck_roll > level) {
-                            extra_drops += 1;
-                        } else { break; }
-                    }
-                    Logger.LogDebug($"Gathering Luck, drop total: {extra_drops}");
-                    // Create the lucky effect to show that the player got extra drops
-                    if (extra_drops > 0) {
-                        Vector3 spawnp = __instance.transform.position + Vector3.up * __instance.m_spawnOffset;
-                        Logger.LogDebug($"Spawning extra drops {extra_drops}");
-                        // Show bonus text amount
-                        DamageText.instance.ShowText(DamageText.TextType.Bonus, __instance.transform.position + Vector3.up * __instance.m_spawnOffset, $"+{extra_drops}", player: true);
-                        for (int i = 0; i < extra_drops; i++) {
-                            __instance.m_bonusEffect.Create(spawnp, Quaternion.identity);
-                            UnityEngine.Object.Instantiate(__instance.m_itemPrefab, spawnp, __instance.transform.rotation);
-                        }
-                    }
-
                     Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
                     if ((player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
@@ -177,8 +180,7 @@ namespace ImpactfulSkills.patches
                             Player.m_localPlayer.StartCoroutine(PickAOE(targets));
                         }
                     }
-                    // Gain a little XP for the skill
-                    Player.m_localPlayer.RaiseSkill(Skills.SkillType.Farming, (1 + extra_drops));
+                    
                 }
             }
 
