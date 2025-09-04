@@ -62,15 +62,15 @@ namespace ImpactfulSkills.patches
             {
                 var codeMatcher = new CodeMatcher(instructions);
                 codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldloc_S),
-                    new CodeMatch(OpCodes.Ldarg_1),
-                    new CodeMatch(OpCodes.Call), // , AccessTools.DeclaredPropertyGetter(typeof(Vector3), "op_multiply")
-                    new CodeMatch(OpCodes.Ldloc_S),
-                    new CodeMatch(OpCodes.Ldc_I4_2),
-                    new CodeMatch(OpCodes.Callvirt), // , AccessTools.Method(typeof(Rigidbody), nameof(Rigidbody.AddForceAtPosition))
-                    new CodeMatch(OpCodes.Ldarg_0),
-                    new CodeMatch(OpCodes.Ldarg_1),
-                    new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Ship), nameof(Ship.ApplyEdgeForce)))
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
+                    ).Advance(1).InsertAndAdvance(
+                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
+                    ).MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
+                    ).Advance(1).InsertAndAdvance(
+                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
+                    ).MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
                     ).Advance(1).InsertAndAdvance(
                     Transpilers.EmitDelegate(PaddleSpeedImprovement)
                     )
@@ -79,17 +79,17 @@ namespace ImpactfulSkills.patches
                 return codeMatcher.Instructions();
             }
 
-            public static Vector3 PaddleSpeedImprovement(Vector3 ship_motion) {
+            public static float PaddleSpeedImprovement(float rudder_speed) {
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
                     float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
                     if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
-                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
+                        float ship_modified_motion = rudder_speed * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
                         //Logger.LogDebug($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
                         return ship_modified_motion;
                     }
                 }
                 // fallback to the default modification for the method
-                return ship_motion;
+                return rudder_speed;
             }
         }
 

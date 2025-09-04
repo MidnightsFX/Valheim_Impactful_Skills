@@ -35,6 +35,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableAnimalWhisper;
         public static ConfigEntry<float> AnimalTamingSpeedFactor;
         public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
+        public static ConfigEntry<int> BetterBeesLevel;
+        public static ConfigEntry<bool> EnableBeeBonuses;
+        public static ConfigEntry<int> BeeBiomeUnrestrictedLevel;
+        public static ConfigEntry<bool> EnableBeeBiomeUnrestricted;
+        public static ConfigEntry<float> BeeHoneyIncreaseDropChance;
 
         public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<float> GatheringLuckFactor;
@@ -121,6 +126,11 @@ namespace ImpactfulSkills
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
+            EnableBeeBonuses = BindServerConfig("AnimalHandling", "EnableBeeBonuses", true, "Enables Animal Handling bonuses related to Bees.");
+            BetterBeesLevel = BindServerConfig("AnimalHandling", "BetterBeesLevel", 15, "The level at which Bee productivity traits kick in", false, 0, 100);
+            BeeHoneyIncreaseDropChance = BindServerConfig("AnimalHandling", "BeeIncreaseDropChance", 1f, "At level 100 skill, each honey gathered will be increased by this. Scaled by skill level. eg: at 1, skill level 10, a 10% chance of another honey.");
+            EnableBeeBiomeUnrestricted = BindServerConfig("AnimalHandling", "EnableBeeBiomeUnrestricted", true, "At the specified level, beeshives built by you can produce honey in any biome.");
+            BeeBiomeUnrestrictedLevel = BindServerConfig("AnimalHandling", "BeeBiomeUnrestrictedLevel", 25, "At this level, if enabled, beehives built by you can produce honey in any biome.", false, 0, 100);
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);

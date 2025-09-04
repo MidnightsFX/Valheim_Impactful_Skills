@@ -95,7 +95,8 @@ namespace ImpactfulSkills.patches
         public static void IncreaseDestructibleTreeDrops(Destructible dtree)
         {
             Vector3 position = dtree.transform.position;
-            DropTable drops = dtree.GetComponent<DropOnDestroyed>().m_dropWhenDestroyed;
+            DropTable drops = dtree.GetComponent<DropOnDestroyed>()?.m_dropWhenDestroyed;
+            if (drops == null) { return; }
             IncreaseWoodDrops(drops, position);
         }
 

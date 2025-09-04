@@ -1,3 +1,12 @@
+**0.3.20**
+---
+```
+- Fixed an issue with destroying trees that had no drops
+- Fixed an issue where Animal whisperer would cause an error on tamable creatures with no drops
+- Added increased honey yields for the animal whisperer skill (15)
+- Added the ability for beehives to work regardless of biome animal whisper (25)
+```
+
 **0.3.19**
 ---
 ```
