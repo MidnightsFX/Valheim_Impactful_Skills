@@ -1,6 +1,13 @@
+**0.3.21**
+---
+```
+- Fixes bad build publish
+```
+
 **0.3.20**
 ---
 ```
+- Fixes for Call to Arms
 - Fixed an issue with destroying trees that had no drops
 - Fixed an issue where Animal whisperer would cause an error on tamable creatures with no drops
 - Added increased honey yields for the animal whisperer skill (15)

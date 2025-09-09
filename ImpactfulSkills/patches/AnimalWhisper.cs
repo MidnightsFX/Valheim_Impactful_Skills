@@ -54,6 +54,11 @@ namespace ImpactfulSkills.patches
         {
             public static void Prefix(Beehive __instance)
             {
+                int honey = __instance.GetHoneyLevel();
+                if (honey > 0 && Player.m_localPlayer != null) {
+                    Player.m_localPlayer.RaiseSkill(AnimalHandling, honey * ValConfig.BeeHarvestXP.Value);
+                }
+
                 if (Player.m_localPlayer != null && ValConfig.EnableBeeBonuses.Value)
                 {
                     float skillfactor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
