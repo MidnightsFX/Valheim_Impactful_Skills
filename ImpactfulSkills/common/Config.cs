@@ -23,11 +23,21 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> RockBreakerRequiredLevel;
         public static ConfigEntry<float> RockBreakerDamage;
         public static ConfigEntry<int> MinehitsPerInterval;
+        public static ConfigEntry<float> ChanceForAOEOnHit;
+        public static ConfigEntry<bool> SkillLevelBonusEnabledForMiningDropChance;
+        public static ConfigEntry<bool> ChanceForAOEOnHitScalesWithSkill;
+        public static ConfigEntry<bool> EnableMiningCritHit;
+        public static ConfigEntry<int> RequiredLevelForMiningCrit;
+        public static ConfigEntry<float> ChanceForMiningCritHit;
+        public static ConfigEntry<float> CriticalHitDmgMult;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
         public static ConfigEntry<float> SneakNoiseReductionLevel;
         public static ConfigEntry<float> SneakNoiseReductionFactor;
+        public static ConfigEntry<bool> EnableSneakBonusDamage;
+        public static ConfigEntry<int> SneakBackstabBonusLevel;
+        public static ConfigEntry<float> SneakBackstabBonusFactor;
 
         public static ConfigEntry<bool> EnableRun;
         public static ConfigEntry<float> RunSpeedFactor;
@@ -39,7 +49,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableBeeBonuses;
         public static ConfigEntry<int> BeeBiomeUnrestrictedLevel;
         public static ConfigEntry<bool> EnableBeeBiomeUnrestricted;
-        public static ConfigEntry<float> BeeHoneyIncreaseDropChance;
+        public static ConfigEntry<float> BeeHoneyOutputIncreaseBySkill;
         public static ConfigEntry<float> BeeHarvestXP;
 
         public static ConfigEntry<bool> EnableGathering;
@@ -76,13 +86,30 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> SharedKnowledgeCap;
         public static ConfigEntry<string> SharedKnowledgeIgnoreList;
 
+        public static ConfigEntry<bool> EnableCrafting;
+        public static ConfigEntry<bool> EnableDurabilitySaves;
+        public static ConfigEntry<bool> ScaleDurabilitySaveBySkillLevel;
+        public static ConfigEntry<bool> EnableDurabilityLossPrevention;
+        public static ConfigEntry<int> DurabilitySaveLevel;
+        public static ConfigEntry<float> ChanceForDurabilityLossPrevention;
+        public static ConfigEntry<int> CraftingMaxBonus;
+        public static ConfigEntry<float> CraftingBonusChance;
+        public static ConfigEntry<bool> EnableBonusItemCrafting;
+        public static ConfigEntry<bool> EnableCraftBonusAsFraction;
+        public static ConfigEntry<float> CraftBonusFractionOfCraftNumber;
+        public static ConfigEntry<int> CraftingBonusCraftsLevel;
+        public static ConfigEntry<bool> EnableMaterialReturns;
+        public static ConfigEntry<int> CraftingMaterialReturnsLevel;
+        public static ConfigEntry<float> MaxCraftingMaterialReturnPercent;
+        public static ConfigEntry<float> ChanceForMaterialReturn;
+
         public ValConfig(ConfigFile cf)
         {
             // ensure all the config values are created
             cfg = cf;
             cfg.SaveOnConfigSet = true;
             CreateConfigValues(cf);
-            Logger.setDebugLogging(ValConfig.EnableDebugMode.Value);
+            Logger.setDebugLogging(EnableDebugMode.Value);
         }
 
         private void CreateConfigValues(ConfigFile Config)
@@ -99,15 +126,22 @@ namespace ImpactfulSkills
 
             EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
             MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
+            EnableMiningCritHit = BindServerConfig("Mining", "EnableMiningCritHit", true, "Enables mining critial hit strikes, must hit the required level for it to be active.");
+            RequiredLevelForMiningCrit = BindServerConfig("Mining", "RequiredLevelForMiningCrit", 25, "Level the player must be for critical mining hits to activate", false, 0, 100);
+            ChanceForMiningCritHit = BindServerConfig("Mining", "ChanceForMiningCritHit", 0.1f, "Chance for a critical hit when mining", valmax: 1f);
+            CriticalHitDmgMult = BindServerConfig("Mining", "CriticalHitDmgMult", 3f, "Multipler for damage from a critical hit", valmin: 1f, valmax: 20f);
             MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 2 is 2x the loot at level 100.");
             EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
-            MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", false, 0.5f, 10f);
-            MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", false, 0f, 100f);
+            ChanceForAOEOnHit = BindServerConfig("Mining", "ChanceForAOEOnHit", 0.3f, "Once AOE Mining is enabled, this is the chance for it to activate on any hit", valmax: 1f);
+            ChanceForAOEOnHitScalesWithSkill = BindServerConfig("Mining", "ChanceForAOEOnHitScalesWithSkill", true, "Increases your chance for an AOE strike based on player skill");
+            MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", valmin: 0.5f, valmax: 10f);
+            MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", valmax: 100f);
             EnableMiningRockBreaker = BindServerConfig("Mining", "EnableMiningRockBreaker", true, "Enable mining whole veins, by a (small) chance.");
-            RockBreakerMaxChance = BindServerConfig("Mining", "RockBreakerMaxChance", 0.05f, "The maximum chance to break a whole vein. 0.05 is 5% chance to break a whole vein at level 100. This is checked on each hit.", false, 0f, 1f);
+            RockBreakerMaxChance = BindServerConfig("Mining", "RockBreakerMaxChance", 0.05f, "The maximum chance to break a whole vein. 0.05 is 5% chance to break a whole vein at level 100. This is checked on each hit.", valmax: 1f);
             RockBreakerRequiredLevel = BindServerConfig("Mining", "RockBreakerRequiredLevel", 75, "The level that vein breaking requires to activate. What skill level whole rocks breaking is enabled at.", false, 0, 100);
-            RockBreakerDamage = BindServerConfig("Mining", "RockBreakerDamage", 300f, "Veinbreakers damage, small damage numbers will mean triggering this will not destroy a whole vein, but massively weaken it. Large numbers will ensure the whole vein is destroyed.", false, 0f, 10000f);
-            MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1,100);
+            RockBreakerDamage = BindServerConfig("Mining", "RockBreakerDamage", 300f, "Veinbreakers damage, small damage numbers will mean triggering this will not destroy a whole vein, but massively weaken it. Large numbers will ensure the whole vein is destroyed.", valmax: 10000f);
+            MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1, 100);
+            SkillLevelBonusEnabledForMiningDropChance = BindServerConfig("Mining", "SkillLevelBonusEnabledForMiningDropChance", false, "Pickaxes skill level provides a bonus to drop chance for drops that are not gaurenteed (This can significantly increase muddy scrap-pile drops).");
 
             EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
             RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
@@ -123,13 +157,16 @@ namespace ImpactfulSkills
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
             SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
             SneakNoiseReductionFactor = BindServerConfig("Sneak", "SneakNoiseReductionFactor", 0.5f, "How much noise is reduced based on your sneak level. Amount applied per level, 0.5 will make level 100 sneak give 50% less noise.", false, 0.1f, 1f);
+            EnableSneakBonusDamage = BindServerConfig("Sneak", "EnableSneakBonusDamage", true, "Enable sneak bonus damage changes.");
+            SneakBackstabBonusLevel = BindServerConfig("Sneak", "SneakBackstabBonusLevel", 25, "The level at which backstab damage starts being applied based on your skill", false, 0, 100);
+            SneakBackstabBonusFactor = BindServerConfig("Sneak", "SneakBackstabBonusFactor", 2f, "How much backstab damage is increased based on your sneak level. 1 is a 100% bonus backstab damage at skill level 100.", valmin: 0.1f, valmax: 10f);
 
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
             EnableBeeBonuses = BindServerConfig("AnimalHandling", "EnableBeeBonuses", true, "Enables Animal Handling bonuses related to Bees.");
             BetterBeesLevel = BindServerConfig("AnimalHandling", "BetterBeesLevel", 15, "The level at which Bee productivity traits kick in", false, 0, 100);
-            BeeHoneyIncreaseDropChance = BindServerConfig("AnimalHandling", "BeeIncreaseDropChance", 1f, "At level 100 skill, each honey gathered will be increased by this. Scaled by skill level. eg: at 1, skill level 10, a 10% chance of another honey.");
+            BeeHoneyOutputIncreaseBySkill = BindServerConfig("AnimalHandling", "BeeHoneyOutputIncreaseBySkill", 1f, "At level 100 skill, and 1.0 this results in a 100% increase in honey gathered.");
             EnableBeeBiomeUnrestricted = BindServerConfig("AnimalHandling", "EnableBeeBiomeUnrestricted", true, "At the specified level, beeshives built by you can produce honey in any biome.");
             BeeBiomeUnrestrictedLevel = BindServerConfig("AnimalHandling", "BeeBiomeUnrestrictedLevel", 25, "At this level, if enabled, beehives built by you can produce honey in any biome.", false, 0, 100);
             BeeHarvestXP = BindServerConfig("AnimalHandling", "BeeHarvestXP", 2f, "The amount of xp for Animal handling provided by harvesting a single honey from a beehive", false, 0f, 20f);
@@ -153,6 +190,25 @@ namespace ImpactfulSkills
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);
             WeaponSkillParryBonus = BindServerConfig("WeaponSkills", "WeaponSkillParryBonus", 1f, "How much extra XP you get for parrying an attack", false, 0f, 10f);
             WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
+
+            EnableCrafting = BindServerConfig("Crafting", "EnableCrafting", true, "Enable crafting skill changes.");
+            EnableDurabilityLossPrevention = BindServerConfig("Crafting", "EnableDurabilityLossPrevention", true, "Enables durability reduction prevention that can scale with player skill.");
+            EnableDurabilitySaves = BindServerConfig("Crafting", "EnableDurabilitySaves", true, "Enables reducing how often you use durability for your items.");
+            DurabilitySaveLevel = BindServerConfig("Crafting", "DurabilitySaveLevel", 25, "Level requirement to enable durability saves.", false, 0, 150);
+            ChanceForDurabilityLossPrevention = BindServerConfig("Crafting", "ChanceForDurabilityLossPrevention", 0.25f, "Chance that you will not use durability on use.", valmax: 1f);
+            ScaleDurabilitySaveBySkillLevel = BindServerConfig("Crafting", "ScaleDurabilitySaveBySkillLevel", true, "Reduces MaxChanceForDurabilityPreserveOnUse based on level, at lvl 50 crafting MaxChanceForDurabilityPreserveOnUse is 50% of its value.");
+            EnableBonusItemCrafting = BindServerConfig("Crafting", "EnableBonusItemCrafting", true, "Enables crafting bonus items.");
+            CraftingBonusCraftsLevel = BindServerConfig("Crafting", "CraftingBonusCraftsLevel", 50, "The level at which you can start getting bonus crafts.", false, 0, 100);
+            CraftingMaxBonus = BindServerConfig("Crafting", "CraftingMaxBonus", 3, "The maximum number of additional bonus crafts you can get from crafting an item", false, 0, 150);
+            CraftingBonusChance = BindServerConfig("Crafting", "CraftingBonusChance", 0.3f, "The chance to get a bonus craft when crafting an item. 0.5 is a 50% chance to get a bonus craft at level 100. Bonus crafting success can stack up to the CraftingMaxBonus times.");
+            EnableCraftBonusAsFraction = BindServerConfig("Crafting", "EnableCraftBonusAsFraction", true, "Enable crafting bonus as a fraction of the number crafted (for recipes where the result is more than 1). If disabled, the bonus is always 1 item.");
+            CraftBonusFractionOfCraftNumber = BindServerConfig("Crafting", "CraftBonusFractionOfCraftNumber", 0.25f, "If the number of items crafted by the recipe is greater than 1, a percentage of the number crafted is used for the bonus. This determines that percentage. Eg: craft 20 arrows (1 craft) a .25 value would give you 5 arrows for 1 bonus craft.");
+            EnableMaterialReturns = BindServerConfig("Crafting", "EnableMaterialReturns", true, "Enable material returns from crafting.");
+            CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
+            MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
+            ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
+            EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
+            CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);

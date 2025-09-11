@@ -50,47 +50,39 @@ namespace ImpactfulSkills.patches
         //}
 
         [HarmonyPatch(typeof(Beehive), nameof(Beehive.RPC_Extract))]
-        public static class BetterBeeProduction
-        {
-            public static void Prefix(Beehive __instance)
-            {
-                int honey = __instance.GetHoneyLevel();
-                if (honey > 0 && Player.m_localPlayer != null) {
-                    Player.m_localPlayer.RaiseSkill(AnimalHandling, honey * ValConfig.BeeHarvestXP.Value);
-                }
-
-                if (Player.m_localPlayer != null && ValConfig.EnableBeeBonuses.Value)
-                {
-                    float skillfactor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
-                    if ((skillfactor * 100) < ValConfig.BetterBeesLevel.Value) {
-                        return;
-                    }
-
-                    float chance = ValConfig.BeeHoneyIncreaseDropChance.Value * skillfactor;
-                    int honeylevel = __instance.GetHoneyLevel();
-                    while (honeylevel > 0) {
-                        if (UnityEngine.Random.value <= chance) {
-                            __instance.m_spawnEffect.Create(__instance.m_spawnPoint.position, Quaternion.identity);
-                            Vector2 vector = UnityEngine.Random.insideUnitCircle * 0.5f;
-                            Vector3 position = __instance.m_spawnPoint.position + new Vector3(vector.x, 0.25f * (float)honeylevel, vector.y);
-                            GameObject.Instantiate(__instance.m_honeyItem, position, Quaternion.identity);
-                        }
-                        honeylevel--;
+        public static class BetterBeeProduction {
+            public static void Postfix(Beehive __instance) {
+                if (ValConfig.EnableBeeBonuses.Value && Player.m_localPlayer != null) {
+                    int honey = __instance.GetHoneyLevel();
+                    if (honey > 0) {
+                        Player.m_localPlayer.RaiseSkill(AnimalHandling, honey * ValConfig.BeeHarvestXP.Value);
                     }
                 }
+            }
+        }
 
+        [HarmonyPatch(typeof(Beehive), nameof(Beehive.GetHoneyLevel))]
+        public static class BeeHivesMoreProductionBySkill {
+            public static void Postfix(ref int __result) {
+                if (Player.m_localPlayer != null && __result > 0 && ValConfig.EnableBeeBonuses.Value) {
+                    float increase = ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetSkillFactor(AnimalHandling);
+                    __result = Mathf.RoundToInt(__result + (increase * __result));
+                }
             }
         }
 
         [HarmonyPatch(typeof(Beehive), nameof(Beehive.CheckBiome))]
         public static class BehivesInAnyBiome {
-            public static bool Prefix(Beehive __instance) {
+            public static bool Prefix(Beehive __instance, ref bool __result) {
                 if (Player.m_localPlayer == null || ValConfig.EnableBeeBiomeUnrestricted.Value == false) { return true; }
+
                 if (__instance.m_nview.GetZDO() != null && __instance.m_nview.GetZDO().GetBool("IS_BHIVE", false)) {
+                    __result = true;
                     return false;
                 }
                 if (__instance.m_nview.GetZDO() != null && Player.m_localPlayer.GetSkillLevel(AnimalHandling) >= ValConfig.BeeBiomeUnrestrictedLevel.Value) {
                     __instance.m_nview.GetZDO().Set("IS_BHIVE", true);
+                    __result = true;
                     return false;
                 }
                 return true;

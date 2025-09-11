@@ -1,10 +1,11 @@
-**0.3.21**
+**0.5.6**
 ---
 ```
-- Fixes bad build publish
+- Compatibility with ZenBees
+- Fixes for bee biome allowance not working in some scenarios
 ```
 
-**0.3.20**
+**0.5.5**
 ---
 ```
 - Fixes for Call to Arms
@@ -12,6 +13,37 @@
 - Fixed an issue where Animal whisperer would cause an error on tamable creatures with no drops
 - Added increased honey yields for the animal whisperer skill (15)
 - Added the ability for beehives to work regardless of biome animal whisper (25)
+```
+
+**0.5.2**
+---
+```
+- Fixes crafting bonus chance incorrectly giving a very high chance to get bonus crafts
+```
+
+**0.5.1**
+---
+```
+- Fixes accesstools warning
+```
+
+**0.5.0**
+---
+```
+- Adds CRAFTING skill bonuses!
+  - Crafting provides a chance for additional crafting yields based on skill level (lvl 25+) (now more than 1, scaling with skill and configurable)
+  - Crafting can refund partial resource costs sometimes (lvl 50+)
+- Mining drop scales are now more linear (not exponential) for drops that have a highly variable chance of dropping
+- Adds in more failsafes to prevent AOE mining from becoming disabled in the current session
+- Added mining drop increases for small destructible rocks
+```
+
+**0.4.0**
+---
+```
+- Better rock breaker per level scaling
+- Sneak now provides a damage bonus to backstabs starting at level 25. Configurable enable/disable, level, and damage scale
+
 ```
 
 **0.3.19**

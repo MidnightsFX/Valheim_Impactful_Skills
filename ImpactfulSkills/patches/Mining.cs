@@ -3,279 +3,350 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem.HID;
 
 namespace ImpactfulSkills.patches
 {
     public static class Mining
     {
         private static readonly int rockmask = LayerMask.GetMask("static_solid", "Default_small", "Default");
-        private static Collider[] current_aoe_strike = null;
+        private static Collider[] current_aoe_strike = (Collider[])null;
         private static bool rockbreaker_running = false;
+
+        public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null)
+        {
+            if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID())
+                return;
+            float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)12);
+            float num1 = (float)(1.0 + (double)ValConfig.MiningDmgMod.Value * ((double)skillFactor * 100.0) / 100.0);
+            Logger.LogDebug(string.Format("Player mining dmg multiplier: {0}", (object)num1));
+            hit.m_damage.m_pickaxe *= num1;
+            if (ValConfig.EnableMiningCritHit.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RequiredLevelForMiningCrit.Value && (double)UnityEngine.Random.value < (double)ValConfig.ChanceForMiningCritHit.Value)
+            {
+                Logger.LogDebug("Mining Critical hit activated");
+                hit.m_damage.m_pickaxe *= ValConfig.CriticalHitDmgMult.Value;
+            }
+            if ((double)hit.m_damage.m_pickaxe <= 0.0)
+                return;
+            if (!Mining.rockbreaker_running && Mining.current_aoe_strike == null)
+            {
+                float num2 = UnityEngine.Random.value;
+                float num3 = skillFactor * ValConfig.RockBreakerMaxChance.Value;
+                Logger.LogDebug(string.Format("Rock breaker roll: {0} <= {1}", (object)num2, (object)num3));
+                if (ValConfig.EnableMiningRockBreaker.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RockBreakerRequiredLevel.Value && (double)num2 <= (double)num3) {
+                    Logger.LogDebug("Rock breaker activated!");
+                    HitData aoedmg = hit;
+                    aoedmg.m_damage.m_pickaxe = ValConfig.RockBreakerDamage.Value;
+                    Mining.rockbreaker_running = true;
+                    if (instance != null) {
+                        Logger.LogDebug("Rock breaker activated on minerock");
+                        Mining.current_aoe_strike = instance.m_hitAreas;
+                        ((MonoBehaviour)instance).StartCoroutine(Mining.MineAoeDamage(instance.m_hitAreas, aoedmg));
+                    }
+                    if (instance5 == null)
+                        return;
+                    Logger.LogDebug("Rock breaker activated on minerock5");
+                    List<Collider> colliderList = new List<Collider>();
+                    foreach (MineRock5.HitArea hitArea in instance5.m_hitAreas)
+                        colliderList.Add(hitArea.m_collider);
+                    Mining.current_aoe_strike = colliderList.ToArray();
+                    ((MonoBehaviour)instance5).StartCoroutine(Mining.MineAoeDamage(colliderList.ToArray(), aoedmg));
+                    return;
+                }
+            }
+            if (!ValConfig.EnableMiningAOE.Value || (double)skillFactor * 100.0 < (double)ValConfig.MiningAOELevel.Value || Mining.current_aoe_strike != null)
+                return;
+            float num4 = ValConfig.ChanceForAOEOnHit.Value;
+            if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value)
+                num4 += 1f * skillFactor;
+            float num5 = UnityEngine.Random.value;
+            if ((double)num5 < (double)num4)
+            {
+                Logger.LogDebug(string.Format("AOE Mining failed roll: {0} < {1}", (object)num5, (object)num4));
+            }
+            else
+            {
+                Logger.LogDebug("Player mining aoe activated");
+                Vector3 point = hit.m_point;
+                HitData.DamageTypes damage = hit.m_damage;
+                HitData aoedmg = hit;
+                double radius = (double)ValConfig.MiningAOERange.Value * (double)skillFactor;
+                int rockmask = Mining.rockmask;
+                Collider[] mine_targets = Physics.OverlapSphere(point, (float)radius, rockmask);
+                Mining.current_aoe_strike = mine_targets;
+                if (instance != null)
+                    ((MonoBehaviour)instance).StartCoroutine(Mining.MineAoeDamage(mine_targets, aoedmg));
+                if (!(instance5 != null))
+                    return;
+                ((MonoBehaviour)instance5).StartCoroutine(Mining.MineAoeDamage(mine_targets, aoedmg));
+            }
+        }
+
+        public static bool ArrayContains(Collider[] group, Collider target)
+        {
+            foreach (UnityEngine.Object @object in group)
+            {
+                if (@object == target)
+                    return true;
+            }
+            return false;
+        }
+
+        private static IEnumerator MineAoeDamage(Collider[] mine_targets, HitData aoedmg)
+        {
+            MineRock5 minerock5 = (MineRock5)null;
+            MineRock minerock = (MineRock)null;
+            bool flag = true;
+            int iterations = 0;
+            try
+            {
+                foreach (Collider mineTarget in mine_targets)
+                {
+                    MineRock componentInParent1 = mineTarget.gameObject.GetComponentInParent<MineRock>();
+                    if (componentInParent1 != null)
+                    {
+                        minerock = componentInParent1;
+                        flag = true;
+                        break;
+                    }
+                    MineRock5 componentInParent2 = mineTarget.gameObject.GetComponentInParent<MineRock5>();
+                    if (componentInParent2 != null)
+                    {
+                        minerock5 = componentInParent2;
+                        flag = false;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("Exception trying to get minerock parent object, AOE mining skipped: " + ex.Message);
+                Mining.rockbreaker_running = false;
+                Mining.current_aoe_strike = (Collider[])null;
+                yield break;
+            }
+            if (minerock == null && minerock5 == null)
+            {
+                Mining.rockbreaker_running = false;
+                Mining.current_aoe_strike = (Collider[])null;
+            }
+            else
+            {
+                Collider[] colliderArray;
+                int index;
+                Collider obj_collider;
+                if (mine_targets != null)
+                {
+                    if (flag)
+                    {
+                        colliderArray = mine_targets;
+                        for (index = 0; index < colliderArray.Length; ++index)
+                        {
+                            obj_collider = colliderArray[index];
+                            if (!(obj_collider == null))
+                            {
+                                ++iterations;
+                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
+                                    yield return (object)new WaitForSeconds(0.2f);
+                                if (Mining.ArrayContains(minerock.m_hitAreas, obj_collider))
+                                {
+                                    Logger.LogDebug("AOE Damage applying to minerock");
+                                    aoedmg.m_point = obj_collider.bounds.center;
+                                    aoedmg.m_hitCollider = obj_collider;
+                                    minerock.Damage(aoedmg);
+                                }
+                                obj_collider = (Collider)null;
+                            }
+                        }
+                        colliderArray = (Collider[])null;
+                    }
+                    else
+                    {
+                        colliderArray = mine_targets;
+                        for (index = 0; index < colliderArray.Length; ++index)
+                        {
+                            obj_collider = colliderArray[index];
+                            if (!(obj_collider == null))
+                            {
+                                ++iterations;
+                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
+                                    yield return (object)new WaitForSeconds(0.1f);
+                                int areaIndex = minerock5.GetAreaIndex(obj_collider);
+                                if (areaIndex >= 0)
+                                {
+                                    Logger.LogDebug("AOE Damage applying to minerock5");
+                                    Logger.LogDebug(string.Format("AOE Damage applying to minerock5 index: {0}", (object)areaIndex));
+                                    aoedmg.m_point = obj_collider.bounds.center;
+                                    aoedmg.m_hitCollider = obj_collider;
+                                    minerock5.DamageArea(areaIndex, aoedmg);
+                                    obj_collider = (Collider)null;
+                                }
+                            }
+                        }
+                        colliderArray = (Collider[])null;
+                    }
+                }
+                Mining.rockbreaker_running = false;
+                Mining.current_aoe_strike = (Collider[])null;
+            }
+        }
+
+        public static void IncreaseDestructibleMineDrops(Destructible dmine)
+        {
+            if (dmine.m_spawnWhenDestroyed != null)
+                return;
+            Vector3 position = ((Component)dmine).transform.position;
+            DropOnDestroyed component = ((Component)dmine).GetComponent<DropOnDestroyed>();
+            if (component == null || component.m_dropWhenDestroyed == null)
+                return;
+            Mining.IncreaseMiningDrops(component.m_dropWhenDestroyed, position);
+        }
+
+        public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata = null)
+        {
+            float num1 = Vector3.Distance(((Component)Player.m_localPlayer).transform.position, position);
+            if ((double)num1 > 15.0)
+            {
+                Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", (object)num1));
+            }
+            else
+            {
+                float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)12);
+                float num2 = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
+                Dictionary<GameObject, int> drops1 = new Dictionary<GameObject, int>();
+                if (drops.m_drops != null)
+                {
+                    foreach (DropTable.DropData drop in drops.m_drops)
+                    {
+                        float num3 = UnityEngine.Random.value;
+                        float num4 = num2;
+                        if (ValConfig.SkillLevelBonusEnabledForMiningDropChance.Value)
+                            num4 = (float)((double)num2 * ((double)drops.m_dropChance * 2.0) / 100.0);
+                        if ((double)num4 > 1.0)
+                            num4 = 1f;
+                        Logger.LogDebug(string.Format("Mining rock check roll: {0} <= {1}", (object)num4, (object)num3));
+                        if ((double)num4 <= (double)num3)
+                        {
+                            Logger.LogDebug("Mining rock drop increase: " + drop.m_item.name + " failed drop roll");
+                        }
+                        else
+                        {
+                            int num5 = 0;
+                            Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", (object)drops.m_dropMin, (object)drops.m_dropMax));
+                            float minInclusive = (float)((double)drops.m_dropMin * (double)num2 / 100.0);
+                            float maxExclusive = (float)((double)drops.m_dropMax * (double)num2 / 100.0);
+                            if ((double)minInclusive > 0.0 && (double)maxExclusive > 0.0 && (double)minInclusive != (double)maxExclusive)
+                                num5 = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
+                            else if ((double)minInclusive == (double)maxExclusive)
+                                num5 = (int)Math.Round((double)minInclusive, 0);
+                            Logger.LogDebug(string.Format("Mining rock drop increase min_drop: {0}, max_drop: {1} drop amount: {2}", (object)minInclusive, (object)maxExclusive, (object)num5));
+                            if (drops1.ContainsKey(drop.m_item))
+                                drops1[drop.m_item] += num5;
+                            else
+                                drops1.Add(drop.m_item, num5);
+                        }
+                    }
+                }
+                if (drops1.Count == 0)
+                    return;
+                ((MonoBehaviour)Player.m_localPlayer).StartCoroutine(Mining.DropItemsAsync(drops1, position, 1f));
+            }
+        }
+
+        private static IEnumerator DropItemsAsync(
+          Dictionary<GameObject, int> drops,
+          Vector3 centerPos,
+          float dropArea)
+        {
+            int obj_spawns = 0;
+            foreach (KeyValuePair<GameObject, int> drop in drops)
+            {
+                bool set_stack_size = false;
+                int max_stack_size = 0;
+                GameObject item = drop.Key;
+                int amount = drop.Value;
+                Logger.LogDebug(string.Format("Dropping {0} {1}", (object)item.name, (object)amount));
+                for (int i = 0; i < amount; ++i)
+                {
+                    if (obj_spawns > 0 && obj_spawns % 10 == 0)
+                        yield return (object)new WaitForSeconds(0.1f);
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(item, centerPos, Quaternion.identity);
+                    ++obj_spawns;
+                    ItemDrop component1 = gameObject.GetComponent<ItemDrop>();
+                    if (!set_stack_size)
+                    {
+                        set_stack_size = true;
+                        if ((bool)component1)
+                            max_stack_size = component1.m_itemData.m_shared.m_maxStackSize;
+                    }
+                    if (component1 != null)
+                    {
+                        int num = amount - i;
+                        if (num > 0)
+                        {
+                            if (amount > max_stack_size)
+                            {
+                                component1.m_itemData.m_stack = max_stack_size;
+                                i += max_stack_size;
+                            }
+                            else
+                            {
+                                component1.m_itemData.m_stack = num;
+                                i += num;
+                            }
+                        }
+                        component1.m_itemData.m_worldLevel = (int)(byte)Game.m_worldLevel;
+                    }
+                    Rigidbody component2 = gameObject.GetComponent<Rigidbody>();
+                    if ((bool)component2)
+                    {
+                        Vector3 insideUnitSphere = UnityEngine.Random.insideUnitSphere;
+                        if ((double)insideUnitSphere.y < 0.0)
+                            insideUnitSphere.y = 0.0f - insideUnitSphere.y;
+                        component2.AddForce(insideUnitSphere * 5f, ForceMode.VelocityChange);
+                    }
+                }
+                item = (GameObject)null;
+            }
+        }
 
         [HarmonyPatch(typeof(MineRock), nameof(MineRock.Damage))]
         public static class MinerockDmgPatch
         {
-            private static void Prefix(HitData hit, MineRock __instance)
+            public static void Prefix(HitData hit, MineRock __instance)
             {
-                ModifyPickaxeDmg(hit, __instance);
+                Mining.ModifyPickaxeDmg(hit, __instance);
             }
         }
 
-        [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.Damage))]
+        [HarmonyPatch(typeof(MineRock5), nameof(MineRock.Damage))]
         public static class Minerock5DmgPatch
         {
-            private static void Prefix(HitData hit, MineRock5 __instance)
+            public static void Prefix(HitData hit, MineRock5 __instance)
             {
-                ModifyPickaxeDmg(hit, null, __instance);
+                Mining.ModifyPickaxeDmg(hit, instance5: __instance);
             }
         }
 
         [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.RPC_SetAreaHealth))]
         public static class Minerock5DestroyPatch
         {
-            private static void Postfix(MineRock5 __instance, long sender, int index, float health)
+            public static void Postfix(MineRock5 __instance, long sender, int index, float health)
             {
-                if (ValConfig.EnableMining.Value == true && Player.m_localPlayer != null && health <= 0)
-                {
-                    IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
-                }
+                if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null) || (double)health > 0.0)
+                    return;
+                Mining.IncreaseMiningDrops(__instance.m_dropItems, ((Component)__instance).gameObject.transform.position);
             }
         }
 
-        public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null)
+        [HarmonyPatch(typeof(Destructible), "Destroy")]
+        public static class IncreaseDropsFromDestructibleRock
         {
-            if (ValConfig.EnableMining.Value == true && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID())
+            public static void Prefix(Destructible __instance, HitData hit)
             {
-                float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
-                float player_pickaxe_bonus = 1 + (ValConfig.MiningDmgMod.Value * (player_skill_factor * 100f) / 100f);
-                Logger.LogDebug($"Player mining dmg multiplier: {player_pickaxe_bonus}");
-                hit.m_damage.m_pickaxe *= player_pickaxe_bonus;
-
-                if (hit.m_damage.m_pickaxe <= 0f) { return; }
-
-                if (rockbreaker_running == false && current_aoe_strike == null) {
-                    float rock_breaker_roll = UnityEngine.Random.value;
-                    Logger.LogDebug($"Rock breaker roll: {rock_breaker_roll} <= {ValConfig.RockBreakerMaxChance.Value}");
-                    if (ValConfig.EnableMiningRockBreaker.Value && (player_skill_factor * 100f) >= ValConfig.RockBreakerRequiredLevel.Value && rock_breaker_roll <= ValConfig.RockBreakerMaxChance.Value)
-                    {
-                        Logger.LogDebug("Rock breaker activated!");
-                        HitData rockbreak = hit;
-                        rockbreak.m_damage.m_pickaxe = ValConfig.RockBreakerDamage.Value;
-                        rockbreaker_running = true;
-                        if (instance != null)
-                        {
-                            Logger.LogDebug("Rock breaker activated on minerock");
-                            current_aoe_strike = instance.m_hitAreas;
-                            instance.StartCoroutine(MineAoeDamage(instance.m_hitAreas, rockbreak));
-                        }
-                        if (instance5 != null)
-                        {
-                            Logger.LogDebug("Rock breaker activated on minerock5");
-                            List<Collider> mr5targets = new List<Collider>();
-                            foreach (var area in instance5.m_hitAreas)
-                            {
-                                mr5targets.Add(area.m_collider);
-                            }
-                            current_aoe_strike = mr5targets.ToArray();
-                            instance5.StartCoroutine(MineAoeDamage(mr5targets.ToArray(), rockbreak));
-                        }
-                        return;
-                    }
-                }
-                
-
-                // Trigger AOE mining if the player has the required skill level
-                if (ValConfig.EnableMiningAOE.Value && (player_skill_factor * 100f) >= ValConfig.MiningAOELevel.Value && current_aoe_strike == null) {
-                    Logger.LogDebug("Player mining aoe activated");
-                    Vector3 position = hit.m_point;
-                    float hitdmg = hit.m_damage.m_pickaxe;
-                    HitData aoedmg = hit;
-                    Collider[] mine_targets = Physics.OverlapSphere(position, (ValConfig.MiningAOERange.Value * player_skill_factor), rockmask);
-                    current_aoe_strike = mine_targets;
-                    if (instance != null) { instance.StartCoroutine(MineAoeDamage(mine_targets, aoedmg)); }
-                    if (instance5 != null) { instance5.StartCoroutine(MineAoeDamage(mine_targets, aoedmg)); }
-                }
+                if (!ValConfig.EnableMining.Value || __instance.m_destructibleType != DestructibleType.Default || hit == null || !(Player.m_localPlayer != null) || hit.m_attacker == Player.m_localPlayer.GetZDOID())
+                    return;
+                Mining.IncreaseDestructibleMineDrops(__instance);
             }
-        }
-
-        public static bool ArrayContains(Collider[] group, Collider target)
-        {
-            foreach(Collider obj_collider in group) {
-                if (obj_collider == target) { return true; }
-            }
-            return false;
-        }
-
-        static IEnumerator MineAoeDamage(Collider[] mine_targets, HitData aoedmg)
-        {
-            MineRock5 minerock5 = null;
-            MineRock minerock = null;
-            bool is_minerock = true;
-            int iterations = 0;
-            foreach (Collider b in mine_targets)
-            {
-                MineRock mr = b.gameObject.GetComponentInParent<MineRock>();
-                if (mr != null) {
-                    minerock = mr;
-                    is_minerock = true;
-                    break;
-                }
-                MineRock5 mr5 = b.gameObject.GetComponentInParent<MineRock5>();
-                if (mr5 != null)
-                {
-                    minerock5 = mr5;
-                    is_minerock = false;
-                    break;
-                }
-            }
-
-            if (is_minerock) {
-                foreach (Collider obj_collider in mine_targets)
-                {
-                    if (obj_collider == null) { continue; }
-                    iterations++;
-                    if (iterations % ValConfig.MinehitsPerInterval.Value == 0) { yield return new WaitForSeconds(0.2f); }
-                    if (ArrayContains(minerock.m_hitAreas, obj_collider))
-                    {
-                        Logger.LogDebug($"AOE Damage applying to minerock");
-                        aoedmg.m_point = obj_collider.bounds.center;
-                        aoedmg.m_hitCollider = obj_collider;
-                        minerock.Damage(aoedmg);
-                    }
-                }
-            } else {
-                foreach (Collider obj_collider in mine_targets) {
-                    if (obj_collider == null) { continue; }
-                    iterations++;
-                    if (iterations % 10 == 0) { yield return new WaitForSeconds(0.1f); }
-                    int index = minerock5.GetAreaIndex(obj_collider);
-                    if (index < 0) { continue; }
-                    Logger.LogDebug($"AOE Damage applying to minerock5");
-                    Logger.LogDebug($"AOE Damage applying to minerock5 index: {index}");
-                    aoedmg.m_point = obj_collider.bounds.center;
-                    aoedmg.m_hitCollider = obj_collider;
-                    minerock5.DamageArea(index, aoedmg);
-                } 
-            }
-
-            rockbreaker_running = false;
-            current_aoe_strike = null;
-            yield break;
-        }
-
-        public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata = null)
-        {
-            float distance_to_rock = Vector3.Distance(Player.m_localPlayer.transform.position, position);
-            if (distance_to_rock > 15f) {
-                Logger.LogDebug($"Player too far away from rock to get increased loot: {distance_to_rock}");
-                return;
-            }
-            float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
-
-            Dictionary<GameObject, int> drops_to_add = new Dictionary<GameObject, int>();
-            if (drops.m_drops != null) {
-                foreach (var drop in drops.m_drops)
-                {
-                    float droll = UnityEngine.Random.value;
-                    Logger.LogDebug($"Mining rock check roll: {droll} < {(1 - drops.m_dropChance)}");
-                    // Use the drops chance to randomly roll if we get extra drops for this drop
-                    if (droll < (1 - drops.m_dropChance)) {
-                        Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed drop roll");
-                        continue;
-                    }
-                    if (drops_to_add.ContainsKey(drop.m_item))
-                    {
-                        drops_to_add[drop.m_item] += drop.m_stackMin;
-                    }
-                    else
-                    {
-                        drops_to_add.Add(drop.m_item, drop.m_stackMin);
-                    }
-
-                }
-            }
-            
-            int drop_amount = 0;
-            Logger.LogDebug($"Mining rock drop current: {drops.m_dropMin}, max_drop: {drops.m_dropMax}");
-            float min_drop = drops.m_dropMin * (ValConfig.MiningLootFactor.Value * (player_skill_factor * 100f)) / 100f;
-            float max_drop = drops.m_dropMax * (ValConfig.MiningLootFactor.Value * (player_skill_factor * 100f)) / 100f;
-            if (min_drop > 0 && max_drop > 0 && min_drop != max_drop) {
-                drop_amount = UnityEngine.Random.Range((int)min_drop, (int)max_drop);
-            } else if (min_drop == max_drop) {
-                drop_amount = (int)Math.Round(min_drop, 0);
-            }
-            if (drops_to_add.Count == 0) { return; }
-            Logger.LogDebug($"Mining rock drop increase min_drop: {min_drop}, max_drop: {max_drop} drop amount: {drop_amount}");
-            Player.m_localPlayer.StartCoroutine(DropItemsAsync(drops_to_add, position, 1f));
-        }
-
-        static IEnumerator DropItemsAsync(Dictionary<GameObject, int> drops, Vector3 centerPos, float dropArea)
-        {
-            int obj_spawns = 0;
-
-            foreach (var drop in drops)
-            {
-                bool set_stack_size = false;
-                int max_stack_size = 0;
-                var item = drop.Key;
-                int amount = drop.Value;
-                Logger.LogDebug($"Dropping {item.name} {amount}");
-                for (int i = 0; i < amount;)
-                {
-
-                    // Wait for a short duration to avoid dropping too many items at once
-                    if (obj_spawns > 0 && obj_spawns % 10 == 0)
-                    {
-                        yield return new WaitForSeconds(0.1f);
-                    }
-
-                    // Drop the item at the specified position
-                    GameObject droppedItem = UnityEngine.Object.Instantiate(item, centerPos, Quaternion.identity);
-                    obj_spawns++;
-
-                    ItemDrop component = droppedItem.GetComponent<ItemDrop>();
-                    if (set_stack_size == false)
-                    {
-                        set_stack_size = true;
-                        if (component) { max_stack_size = component.m_itemData.m_shared.m_maxStackSize; }
-                    }
-
-                    // Drop in stacks if this is an item
-                    if ((object)component != null)
-                    {
-                        int remaining = (amount - i);
-                        if (remaining > 0)
-                        {
-                            if (amount > max_stack_size)
-                            {
-                                component.m_itemData.m_stack = max_stack_size;
-                                i += max_stack_size;
-                            }
-                            else
-                            {
-                                component.m_itemData.m_stack = remaining;
-                                i += remaining;
-                            }
-                        }
-                        component.m_itemData.m_worldLevel = (byte)Game.m_worldLevel;
-                    }
-
-                    Rigidbody component2 = droppedItem.GetComponent<Rigidbody>();
-                    if ((bool)component2)
-                    {
-                        Vector3 insideUnitSphere = UnityEngine.Random.insideUnitSphere;
-                        if (insideUnitSphere.y < 0f)
-                        {
-                            insideUnitSphere.y = 0f - insideUnitSphere.y;
-                        }
-                        component2.AddForce(insideUnitSphere * 5f, ForceMode.VelocityChange);
-                    }
-                    i++;
-                }
-            }
-
-            yield break;
         }
     }
 }
