@@ -1,3 +1,10 @@
+**0.5.7**
+---
+```
+- Fixes mining drop chance being overly generous on chance based ores
+- Fixes mining drop chance giving extra drops on small trees
+```
+
 **0.5.6**
 ---
 ```

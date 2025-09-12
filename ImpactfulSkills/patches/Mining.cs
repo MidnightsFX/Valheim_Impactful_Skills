@@ -93,8 +93,8 @@ namespace ImpactfulSkills.patches
 
         private static IEnumerator MineAoeDamage(Collider[] mine_targets, HitData aoedmg)
         {
-            MineRock5 minerock5 = (MineRock5)null;
-            MineRock minerock = (MineRock)null;
+            MineRock5 minerock5 = null;
+            MineRock minerock = null;
             bool flag = true;
             int iterations = 0;
             try
@@ -121,13 +121,13 @@ namespace ImpactfulSkills.patches
             {
                 Logger.LogWarning("Exception trying to get minerock parent object, AOE mining skipped: " + ex.Message);
                 Mining.rockbreaker_running = false;
-                Mining.current_aoe_strike = (Collider[])null;
+                Mining.current_aoe_strike = null;
                 yield break;
             }
             if (minerock == null && minerock5 == null)
             {
                 Mining.rockbreaker_running = false;
-                Mining.current_aoe_strike = (Collider[])null;
+                Mining.current_aoe_strike = null;
             }
             else
             {
@@ -154,10 +154,10 @@ namespace ImpactfulSkills.patches
                                     aoedmg.m_hitCollider = obj_collider;
                                     minerock.Damage(aoedmg);
                                 }
-                                obj_collider = (Collider)null;
+                                obj_collider = null;
                             }
                         }
-                        colliderArray = (Collider[])null;
+                        colliderArray = null;
                     }
                     else
                     {
@@ -178,15 +178,15 @@ namespace ImpactfulSkills.patches
                                     aoedmg.m_point = obj_collider.bounds.center;
                                     aoedmg.m_hitCollider = obj_collider;
                                     minerock5.DamageArea(areaIndex, aoedmg);
-                                    obj_collider = (Collider)null;
+                                    obj_collider = null;
                                 }
                             }
                         }
-                        colliderArray = (Collider[])null;
+                        colliderArray = null;
                     }
                 }
                 Mining.rockbreaker_running = false;
-                Mining.current_aoe_strike = (Collider[])null;
+                Mining.current_aoe_strike = null;
             }
         }
 
@@ -203,52 +203,49 @@ namespace ImpactfulSkills.patches
 
         public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata = null)
         {
-            float num1 = Vector3.Distance(((Component)Player.m_localPlayer).transform.position, position);
-            if ((double)num1 > 15.0)
+            float nearbyDistance = Vector3.Distance(Player.m_localPlayer.transform.position, position);
+            if (nearbyDistance > 15.0)
             {
-                Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", (object)num1));
+                Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", nearbyDistance));
             }
             else
             {
-                float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)12);
+                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
                 float num2 = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
                 Dictionary<GameObject, int> drops1 = new Dictionary<GameObject, int>();
                 if (drops.m_drops != null)
                 {
                     foreach (DropTable.DropData drop in drops.m_drops)
                     {
-                        float num3 = UnityEngine.Random.value;
-                        float num4 = num2;
+                        float randomChanceRoll = UnityEngine.Random.value;
+                        float lootdropchance = drops.m_dropChance;
                         if (ValConfig.SkillLevelBonusEnabledForMiningDropChance.Value)
-                            num4 = (float)((double)num2 * ((double)drops.m_dropChance * 2.0) / 100.0);
-                        if ((double)num4 > 1.0)
-                            num4 = 1f;
-                        Logger.LogDebug(string.Format("Mining rock check roll: {0} <= {1}", (object)num4, (object)num3));
-                        if ((double)num4 <= (double)num3)
-                        {
+                            lootdropchance = (float)(num2 * (drops.m_dropChance * 2.0) / 100.0);
+                        if (lootdropchance > 1.0)
+                            lootdropchance = 1f;
+                        Logger.LogDebug(string.Format("Mining rock check roll: {0} <= {1}", lootdropchance, randomChanceRoll));
+                        if (lootdropchance <= randomChanceRoll) {
                             Logger.LogDebug("Mining rock drop increase: " + drop.m_item.name + " failed drop roll");
-                        }
-                        else
-                        {
-                            int num5 = 0;
-                            Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", (object)drops.m_dropMin, (object)drops.m_dropMax));
+                        } else {
+                            int dropAmountExtra = 0;
+                            Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", drops.m_dropMin, drops.m_dropMax));
                             float minInclusive = (float)((double)drops.m_dropMin * (double)num2 / 100.0);
                             float maxExclusive = (float)((double)drops.m_dropMax * (double)num2 / 100.0);
                             if ((double)minInclusive > 0.0 && (double)maxExclusive > 0.0 && (double)minInclusive != (double)maxExclusive)
-                                num5 = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
+                                dropAmountExtra = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
                             else if ((double)minInclusive == (double)maxExclusive)
-                                num5 = (int)Math.Round((double)minInclusive, 0);
-                            Logger.LogDebug(string.Format("Mining rock drop increase min_drop: {0}, max_drop: {1} drop amount: {2}", (object)minInclusive, (object)maxExclusive, (object)num5));
+                                dropAmountExtra = (int)Math.Round((double)minInclusive, 0);
+                            Logger.LogDebug(string.Format("Mining rock drop increase min_drop: {0}, max_drop: {1} drop amount: {2}", (object)minInclusive, (object)maxExclusive, (object)dropAmountExtra));
                             if (drops1.ContainsKey(drop.m_item))
-                                drops1[drop.m_item] += num5;
+                                drops1[drop.m_item] += dropAmountExtra;
                             else
-                                drops1.Add(drop.m_item, num5);
+                                drops1.Add(drop.m_item, dropAmountExtra);
                         }
                     }
                 }
                 if (drops1.Count == 0)
                     return;
-                ((MonoBehaviour)Player.m_localPlayer).StartCoroutine(Mining.DropItemsAsync(drops1, position, 1f));
+                Player.m_localPlayer.StartCoroutine(Mining.DropItemsAsync(drops1, position, 1f));
             }
         }
 
@@ -305,7 +302,7 @@ namespace ImpactfulSkills.patches
                         component2.AddForce(insideUnitSphere * 5f, ForceMode.VelocityChange);
                     }
                 }
-                item = (GameObject)null;
+                item = null;
             }
         }
 
@@ -343,7 +340,7 @@ namespace ImpactfulSkills.patches
         {
             public static void Prefix(Destructible __instance, HitData hit)
             {
-                if (!ValConfig.EnableMining.Value || __instance.m_destructibleType != DestructibleType.Default || hit == null || !(Player.m_localPlayer != null) || hit.m_attacker == Player.m_localPlayer.GetZDOID())
+                if (!ValConfig.EnableMining.Value || __instance.m_destructibleType != DestructibleType.Default && __instance.m_destructibleType != DestructibleType.Tree || hit == null || !(Player.m_localPlayer != null) || hit.m_attacker == Player.m_localPlayer.GetZDOID())
                     return;
                 Mining.IncreaseDestructibleMineDrops(__instance);
             }
