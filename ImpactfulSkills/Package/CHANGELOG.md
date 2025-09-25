@@ -1,3 +1,10 @@
+**0.5.8**
+---
+```
+- Fixes honey not giving XP for Animal Whisperer when harvested
+- Fixes an issue where high levels of Voyager could result in negative steering on some boats
+```
+
 **0.5.7**
 ---
 ```

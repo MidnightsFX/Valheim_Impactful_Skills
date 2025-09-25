@@ -52,44 +52,41 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        //[HarmonyEmitIL("./dumps")]
+        //[HarmonyDebug]
         [HarmonyPatch(typeof(Ship))]
         public static class PaddlingIsFasterPatch
         {
-            //[HarmonyDebug]
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Ship.CustomFixedUpdate))]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
                 codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
-                    ).Advance(1).InsertAndAdvance(
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_body))),
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_body))),
+                    new CodeMatch(OpCodes.Callvirt),
+                    new CodeMatch(OpCodes.Ldarg_1)
+                    ).Advance(3).InsertAndAdvance(
                     Transpilers.EmitDelegate(PaddleSpeedImprovement)
-                    ).MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
-                    ).Advance(1).InsertAndAdvance(
-                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
-                    ).MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_rudderValue)))
-                    ).Advance(1).InsertAndAdvance(
-                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
-                    )
-                    .ThrowIfNotMatch("Unable to patch ship paddle speed improvement.");
-
+                    ).ThrowIfNotMatch("Unable to patch paddle speed improvement."); ;
                 return codeMatcher.Instructions();
             }
 
-            public static float PaddleSpeedImprovement(float rudder_speed) {
+            public static Vector3 PaddleSpeedImprovement(Vector3 ship_motion) {
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
                     float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
                     if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
-                        float ship_modified_motion = rudder_speed * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
-                        //Logger.LogDebug($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
+                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
+                        //Logger.LogInfo($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
                         return ship_modified_motion;
                     }
                 }
                 // fallback to the default modification for the method
-                return rudder_speed;
+                return ship_motion;
             }
         }
 

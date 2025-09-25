@@ -51,7 +51,7 @@ namespace ImpactfulSkills.patches
 
         [HarmonyPatch(typeof(Beehive), nameof(Beehive.RPC_Extract))]
         public static class BetterBeeProduction {
-            public static void Postfix(Beehive __instance) {
+            public static void Prefix(Beehive __instance) {
                 if (ValConfig.EnableBeeBonuses.Value && Player.m_localPlayer != null) {
                     int honey = __instance.GetHoneyLevel();
                     if (honey > 0) {
