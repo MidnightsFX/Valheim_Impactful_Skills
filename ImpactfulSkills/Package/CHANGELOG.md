@@ -1,3 +1,22 @@
+**0.5.11**
+---
+```
+- Fixes Animal handling drops triggering for tamed creatures that do not have drops
+```
+
+**0.5.10**
+---
+```
+- Additional configurabiliity for Mining drops chance for drops that have a chance to drop
+- Configuration option to avoid increasing drops for mining products that are not stone/ore
+```
+
+**0.5.9**
+---
+```
+- Fixes broken items not being unequipped when running out of durability
+```
+
 **0.5.8**
 ---
 ```

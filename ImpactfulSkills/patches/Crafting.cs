@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using Jotunn.Managers;
 using System;
 using System.Collections.Generic;
@@ -8,20 +9,17 @@ using UnityEngine;
 
 namespace ImpactfulSkills.patches
 {
-    internal class Crafting
-    {
-        public static float CheckAndReduceDurabilityCost(float item_durability_drain)
-        {
-            if (ValConfig.EnableDurabilityLossPrevention.Value && (UnityEngine.Object)Player.m_localPlayer != (UnityEngine.Object)null)
-            {
-                float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
-                float num1 = UnityEngine.Random.value;
-                float num2 = ValConfig.ChanceForDurabilityLossPrevention.Value;
-                if (ValConfig.ScaleDurabilitySaveBySkillLevel.Value)
-                    num2 *= skillFactor;
-                if ((double)ValConfig.DurabilitySaveLevel.Value <= (double)skillFactor * 100.0 && (double)num1 < (double)num2)
-                {
-                    Logger.LogDebug(string.Format("Skipping durability usage {0} < {1}", (object)num1, (object)num2));
+    internal class Crafting {
+        public static float CheckAndReduceDurabilityCost(float item_durability_drain) {
+            if (ValConfig.EnableDurabilityLossPrevention.Value && Player.m_localPlayer != null) {
+                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
+                float chance = UnityEngine.Random.value;
+                float chanceToNotUseDurability = ValConfig.ChanceForDurabilityLossPrevention.Value;
+                if (ValConfig.ScaleDurabilitySaveBySkillLevel.Value) {
+                    chanceToNotUseDurability *= skillFactor;
+                }
+                if (ValConfig.DurabilitySaveLevel.Value <= skillFactor * 100.0 && chance < chanceToNotUseDurability) {
+                    Logger.LogDebug(string.Format("Skipping durability usage {0} < {1}", chance, chanceToNotUseDurability));
                     return 0.0f;
                 }
             }
@@ -30,13 +28,13 @@ namespace ImpactfulSkills.patches
 
         private static int CraftableBonus(InventoryGui instance, int base_amount_crafted)
         {
-            if (!ValConfig.EnableCrafting.Value || (UnityEngine.Object)Player.m_localPlayer == (UnityEngine.Object)null)
+            if (!ValConfig.EnableCrafting.Value || Player.m_localPlayer == null)
                 return base_amount_crafted;
             int num = base_amount_crafted;
             CraftingStation currentCraftingStation = Player.m_localPlayer.GetCurrentCraftingStation();
-            float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
-            float skillLevel = ((Character)Player.m_localPlayer).GetSkillLevel((Skills.SkillType)107);
-            if ((UnityEngine.Object)currentCraftingStation != (UnityEngine.Object)null && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1)
+            float skillFactor = (Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
+            float skillLevel = (Player.m_localPlayer).GetSkillLevel((Skills.SkillType)107);
+            if (currentCraftingStation != null && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1)
                 num += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel);
             if (num != base_amount_crafted)
             {
@@ -119,42 +117,21 @@ namespace ImpactfulSkills.patches
         }
 
         [HarmonyPatch(typeof(Humanoid))]
-        public static class PreserveDurabilityChance
-        {
-            [HarmonyPatch("DrainEquipedItemDurability")]
-            private static bool Prefix()
-            {
-                if (ValConfig.EnableDurabilitySaves.Value && (UnityEngine.Object)Player.m_localPlayer != (UnityEngine.Object)null)
-                {
-                    float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
-                    float num1 = UnityEngine.Random.value;
-                    float num2 = ValConfig.ChanceForDurabilityLossPrevention.Value;
-                    if (ValConfig.ScaleDurabilitySaveBySkillLevel.Value)
-                        num2 *= skillFactor;
-                    if ((double)ValConfig.DurabilitySaveLevel.Value <= (double)skillFactor * 100.0 && (double)num1 < (double)num2)
-                        return true;
-                }
-                return false;
-            }
-        }
-
-        [HarmonyPatch(typeof(Humanoid))]
         public static class BlockDurabilityReduction
         {
             [HarmonyTranspiler]
-            [HarmonyPatch("BlockAttack")]
-            private static IEnumerable<CodeInstruction> Transpiler(
+            [HarmonyPatch(nameof(Humanoid.BlockAttack))]
+            public static IEnumerable<CodeInstruction> Transpiler(
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
                 codeMatcher.MatchStartForward(new CodeMatch[1]
                 {
-          new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1).RemoveInstructions(4).InsertAndAdvance(new CodeInstruction[1]
-                {
-          Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost))
-                }).ThrowIfNotMatch("Unable to patch Block Durability reduction.", Array.Empty<CodeMatch>());
-                return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
+          new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
+                }).Advance(1).RemoveInstructions(4).InsertAndAdvance(
+                    Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost)
+                ).ThrowIfNotMatch("Unable to patch Block Durability reduction.", Array.Empty<CodeMatch>());
+                return codeMatcher.Instructions();
             }
         }
 
@@ -162,18 +139,17 @@ namespace ImpactfulSkills.patches
         public static class RangedAttackReduceDurabilityCost
         {
             [HarmonyTranspiler]
-            [HarmonyPatch("ProjectileAttackTriggered")]
-            private static IEnumerable<CodeInstruction> Transpiler(
+            [HarmonyPatch(nameof(Attack.ProjectileAttackTriggered))]
+            public static IEnumerable<CodeInstruction> Transpiler(
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[1]
-                {
-          new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1).InsertAndAdvance(new CodeInstruction[1]
-                {
-          Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost))
-                }).ThrowIfNotMatch("Unable to patch Ranged attack durability reduction.", Array.Empty<CodeMatch>());
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null))
+                .Advance(1)
+                .InsertAndAdvance(
+                    Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost))
+                .ThrowIfNotMatch("Unable to patch Ranged attack durability reduction.", Array.Empty<CodeMatch>());
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -182,18 +158,17 @@ namespace ImpactfulSkills.patches
         public static class MeleeAttackReduceDurabilityCost
         {
             [HarmonyTranspiler]
-            [HarmonyPatch("DoMeleeAttack")]
-            private static IEnumerable<CodeInstruction> Transpiler(
+            [HarmonyPatch(nameof(Attack.DoMeleeAttack))]
+            public static IEnumerable<CodeInstruction> Transpiler(
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
                 codeMatcher.MatchStartForward(new CodeMatch[1]
                 {
           new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1).InsertAndAdvance(new CodeInstruction[1]
-                {
-          Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost))
-                }).ThrowIfNotMatch("Unable to patch Melee attack durability reduction.", Array.Empty<CodeMatch>());
+                }).Advance(1)
+                .InsertAndAdvance(Transpilers.EmitDelegate(CheckAndReduceDurabilityCost))
+                .ThrowIfNotMatch("Unable to patch Melee attack durability reduction.", Array.Empty<CodeMatch>());
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -202,18 +177,13 @@ namespace ImpactfulSkills.patches
         public static class DoNonAttackReduceDurabilityCost
         {
             [HarmonyTranspiler]
-            [HarmonyPatch("DoNonAttack")]
-            private static IEnumerable<CodeInstruction> Transpiler(
-              IEnumerable<CodeInstruction> instructions)
-            {
+            [HarmonyPatch(nameof(Attack.DoNonAttack))]
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[1]
-                {
-          new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1).InsertAndAdvance(new CodeInstruction[1]
-                {
-          Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost))
-                }).ThrowIfNotMatch("Unable to patch DoNonAttack durability reduction.", Array.Empty<CodeMatch>());
+                codeMatcher.MatchStartForward(new CodeMatch(OpCodes.Ldfld, (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain")))
+                .Advance(1)
+                .InsertAndAdvance(Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost)))
+                .ThrowIfNotMatch("Unable to patch DoNonAttack durability reduction.", Array.Empty<CodeMatch>());
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -222,24 +192,27 @@ namespace ImpactfulSkills.patches
         public static class CraftingItemBonusDropsPatch
         {
             [HarmonyTranspiler]
-            [HarmonyPatch("DoCrafting")]
-            private static IEnumerable<CodeInstruction> Transpiler(
-              IEnumerable<CodeInstruction> instructions)
-            {
-                CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[3]
-                {
-          new CodeMatch(new OpCode?(OpCodes.Ldloc_S), (object) null, (string) null),
-          new CodeMatch(new OpCode?(OpCodes.Ldnull), (object) null, (string) null),
-          new CodeMatch(new OpCode?(OpCodes.Call), (object) null, (string) null)
-                }).RemoveInstructions(45).InsertAndAdvance(new CodeInstruction[4]
-                {
-          new CodeInstruction(OpCodes.Ldarg_0, (object) null),
-          new CodeInstruction(OpCodes.Ldloc_2, (object) null),
-          Transpilers.EmitDelegate<Func<InventoryGui, int, int>>(new Func<InventoryGui, int, int>(Crafting.CraftableBonus)),
-          new CodeInstruction(OpCodes.Stloc_2, (object) null)
-                }).ThrowIfNotMatch("Unable to patch Crafting bonus.", Array.Empty<CodeMatch>());
-                return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
+            [HarmonyPatch(nameof(InventoryGui.DoCrafting))]
+            static IEnumerable<CodeInstruction> ConstructorTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator) {
+                CodeMatcher codeMatcher = new CodeMatcher(instructions, generator);
+                codeMatcher.MatchStartForward(
+                    // int num4 = 0;
+                    new CodeMatch(OpCodes.Ldc_I4_0),
+                    new CodeMatch(OpCodes.Stloc_S), // Convert.ToSByte(6)
+                    new CodeMatch(OpCodes.Ldloc_S), // Convert.ToSByte(5)
+                    new CodeMatch(OpCodes.Ldnull),
+                    new CodeMatch(OpCodes.Call))
+                .Advance(2)
+                .InsertAndAdvance(
+                  new CodeInstruction(OpCodes.Ldarg_0),
+                  new CodeInstruction(OpCodes.Ldloc_2),
+                  Transpilers.EmitDelegate(Crafting.CraftableBonus),
+                  new CodeInstruction(OpCodes.Stloc_2)
+                )
+                .CreateLabelOffset(out Label label, offset: 45)
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label))
+                .ThrowIfNotMatch("Unable to patch Crafting bonus.");
+                return codeMatcher.Instructions();
             }
         }
 
@@ -248,7 +221,7 @@ namespace ImpactfulSkills.patches
         {
             [HarmonyTranspiler]
             [HarmonyPatch("DoCrafting")]
-            private static IEnumerable<CodeInstruction> Transpiler(
+            public static IEnumerable<CodeInstruction> Transpiler(
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);

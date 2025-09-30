@@ -96,7 +96,7 @@ namespace ImpactfulSkills.patches
         {
             private static void Postfix(Tameable __instance)
             {
-                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
+                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && __instance != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
                     // Only increase drops of the character is also tamed
                     if (__instance.gameObject.GetComponent<Character>()?.m_tamed != true) { return; }
                     CharacterDrop tamechardrop = __instance.gameObject.GetComponent<CharacterDrop>();

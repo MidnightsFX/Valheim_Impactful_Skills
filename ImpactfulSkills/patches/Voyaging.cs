@@ -31,6 +31,7 @@ namespace ImpactfulSkills.patches
 
                 current_update_time += dt;
                 
+                //Logger.LogDebug($"Current time: {current_update_time}, Is Player attached to ship: {Player.m_localPlayer.IsAttachedToShip()}");
                 if (Player.m_localPlayer.IsAttachedToShip() && update_timer <= current_update_time) {
                     // update the interval
                     update_timer += (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);

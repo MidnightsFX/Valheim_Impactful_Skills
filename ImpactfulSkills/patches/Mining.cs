@@ -11,8 +11,9 @@ namespace ImpactfulSkills.patches
         private static readonly int rockmask = LayerMask.GetMask("static_solid", "Default_small", "Default");
         private static Collider[] current_aoe_strike = (Collider[])null;
         private static bool rockbreaker_running = false;
+        private static readonly List<string> skipIncreaseDrops = new List<string> { "LeatherScraps", "WitheredBone" };
 
-        public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null)
+    public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null)
         {
             if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID())
                 return;
@@ -217,6 +218,11 @@ namespace ImpactfulSkills.patches
                 {
                     foreach (DropTable.DropData drop in drops.m_drops)
                     {
+                        if (ValConfig.SkipNonRockDropIncreases.Value) {
+                            if (skipIncreaseDrops.Contains(drop.m_item.name)) {
+                                continue;
+                            }
+                        }
                         float randomChanceRoll = UnityEngine.Random.value;
                         float lootdropchance = drops.m_dropChance;
                         if (ValConfig.SkillLevelBonusEnabledForMiningDropChance.Value)
@@ -231,11 +237,18 @@ namespace ImpactfulSkills.patches
                             Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", drops.m_dropMin, drops.m_dropMax));
                             float minInclusive = (float)((double)drops.m_dropMin * (double)num2 / 100.0);
                             float maxExclusive = (float)((double)drops.m_dropMax * (double)num2 / 100.0);
-                            if ((double)minInclusive > 0.0 && (double)maxExclusive > 0.0 && (double)minInclusive != (double)maxExclusive)
+                            if (ValConfig.ReducedChanceDropsForLowAmountDrops.Value == true && minInclusive > 0.0 && maxExclusive > 0.0 && minInclusive != 1f) {
+                                float dropAmountChanceRoll = UnityEngine.Random.Range(minInclusive, maxExclusive);
+                                float dropAmountRandomChanceRoll = UnityEngine.Random.value;
+                                if (dropAmountChanceRoll <= dropAmountRandomChanceRoll) {
+                                    Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed amount roll {dropAmountChanceRoll} <= {dropAmountRandomChanceRoll}");
+                                    continue;
+                                }
                                 dropAmountExtra = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
+                            }
                             else if ((double)minInclusive == (double)maxExclusive)
-                                dropAmountExtra = (int)Math.Round((double)minInclusive, 0);
-                            Logger.LogDebug(string.Format("Mining rock drop increase min_drop: {0}, max_drop: {1} drop amount: {2}", (object)minInclusive, (object)maxExclusive, (object)dropAmountExtra));
+                                dropAmountExtra = Mathf.RoundToInt(minInclusive);
+                            Logger.LogDebug($"Mining rock drop increase {drop.m_item.name} min_drop: {minInclusive}, max_drop: {maxExclusive} drop amount: {dropAmountExtra}");
                             if (drops1.ContainsKey(drop.m_item))
                                 drops1[drop.m_item] += dropAmountExtra;
                             else
