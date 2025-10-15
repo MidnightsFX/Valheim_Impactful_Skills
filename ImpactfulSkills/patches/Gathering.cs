@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -64,31 +65,38 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Pickable))]
         public static class DisableVanillaGatheringLuck
         {
-            // [HarmonyDebug]
+            //[HarmonyEmitIL("./dumps")]
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Pickable.Interact))]
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions , ILGenerator generator)
             {
-                var codeMatcher = new CodeMatcher(instructions);
+                var codeMatcher = new CodeMatcher(instructions, generator);
                 codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldloc_1),
-                    new CodeMatch(OpCodes.Ldarg_0),
-                    new CodeMatch(OpCodes.Ldfld),
-                    new CodeMatch(OpCodes.Callvirt),
-                    new CodeMatch(OpCodes.Stloc_2)
-                    ).RemoveInstructions(43).InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
-                    Transpilers.EmitDelegate(DetermineExtraDrops),
-                    new CodeInstruction(OpCodes.Stloc_0) // Store the value
+                        new CodeMatch(OpCodes.Ldc_I4_0), 
+                        new CodeMatch(OpCodes.Stloc_0), // int bonus_num = 0;
+                        new CodeMatch(OpCodes.Ldarg_0),
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Pickable), nameof(Pickable.m_picked)))
                     )
+                    .Advance(2)
+                    .Insert(
+                        new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
+                        Transpilers.EmitDelegate(DetermineExtraDrops),
+                        new CodeInstruction(OpCodes.Stloc_0)
+                    )
+                    .Advance(3)
+                    .CreateLabelOffset(out Label label, offset: 59)
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label))
                     .ThrowIfNotMatch("Unable remove vanilla pickable luckydrop.");
-
                 return codeMatcher.Instructions();
             }
 
             static int DetermineExtraDrops(Pickable __instance)
             {
-                if (Player.m_localPlayer == null) { return 0; }
+                if (Player.m_localPlayer == null || __instance.m_picked == true) { return 0; }
+                if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)) {
+                    Logger.LogDebug($"Pickable is not an allowed gathering item.");
+                    return 0;
+                }
                 // Increase item drops based on luck, and the gathering skill
                 float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
                 float player_luck = (ValConfig.GatheringLuckFactor.Value * player_skill_factor * 100f) / 100f;

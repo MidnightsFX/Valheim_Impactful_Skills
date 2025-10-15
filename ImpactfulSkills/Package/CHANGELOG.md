@@ -1,3 +1,10 @@
+**0.5.12**
+---
+```
+- Allows Farmings extra drops to work with any pickables, if configured to do so
+	- Default configuration still prevents it from working on non-food related pickables
+```
+
 **0.5.11**
 ---
 ```
