@@ -26,19 +26,19 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Ship), nameof(Ship.GetSailForce))]
         public static class VoyagerSpeedPatch
         {
-            private static void Postfix(ref Vector3 __result, float dt) {
+            private static void Postfix(Ship __instance, ref Vector3 __result, float dt) {
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
                 current_update_time += dt;
                 
                 //Logger.LogDebug($"Current time: {current_update_time}, Is Player attached to ship: {Player.m_localPlayer.IsAttachedToShip()}");
-                if (Player.m_localPlayer.IsAttachedToShip() && update_timer <= current_update_time) {
+                if (__instance.IsPlayerInBoat(Player.m_localPlayer) && update_timer <= current_update_time) {
                     // update the interval
                     update_timer += (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
                     Vector3 pvel = Player.m_localPlayer.GetVelocity();
                     // Only get XP if you are moving
-                    bool skill_gain_speed = Mathf.Abs(pvel.x) > 0.5f || Mathf.Abs(pvel.y) > 0.5f || Mathf.Abs(pvel.z) > 0.5f;
-                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, y-vel: {pvel.y}, z-vel: {pvel.z} | skill gain speed? {skill_gain_speed}");
+                    bool skill_gain_speed = Mathf.Abs(pvel.x) > 1.5f || Mathf.Abs(pvel.z) > 1.5f;
+                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, z-vel: {pvel.z} | skill gain speed? {skill_gain_speed}");
                     if (skill_gain_speed) {
                         Logger.LogDebug($"Raising player voyager skill.");
                         Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));

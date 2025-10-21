@@ -157,7 +157,7 @@ namespace ImpactfulSkills.patches
 
             private static void Postfix(ref bool __result, Pickable __instance, Humanoid character)
             {
-                if (ValConfig.EnableGathering.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
+                if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
                 {
                     if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
                         Logger.LogDebug($"Pickable is not a gathering item.");
@@ -170,6 +170,7 @@ namespace ImpactfulSkills.patches
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
                         Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
+                        enabled_aoe_gathering = false;
                         if (targets.Length <= 5) {
                             foreach (Collider obj_collider in targets) {
                                 Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
@@ -183,8 +184,8 @@ namespace ImpactfulSkills.patches
                                     }
                                 }
                             }
+                            enabled_aoe_gathering = true;
                         } else {
-                            enabled_aoe_gathering = false;
                             Player.m_localPlayer.StartCoroutine(PickAOE(targets));
                         }
                     }

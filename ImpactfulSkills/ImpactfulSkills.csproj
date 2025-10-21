@@ -28,6 +28,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Releases\**" />
+    <EmbeddedResource Remove="Releases\**" />
+    <None Remove="Releases\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="AssetsEmbedded\impactfulskills" />
     <None Remove="Localizations\English.json" />
   </ItemGroup>

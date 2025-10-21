@@ -1,3 +1,13 @@
+**0.5.13**
+---
+```
+- Make Voyager more permissive about what counts as being in the ship for skill gain
+- Increased velocity requirements for Voyager skill gain, removed bounce velocity consideration (only forward or backward movement gives skill gains)
+- Adds Swimming skill bonus:
+  - Swimming speed increases with skill level (lvl 25+, configurable)
+  - Reduces stamina drain while swimming (lvl 50+, configurable)
+```
+
 **0.5.12**
 ---
 ```

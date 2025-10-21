@@ -55,6 +55,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> BeeHarvestXP;
 
         public static ConfigEntry<bool> EnableGathering;
+        public static ConfigEntry<bool> EnableGatheringAOE;
         public static ConfigEntry<float> GatheringLuckFactor;
         public static ConfigEntry<float> GatheringRangeFactor;
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
@@ -104,6 +105,13 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> CraftingMaterialReturnsLevel;
         public static ConfigEntry<float> MaxCraftingMaterialReturnPercent;
         public static ConfigEntry<float> ChanceForMaterialReturn;
+
+        public static ConfigEntry<bool> EnableSwimming;
+        public static ConfigEntry<int> SwimSpeedRequiredLevel;
+        public static ConfigEntry<float> SwimmingSpeedFactor;
+        public static ConfigEntry<bool> EnableSwimStaminaCostReduction;
+        public static ConfigEntry<int> SwimStaminaReductionLevel;
+        public static ConfigEntry<float> SwimStaminaCostReductionFactor;
 
         public ValConfig(ConfigFile cf)
         {
@@ -177,6 +185,7 @@ namespace ImpactfulSkills
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
+            EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "30,50,70,90,100", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop.");
@@ -221,6 +230,12 @@ namespace ImpactfulSkills
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
             SharedKnowledgeIgnoreList = BindServerConfig("SkillRates", "SharedKnowledgeIgnoreList", "", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in. Invalid skill names will be ignored.");
             SharedKnowledgeIgnoreList.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
+
+            EnableSwimming = BindServerConfig("Swimming", "EnableSwimming", true, "Enable swimming skill changes.");
+            SwimSpeedRequiredLevel = BindServerConfig("Swimming", "SwimSpeedRequiredLevel", 25, "The level that swimming speed increases start being applied based on your skill", false, 0, 100);
+            SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
+            SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
+            SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
         }
 
         /// <summary>
