@@ -1,3 +1,9 @@
+**0.5.14**
+---
+```
+- Fix for excess swimming statmina consumption when stamina cost reduction is not active
+```
+
 **0.5.13**
 ---
 ```
