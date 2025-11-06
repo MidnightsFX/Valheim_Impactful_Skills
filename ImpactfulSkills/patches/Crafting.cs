@@ -32,8 +32,17 @@ namespace ImpactfulSkills.patches
                 return base_amount_crafted;
             int num = base_amount_crafted;
             CraftingStation currentCraftingStation = Player.m_localPlayer.GetCurrentCraftingStation();
-            float skillFactor = (Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
-            float skillLevel = (Player.m_localPlayer).GetSkillLevel((Skills.SkillType)107);
+            float skillFactor;
+            float skillLevel;
+            // Maybe this should just use the skill that is defined as the crafting station skill?
+            if (instance.m_craftRecipe.m_craftingStation.m_craftingSkill == Skills.SkillType.Cooking) {
+                skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Cooking);
+                skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Cooking);
+            } else {
+                skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
+                skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
+            }
+            
             if (currentCraftingStation != null && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1)
                 num += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel);
             if (num != base_amount_crafted)

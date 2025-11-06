@@ -1,3 +1,9 @@
+**0.5.15**
+---
+```
+- Fixes Cooking skill now being used as the skill level gate for bonus crafts when cooking food items (was crafting skill previously)
+```
+
 **0.5.14**
 ---
 ```
