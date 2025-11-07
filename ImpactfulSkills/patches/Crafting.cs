@@ -35,7 +35,7 @@ namespace ImpactfulSkills.patches
             float skillFactor;
             float skillLevel;
             // Maybe this should just use the skill that is defined as the crafting station skill?
-            if (instance.m_craftRecipe.m_craftingStation.m_craftingSkill == Skills.SkillType.Cooking) {
+            if (instance.m_craftRecipe.m_craftingStation != null && instance.m_craftRecipe.m_craftingStation.m_craftingSkill == Skills.SkillType.Cooking) {
                 skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Cooking);
                 skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Cooking);
             } else {

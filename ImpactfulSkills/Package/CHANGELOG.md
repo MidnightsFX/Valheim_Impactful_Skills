@@ -1,3 +1,9 @@
+**0.5.16**
+---
+```
+- Fixes hand crafting causing errors when no crafting table is available
+```
+
 **0.5.15**
 ---
 ```
