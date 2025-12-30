@@ -60,14 +60,14 @@ namespace ImpactfulSkills.patches {
             // Check for AOE mining, guard clause
             if (!ValConfig.EnableMiningAOE.Value || (double)skillFactor * 100.0 < (double)ValConfig.MiningAOELevel.Value || Mining.current_aoe_strike != null) { return; }
                 
-            float num4 = ValConfig.ChanceForAOEOnHit.Value;
-            if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value)
-                num4 += 1f * skillFactor;
-            float num5 = UnityEngine.Random.value;
-            if ((double)num5 < (double)num4) {
-                Logger.LogDebug(string.Format("AOE Mining failed roll: {0} < {1}", (object)num5, (object)num4));
+            float chance = ValConfig.ChanceForAOEOnHit.Value;
+            if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value) { chance -= 1f * skillFactor; }
+            if (chance < 0f) { chance = 0f; }
+            float aoe_roll = UnityEngine.Random.value;
+            if (aoe_roll < chance) {
+                Logger.LogDebug(string.Format($"AOE Mining failed roll: {aoe_roll} < {chance}"));
             } else {
-                Logger.LogDebug("Player mining aoe activated");
+                Logger.LogDebug($"Player mining aoe activated: {aoe_roll} > {chance}");
                 Vector3 point = hit.m_point;
                 HitData.DamageTypes damage = hit.m_damage;
                 HitData aoedmg = hit;

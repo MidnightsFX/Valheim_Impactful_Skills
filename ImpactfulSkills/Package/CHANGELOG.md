@@ -3,6 +3,7 @@
 ```
 - Reduces chances that rockbreaker is not reset with rock destruction
 - Reduces config sync strictness to allow players using the mod on servers (friends or dedicated) which do not have the mod to run their own configuration values instead of defaults
+- Corrects mining AOE chance becoming unreachable
 ```
 
 **0.5.16**
