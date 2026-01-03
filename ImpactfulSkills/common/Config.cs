@@ -32,6 +32,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> CriticalHitDmgMult;
         public static ConfigEntry<bool> SkipNonRockDropIncreases;
         public static ConfigEntry<bool> ReducedChanceDropsForLowAmountDrops;
+        public static ConfigEntry<float> DistanceMiningDropMultiplierChecks;
+        public static ConfigEntry<float> RockbreakerSafetyResetTimeout;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
@@ -154,6 +156,8 @@ namespace ImpactfulSkills
             SkillLevelBonusEnabledForMiningDropChance = BindServerConfig("Mining", "SkillLevelBonusEnabledForMiningDropChance", false, "Pickaxes skill level provides a bonus to drop chance for drops that are not gaurenteed (This can significantly increase muddy scrap-pile drops).");
             SkipNonRockDropIncreases = BindServerConfig("Mining", "SkipNonRockDropIncreases", true, "When enabled, only ores/rocks will get the increased drops, this primarily impacts muddy scrap piles in vanilla.");
             ReducedChanceDropsForLowAmountDrops = BindServerConfig("Mining", "ReducedChanceDropsForLowAmountDrops", false, "When Enabled, drops that have an amount increase below 1 will only have a chance to happen instead of being rounded up to 1, and always happening.");
+            DistanceMiningDropMultiplierChecks = BindServerConfig("Mining", "DistanceMiningDropMultiplierChecks", 20f, "How far away the loot multiplier will check when rocks are destroyed. Increasing this significantly can cause a performance impact.", true, 10, 100);
+            RockbreakerSafetyResetTimeout = BindServerConfig("Mining", "RockbreakerSafetyResetTimeout", 30f, "How long to wait before re-enabling rock breaker after its last activation.", true, 10f, 120f);
 
             EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
             RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
@@ -232,6 +236,7 @@ namespace ImpactfulSkills
             SharedKnowledgeIgnoreList.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
 
             EnableSwimming = BindServerConfig("Swimming", "EnableSwimming", true, "Enable swimming skill changes.");
+            EnableSwimStaminaCostReduction = BindServerConfig("Swimming", "EnableSwimStaminaCostReduction", true, "Enables swim stamina cost reduction, at the level specified by SwimStaminaReductionLevel.");
             SwimSpeedRequiredLevel = BindServerConfig("Swimming", "SwimSpeedRequiredLevel", 25, "The level that swimming speed increases start being applied based on your skill", false, 0, 100);
             SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
             SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);

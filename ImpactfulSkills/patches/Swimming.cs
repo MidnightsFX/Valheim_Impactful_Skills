@@ -59,7 +59,7 @@ namespace ImpactfulSkills.patches
             }
 
             public static float ModifySwimCost(float swimCost) {
-                if (!ValConfig.EnableSwimming.Value || Player.m_localPlayer == null) { return swimCost; }
+                if (!ValConfig.EnableSwimming.Value || !ValConfig.EnableSwimStaminaCostReduction.Value || Player.m_localPlayer == null) { return swimCost; }
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Swim);
                 if (ValConfig.SwimStaminaReductionLevel.Value > skillFactor * 100) { return swimCost; }
                 float modified_swim_cost_factor = (1f - (ValConfig.SwimStaminaCostReductionFactor.Value * skillFactor)) * swimCost;

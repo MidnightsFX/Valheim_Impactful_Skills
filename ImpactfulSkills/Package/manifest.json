@@ -1,7 +1,7 @@
 ﻿{
   "name": "ImpactfulSkills",
   "description": "Make skill related progression feel impactful and meaningful",
-  "version_number": "0.5.17",
+  "version_number": "0.5.18",
   "website_url": "https://discord.gg/Dmr9PQTy9m",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2202",

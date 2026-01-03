@@ -10,6 +10,7 @@ namespace ImpactfulSkills.patches {
         private static Collider[] current_aoe_strike = (Collider[])null;
         private static bool rockbreaker_running = false;
         private static readonly List<string> skipIncreaseDrops = new List<string> { "LeatherScraps", "WitheredBone" };
+        private static float rockbreakerActivatedAt = 0;
 
         public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null) {
             if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID())
@@ -24,6 +25,12 @@ namespace ImpactfulSkills.patches {
             }
             // No damage will be done, skip.
             if ((double)hit.m_damage.m_pickaxe <= 0.0) { return; }
+
+            //safety reset
+            if (rockbreaker_running == true && Mining.rockbreakerActivatedAt + ValConfig.RockbreakerSafetyResetTimeout.Value < Time.realtimeSinceStartup) {
+                Mining.rockbreaker_running = false;
+                Mining.current_aoe_strike = null;
+            }
             // Check for whole rock breaker
             if (!Mining.rockbreaker_running && Mining.current_aoe_strike == null) {
                 float num2 = UnityEngine.Random.value;
@@ -34,6 +41,7 @@ namespace ImpactfulSkills.patches {
                     HitData aoedmg = hit;
                     aoedmg.m_damage.m_pickaxe = ValConfig.RockBreakerDamage.Value;
                     Mining.rockbreaker_running = true;
+                    Mining.rockbreakerActivatedAt = Time.realtimeSinceStartup;
                     if (instance != null && Player.m_localPlayer != null) {
                         Logger.LogDebug("Rock breaker activated on minerock");
                         Mining.current_aoe_strike = instance.m_hitAreas;
@@ -149,7 +157,6 @@ namespace ImpactfulSkills.patches {
                                     yield return (object)new WaitForSeconds(0.1f);
                                 int areaIndex = minerock5.GetAreaIndex(obj_collider);
                                 if (areaIndex >= 0) {
-                                    Logger.LogDebug("AOE Damage applying to minerock5");
                                     Logger.LogDebug(string.Format("AOE Damage applying to minerock5 index: {0}", (object)areaIndex));
                                     aoedmg.m_point = obj_collider.bounds.center;
                                     aoedmg.m_hitCollider = obj_collider;
@@ -176,10 +183,10 @@ namespace ImpactfulSkills.patches {
 
         public static void IncreaseMiningDrops(DropTable drops, Vector3 position, HitData hitdata = null) {
             float nearbyDistance = Vector3.Distance(Player.m_localPlayer.transform.position, position);
-            if (nearbyDistance > 15.0) {
+            if (nearbyDistance > ValConfig.DistanceMiningDropMultiplierChecks.Value) {
                 Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", nearbyDistance));
             } else {
-                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
+                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
                 float num2 = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
                 Dictionary<GameObject, int> drops1 = new Dictionary<GameObject, int>();
                 if (drops.m_drops != null) {
@@ -210,9 +217,15 @@ namespace ImpactfulSkills.patches {
                                     Logger.LogDebug($"Mining rock drop increase: {drop.m_item.name} failed amount roll {dropAmountChanceRoll} <= {dropAmountRandomChanceRoll}");
                                     continue;
                                 }
-                                dropAmountExtra = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
-                            } else if ((double)minInclusive == (double)maxExclusive)
+                            }
+
+                            // Ensure Mining drops are set
+                            if ((double)minInclusive == (double)maxExclusive) {
                                 dropAmountExtra = Mathf.RoundToInt(minInclusive);
+                            } else {
+                                dropAmountExtra = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
+                            }
+
                             Logger.LogDebug($"Mining rock drop increase {drop.m_item.name} min_drop: {minInclusive}, max_drop: {maxExclusive} drop amount: {dropAmountExtra}");
                             if (drops1.ContainsKey(drop.m_item))
                                 drops1[drop.m_item] += dropAmountExtra;

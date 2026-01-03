@@ -1,3 +1,12 @@
+**0.5.18**
+---
+```
+- Configuration to individually enable/disable swimming stamina cost reduction
+- Configuration to modify the distance that Mining bonuses can be applied at
+- Safety fallback, with configuration to reset rockbreaker incase it becomes stuck
+- Fixes a bug which would cause 100 skill level to provide no extra mining drops in a very specific scenario
+```
+
 **0.5.17**
 ---
 ```
