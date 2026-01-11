@@ -1,3 +1,9 @@
+**0.5.19**
+---
+```
+- Fixes mining loot increases not being applied to small destructible rocks
+```
+
 **0.5.18**
 ---
 ```

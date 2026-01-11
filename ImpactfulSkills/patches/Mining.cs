@@ -310,10 +310,11 @@ namespace ImpactfulSkills.patches {
             }
         }
 
-        [HarmonyPatch(typeof(Destructible), "Destroy")]
+        [HarmonyPatch(typeof(Destructible), nameof(Destructible.Destroy))]
         public static class IncreaseDropsFromDestructibleRock {
             public static void Prefix(Destructible __instance, HitData hit) {
-                if (!ValConfig.EnableMining.Value || __instance.m_destructibleType != DestructibleType.Default && __instance.m_destructibleType != DestructibleType.Tree || hit == null || !(Player.m_localPlayer != null) || hit.m_attacker == Player.m_localPlayer.GetZDOID())
+                //Logger.LogDebug($"Destructible destroy called, type: {__instance.m_destructibleType} {__instance.m_destructibleType != DestructibleType.Default} | hit_null? {hit == null} | playernull {!(Player.m_localPlayer != null)} | attacker is current player {hit.m_attacker == Player.m_localPlayer.GetZDOID()}");
+                if (!ValConfig.EnableMining.Value || __instance.m_destructibleType != DestructibleType.Default || __instance.m_destructibleType == DestructibleType.Tree || hit == null || !(Player.m_localPlayer != null) || hit.m_attacker != Player.m_localPlayer.GetZDOID())
                     return;
                 Mining.IncreaseDestructibleMineDrops(__instance);
             }
