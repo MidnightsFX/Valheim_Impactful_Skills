@@ -1,5 +1,7 @@
-﻿using BepInEx.Configuration;
+﻿using BepInEx;
+using BepInEx.Configuration;
 using ImpactfulSkills.patches;
+using System.IO;
 
 namespace ImpactfulSkills
 {
@@ -34,6 +36,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> ReducedChanceDropsForLowAmountDrops;
         public static ConfigEntry<float> DistanceMiningDropMultiplierChecks;
         public static ConfigEntry<float> RockbreakerSafetyResetTimeout;
+        public static ConfigEntry<string> SkipNonRockDropPrefabs;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
@@ -122,6 +125,7 @@ namespace ImpactfulSkills
             cfg.SaveOnConfigSet = true;
             CreateConfigValues(cf);
             Logger.setDebugLogging(EnableDebugMode.Value);
+            SetupMainFileWatcher();
         }
 
         private void CreateConfigValues(ConfigFile Config)
@@ -155,6 +159,7 @@ namespace ImpactfulSkills
             MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1, 100);
             SkillLevelBonusEnabledForMiningDropChance = BindServerConfig("Mining", "SkillLevelBonusEnabledForMiningDropChance", false, "Pickaxes skill level provides a bonus to drop chance for drops that are not gaurenteed (This can significantly increase muddy scrap-pile drops).");
             SkipNonRockDropIncreases = BindServerConfig("Mining", "SkipNonRockDropIncreases", true, "When enabled, only ores/rocks will get the increased drops, this primarily impacts muddy scrap piles in vanilla.");
+            SkipNonRockDropPrefabs = BindServerConfig("Mining", "SkipNonRockDropPrefabs", "LeatherScraps,WitheredBone", "List of prefabs which will not recieve increased mining drops. Should be comma seperated without spaces.");
             ReducedChanceDropsForLowAmountDrops = BindServerConfig("Mining", "ReducedChanceDropsForLowAmountDrops", false, "When Enabled, drops that have an amount increase below 1 will only have a chance to happen instead of being rounded up to 1, and always happening.");
             DistanceMiningDropMultiplierChecks = BindServerConfig("Mining", "DistanceMiningDropMultiplierChecks", 20f, "How far away the loot multiplier will check when rocks are destroyed. Increasing this significantly can cause a performance impact.", true, 10, 100);
             RockbreakerSafetyResetTimeout = BindServerConfig("Mining", "RockbreakerSafetyResetTimeout", 30f, "How long to wait before re-enabling rock breaker after its last activation.", true, 10f, 120f);
@@ -241,6 +246,28 @@ namespace ImpactfulSkills
             SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
             SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
             SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
+        }
+
+        internal static void SetupMainFileWatcher() {
+            // Setup a file watcher to detect changes to the config file
+            FileSystemWatcher watcher = new FileSystemWatcher();
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.Path = Path.GetDirectoryName(cfg.ConfigFilePath);
+            // Ignore changes to other files
+            watcher.Filter = "MidnightsFX.ImpactfulSkills.cfg";
+            watcher.Changed += OnConfigFileChanged;
+            watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+            watcher.EnableRaisingEvents = true;
+        }
+
+        private static void OnConfigFileChanged(object sender, FileSystemEventArgs e) {
+            // We only want the config changes being allowed if this is a server (ie in game in a hosted world or dedicated ideally)
+            if (ZNet.instance.IsServer() == false) {
+                return;
+            }
+            // Handle the config file change event
+            Logger.LogInfo("Configuration file has been changed, reloading settings.");
+            cfg.Reload();
         }
 
         /// <summary>

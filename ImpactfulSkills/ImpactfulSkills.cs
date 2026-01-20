@@ -21,7 +21,7 @@ namespace ImpactfulSkills
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.5.19";
+        public const string PluginVersion = "0.5.20";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
@@ -37,6 +37,7 @@ namespace ImpactfulSkills
             EmbeddedResourceBundle = AssetUtils.LoadAssetBundleFromResources("ImpactfulSkills.AssetsEmbedded.impactfulskills", typeof(ImpactfulSkills).Assembly);
             AddLocalizations();
             Gathering.SetupGatherables();
+            Mining.SetupMining();
             AnimalWhisper.SetupAnimalSkill();
             Voyaging.SetupSailingSkill();
 

@@ -1,3 +1,13 @@
+**0.5.20**
+---
+```
+- Added extra safety checks for invalid denylist entries for pickable luck levels and items
+- Added a denylist for mining drop modification
+- Fixed a bug that could result in 1-2 more bonus item being given than intended when lucky crafting
+- Rescaled mining drops with low chance to be less generous than before
+- Fixes rockbreaker softlock on rock types not used by default
+```
+
 **0.5.19**
 ---
 ```

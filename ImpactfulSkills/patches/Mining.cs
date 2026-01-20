@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches {
@@ -11,6 +12,35 @@ namespace ImpactfulSkills.patches {
         private static bool rockbreaker_running = false;
         private static readonly List<string> skipIncreaseDrops = new List<string> { "LeatherScraps", "WitheredBone" };
         private static float rockbreakerActivatedAt = 0;
+
+        private static void UnallowedMinablesChanged(object s, EventArgs e) {
+            try {
+                List<String> tunallowed = new List<String>() { };
+                foreach (var item in ValConfig.SkipNonRockDropPrefabs.Value.Split(',')) {
+                    tunallowed.Add(item);
+                }
+                if (tunallowed.Count > 0) {
+                    skipIncreaseDrops.Clear();
+                    skipIncreaseDrops.AddRange(tunallowed);
+                }
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing SkipNonRockDropPrefabs: {ex}");
+            }
+        }
+
+        public static void SetupMining() {
+            try {
+                foreach (var unallowed in ValConfig.SkipNonRockDropPrefabs.Value.Split(',')) {
+                    skipIncreaseDrops.Add(unallowed);
+                }
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing SkipNonRockDropPrefabs, defaults will be used.: {ex}");
+                skipIncreaseDrops.AddRange(new List<string>() {
+                    "LeatherScraps",
+                    "WitheredBone" });
+            }
+            ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedMinablesChanged;
+        }
 
         public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null) {
             if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID())
@@ -50,17 +80,21 @@ namespace ImpactfulSkills.patches {
                         Mining.rockbreaker_running = false;
                         Mining.current_aoe_strike = null;
                     }
-                    if (instance5 != null && Player.m_localPlayer != null) {
-                        Logger.LogDebug("Rock breaker activated on minerock5");
-                        List<Collider> colliderList = new List<Collider>();
-                        foreach (MineRock5.HitArea hitArea in instance5.m_hitAreas) {
-                            colliderList.Add(hitArea.m_collider);
+
+                    // Needs to be gated to ensure we do not flip the rockbreaker flags again if we are already hitting a minerock
+                    if (instance5 != null) {
+                        if (Player.m_localPlayer != null) {
+                            Logger.LogDebug("Rock breaker activated on minerock5");
+                            List<Collider> colliderList = new List<Collider>();
+                            foreach (MineRock5.HitArea hitArea in instance5.m_hitAreas) {
+                                colliderList.Add(hitArea.m_collider);
+                            }
+                            Mining.current_aoe_strike = colliderList.ToArray();
+                            Player.m_localPlayer.StartCoroutine(Mining.MineAoeDamage(colliderList.ToArray(), aoedmg));
+                        } else {
+                            Mining.rockbreaker_running = false;
+                            Mining.current_aoe_strike = null;
                         }
-                        Mining.current_aoe_strike = colliderList.ToArray();
-                        Player.m_localPlayer.StartCoroutine(Mining.MineAoeDamage(colliderList.ToArray(), aoedmg));
-                    } else {
-                        Mining.rockbreaker_running = false;
-                        Mining.current_aoe_strike = null;
                     }
                     return;
                 }
@@ -187,7 +221,7 @@ namespace ImpactfulSkills.patches {
                 Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", nearbyDistance));
             } else {
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
-                float num2 = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
+                float mineSkillFactor = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
                 Dictionary<GameObject, int> drops1 = new Dictionary<GameObject, int>();
                 if (drops.m_drops != null) {
                     foreach (DropTable.DropData drop in drops.m_drops) {
@@ -199,7 +233,7 @@ namespace ImpactfulSkills.patches {
                         float randomChanceRoll = UnityEngine.Random.value;
                         float lootdropchance = drops.m_dropChance;
                         if (ValConfig.SkillLevelBonusEnabledForMiningDropChance.Value)
-                            lootdropchance = (float)(num2 * (drops.m_dropChance * 2.0) / 100.0);
+                            lootdropchance = (float)(mineSkillFactor * drops.m_dropChance / 100.0);
                         if (lootdropchance > 1.0)
                             lootdropchance = 1f;
                         Logger.LogDebug(string.Format("Mining rock check roll: {0} <= {1}", lootdropchance, randomChanceRoll));
@@ -208,8 +242,8 @@ namespace ImpactfulSkills.patches {
                         } else {
                             int dropAmountExtra = 0;
                             Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", drops.m_dropMin, drops.m_dropMax));
-                            float minInclusive = (float)((double)drops.m_dropMin * (double)num2 / 100.0);
-                            float maxExclusive = (float)((double)drops.m_dropMax * (double)num2 / 100.0);
+                            float minInclusive = (float)(drops.m_dropMin * mineSkillFactor / 100.0);
+                            float maxExclusive = (float)(drops.m_dropMax * mineSkillFactor / 100.0);
                             if (ValConfig.ReducedChanceDropsForLowAmountDrops.Value == true && minInclusive > 0.0 && maxExclusive > 0.0 && minInclusive != 1f) {
                                 float dropAmountChanceRoll = UnityEngine.Random.Range(minInclusive, maxExclusive);
                                 float dropAmountRandomChanceRoll = UnityEngine.Random.value;
@@ -294,7 +328,37 @@ namespace ImpactfulSkills.patches {
             }
         }
 
-        [HarmonyPatch(typeof(MineRock5), nameof(MineRock.Damage))]
+        [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hide))]
+        public static class MinerockDestroyPatch {
+            public static void Postfix(MineRock __instance, long sender, int index) {
+                if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null))
+                    return;
+                Mining.IncreaseMiningDrops(__instance.m_dropItems, ((Component)__instance).gameObject.transform.position);
+            }
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/) {
+            var codeMatcher = new CodeMatcher(instructions);
+            codeMatcher.MatchEndForward(
+                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MineRock), nameof(MineRock.m_destroyedEffect)))
+                ).MatchEndForward(
+                new CodeMatch(OpCodes.Pop)
+                ).InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_0), // load __instance
+                Transpilers.EmitDelegate(ApplyIncreasedMiningDrops)
+                ).ThrowIfNotMatch("Unable to patch Minerock Drop increase.");
+
+            return codeMatcher.Instructions();
+        }
+
+        private static void ApplyIncreasedMiningDrops(MineRock __instance) {
+            if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null)) { return; }
+            Mining.IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
+        }
+
+        [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.Damage))]
         public static class Minerock5DmgPatch {
             public static void Prefix(HitData hit, MineRock5 __instance) {
                 Mining.ModifyPickaxeDmg(hit, instance5: __instance);

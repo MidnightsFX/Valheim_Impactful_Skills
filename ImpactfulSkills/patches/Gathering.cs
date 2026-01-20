@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
+using static Player;
 
 namespace ImpactfulSkills.patches
 {
@@ -51,13 +52,46 @@ namespace ImpactfulSkills.patches
         }
 
         public static void SetupGatherables() {
-            foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
-                luck_levels.Add(float.Parse(item));
+            try {
+                foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
+                    luck_levels.Add(float.Parse(item));
+                }
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing GatheringLuckLevels, defaults will be used: {ex}");
+                luck_levels.AddRange(new List<float>() { 30, 50, 70, 90, 100 });
             }
+
             ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
-            foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Split(','))
-            {
-                UnallowedPickables.Add(unallowed);
+            try {
+                foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Split(',')) {
+                    UnallowedPickables.Add(unallowed);
+                }
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing GatheringDisallowedItems, defaults will be used.: {ex}");
+                UnallowedPickables.AddRange(new List<string>() {
+                    "SurtlingCore",
+                    "Flint",
+                    "Wood",
+                    "Branch",
+                    "Stone",
+                    "Amber",
+                    "AmberPearl",
+                    "Coins",
+                    "Ruby",
+                    "CryptRemains",
+                    "Obsidian",
+                    "Crystal",
+                    "Pot_Shard",
+                    "DragonEgg",
+                    "DvergrLantern",
+                    "DvergrMineTreasure",
+                    "SulfurRock",
+                    "VoltureEgg",
+                    "Swordpiece",
+                    "MoltenCore",
+                    "Hairstrands",
+                    "Tar",
+                    "BlackCore" });
             }
             ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedPickablesChanged;
         }

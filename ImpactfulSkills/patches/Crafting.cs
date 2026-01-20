@@ -105,19 +105,19 @@ namespace ImpactfulSkills.patches
             int craftingItemBonusAmount = 0;
             if (!ValConfig.EnableBonusItemCrafting.Value || (double)player_skill_level < (double)ValConfig.CraftingBonusCraftsLevel.Value)
                 return craftingItemBonusAmount;
-            float num1 = ValConfig.CraftingBonusChance.Value * skill_factor;
-            int num2 = 1;
+            float success_chance = ValConfig.CraftingBonusChance.Value * skill_factor;
+            int bonusAmount = 1;
             if (instance.m_craftRecipe.m_amount > 1 && ValConfig.EnableCraftBonusAsFraction.Value)
             {
-                num2 = Mathf.RoundToInt((float)instance.m_craftRecipe.m_amount * ValConfig.CraftBonusFractionOfCraftNumber.Value);
-                Logger.LogDebug(string.Format("Bonus updated now {0}, using fraction of result.", (object)num2));
+                bonusAmount = Mathf.RoundToInt((float)instance.m_craftRecipe.m_amount * ValConfig.CraftBonusFractionOfCraftNumber.Value);
+                Logger.LogDebug(string.Format("Bonus updated now {0}, using fraction of result.", (object)bonusAmount));
             }
-            for (int index = 0; index <= ValConfig.CraftingMaxBonus.Value; ++index)
+            for (int index = 1; index <= ValConfig.CraftingMaxBonus.Value; ++index)
             {
-                float num3 = UnityEngine.Random.value;
-                Logger.LogDebug(string.Format("Bonus crafting roll {0}: {1} >= {2}", (object)index, (object)num1, (object)num3));
-                if ((double)num1 >= (double)num3)
-                    craftingItemBonusAmount += num2;
+                float roll = UnityEngine.Random.Range(0, 100);
+                Logger.LogDebug(string.Format("Bonus crafting roll {0}: {1} >= {2}", (object)index, (object)success_chance, (object)roll));
+                if ((double)success_chance >= (double)roll)
+                    craftingItemBonusAmount += bonusAmount;
                 else
                     break;
             }
