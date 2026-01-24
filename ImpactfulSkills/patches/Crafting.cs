@@ -114,14 +114,14 @@ namespace ImpactfulSkills.patches
             }
             for (int index = 1; index <= ValConfig.CraftingMaxBonus.Value; ++index)
             {
-                float roll = UnityEngine.Random.Range(0, 100);
-                Logger.LogDebug(string.Format("Bonus crafting roll {0}: {1} >= {2}", (object)index, (object)success_chance, (object)roll));
+                float roll = UnityEngine.Random.Range(0, 1f);
+                Logger.LogDebug($"Bonus crafting roll {index}: {success_chance} >= {roll}");
                 if ((double)success_chance >= (double)roll)
                     craftingItemBonusAmount += bonusAmount;
                 else
                     break;
             }
-            Logger.LogDebug(string.Format("Crafting {0} with new total {1} + (bonus) {2}.", (object)instance.m_craftRecipe.m_item.m_itemData.m_shared.m_name, (object)base_amount_crafted, (object)craftingItemBonusAmount));
+            Logger.LogDebug($"Crafting {instance.m_craftRecipe.m_item.m_itemData.m_shared.m_name} with new total {base_amount_crafted} + (bonus) {craftingItemBonusAmount}.");
             return craftingItemBonusAmount;
         }
 

@@ -39,7 +39,7 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Player))]
         public static class SwimmingReduceStaminaCostPatch
         {
-            [HarmonyEmitIL("./dumps")]
+            //[HarmonyEmitIL("./dumps")]
             [HarmonyTranspiler]
             [HarmonyPatch("OnSwimming")]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)

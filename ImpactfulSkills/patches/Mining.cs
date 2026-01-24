@@ -257,7 +257,20 @@ namespace ImpactfulSkills.patches {
                             if ((double)minInclusive == (double)maxExclusive) {
                                 dropAmountExtra = Mathf.RoundToInt(minInclusive);
                             } else {
-                                dropAmountExtra = UnityEngine.Random.Range((int)minInclusive, (int)maxExclusive);
+                                float amount = UnityEngine.Random.Range(minInclusive, maxExclusive);
+                                dropAmountExtra = Mathf.RoundToInt(amount);
+                            }
+
+                            // Modify drops that would always be zero to be a chance, if enabled
+                            if (dropAmountExtra < 1) {
+                                float rnd = UnityEngine.Random.value;
+                                if (ValConfig.FractionalDropsAsChance.Value && rnd <= minInclusive) {
+                                    Logger.LogDebug($"Mining rock drop bonus result is less than 1. Roll success ({rnd} <= {minInclusive}) for dropping 1.");
+                                    dropAmountExtra = 1;
+                                } else {
+                                    Logger.LogDebug($"Mining rock drop bonus result is less than 1. No bonus. ({rnd} <= {minInclusive})");
+                                    dropAmountExtra = 0;
+                                }
                             }
 
                             Logger.LogDebug($"Mining rock drop increase {drop.m_item.name} min_drop: {minInclusive}, max_drop: {maxExclusive} drop amount: {dropAmountExtra}");
@@ -325,15 +338,6 @@ namespace ImpactfulSkills.patches {
         public static class MinerockDmgPatch {
             public static void Prefix(HitData hit, MineRock __instance) {
                 Mining.ModifyPickaxeDmg(hit, __instance);
-            }
-        }
-
-        [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hide))]
-        public static class MinerockDestroyPatch {
-            public static void Postfix(MineRock __instance, long sender, int index) {
-                if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null))
-                    return;
-                Mining.IncreaseMiningDrops(__instance.m_dropItems, ((Component)__instance).gameObject.transform.position);
             }
         }
 

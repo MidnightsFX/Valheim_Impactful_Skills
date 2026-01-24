@@ -37,6 +37,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> DistanceMiningDropMultiplierChecks;
         public static ConfigEntry<float> RockbreakerSafetyResetTimeout;
         public static ConfigEntry<string> SkipNonRockDropPrefabs;
+        public static ConfigEntry<bool> FractionalDropsAsChance;
 
         public static ConfigEntry<bool> EnableStealth;
         public static ConfigEntry<float> SneakSpeedFactor;
@@ -161,6 +162,7 @@ namespace ImpactfulSkills
             SkipNonRockDropIncreases = BindServerConfig("Mining", "SkipNonRockDropIncreases", true, "When enabled, only ores/rocks will get the increased drops, this primarily impacts muddy scrap piles in vanilla.");
             SkipNonRockDropPrefabs = BindServerConfig("Mining", "SkipNonRockDropPrefabs", "LeatherScraps,WitheredBone", "List of prefabs which will not recieve increased mining drops. Should be comma seperated without spaces.");
             ReducedChanceDropsForLowAmountDrops = BindServerConfig("Mining", "ReducedChanceDropsForLowAmountDrops", false, "When Enabled, drops that have an amount increase below 1 will only have a chance to happen instead of being rounded up to 1, and always happening.");
+            FractionalDropsAsChance = BindServerConfig("Mining", "FractionalDropsAsChance", true, "When enabled, drops that are less than 1 become a chance to drop one. When disabled drops below 1 will never result in drops.");
             DistanceMiningDropMultiplierChecks = BindServerConfig("Mining", "DistanceMiningDropMultiplierChecks", 20f, "How far away the loot multiplier will check when rocks are destroyed. Increasing this significantly can cause a performance impact.", true, 10, 100);
             RockbreakerSafetyResetTimeout = BindServerConfig("Mining", "RockbreakerSafetyResetTimeout", 30f, "How long to wait before re-enabling rock breaker after its last activation.", true, 10f, 120f);
 
@@ -222,7 +224,7 @@ namespace ImpactfulSkills
             EnableBonusItemCrafting = BindServerConfig("Crafting", "EnableBonusItemCrafting", true, "Enables crafting bonus items.");
             CraftingBonusCraftsLevel = BindServerConfig("Crafting", "CraftingBonusCraftsLevel", 50, "The level at which you can start getting bonus crafts.", false, 0, 100);
             CraftingMaxBonus = BindServerConfig("Crafting", "CraftingMaxBonus", 3, "The maximum number of additional bonus crafts you can get from crafting an item", false, 0, 150);
-            CraftingBonusChance = BindServerConfig("Crafting", "CraftingBonusChance", 0.3f, "The chance to get a bonus craft when crafting an item. 0.5 is a 50% chance to get a bonus craft at level 100. Bonus crafting success can stack up to the CraftingMaxBonus times.");
+            CraftingBonusChance = BindServerConfig("Crafting", "CraftingBonusChance", 0.3f, "The chance to get a bonus craft when crafting an item. 0.5 is a 50% chance to get a bonus craft at level 100. Bonus crafting success can stack up to the CraftingMaxBonus times.", false, 0, 1f);
             EnableCraftBonusAsFraction = BindServerConfig("Crafting", "EnableCraftBonusAsFraction", true, "Enable crafting bonus as a fraction of the number crafted (for recipes where the result is more than 1). If disabled, the bonus is always 1 item.");
             CraftBonusFractionOfCraftNumber = BindServerConfig("Crafting", "CraftBonusFractionOfCraftNumber", 0.25f, "If the number of items crafted by the recipe is greater than 1, a percentage of the number crafted is used for the bonus. This determines that percentage. Eg: craft 20 arrows (1 craft) a .25 value would give you 5 arrows for 1 bonus craft.");
             EnableMaterialReturns = BindServerConfig("Crafting", "EnableMaterialReturns", true, "Enable material returns from crafting.");

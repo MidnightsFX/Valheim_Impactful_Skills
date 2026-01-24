@@ -1,3 +1,10 @@
+**0.5.21**
+---
+```
+- Limited bonus crafting chance to valid percentile chance ranges
+- Added an option to have fractional rolls for mining allowed to have a chance to spawn. This provides more linear scaling for drops with low chances (like mudpiles)
+```
+
 **0.5.20**
 ---
 ```
