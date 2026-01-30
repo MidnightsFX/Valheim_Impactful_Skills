@@ -75,6 +75,13 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
         public static ConfigEntry<float> VoyagerPaddleSpeedBonus;
         public static ConfigEntry<float> VoyagerPaddleSpeedBonusLevel;
+        public static ConfigEntry<bool> EnableBoatDamageReduction;
+        public static ConfigEntry<int> BoatDamageReductionLevel;
+        public static ConfigEntry<float> VoyagerDamageReductionAmount;
+        public static ConfigEntry<bool> VoyagerImpactResistance;
+        public static ConfigEntry<int> VoyagerImpactResistanceLevel;
+        public static ConfigEntry<bool> EnableFriendsRowSpeedBonus;
+        public static ConfigEntry<float> MaxFriendsRowSpeedBonus;
 
         public static ConfigEntry<bool> EnableWeaponSkill;
         public static ConfigEntry<float> WeaponSkillStaminaReduction;
@@ -209,6 +216,13 @@ namespace ImpactfulSkills
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 1.5f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
             VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);
             VoyagerPaddleSpeedBonusLevel = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonusLevel", 25f, "The level that the player starts to get a bonus to paddle speed.", false, 0f, 100f);
+            EnableFriendsRowSpeedBonus = BindServerConfig("Voyager", "EnableFriendsRowSpeedBonus", true, "Whether or not friends attached to the ship will provide a 'rowing' speed bonus.");
+            MaxFriendsRowSpeedBonus = BindServerConfig("Voyager", "MaxFriendsRowSpeedBonus", 0.25f, "The maximum speed bonus percent that each player can contribute. Players contribution is based on their own Voyager skill level.", false, 0, 2f);
+            EnableBoatDamageReduction = BindServerConfig("Voyager", "EnableBoatDamageReduction", true, "Enable to reduce damage to your boat as Voyager skill level increases.");
+            VoyagerDamageReductionAmount = BindServerConfig("Voyager", "VoyagerDamageReductionAmount", 0.9f, "The maximum percentage of damage reduction, at level 100 skill. Scaled to skill. 1 is 100% damage reduction at player skill level 100.", false, 0, 1f);
+            BoatDamageReductionLevel = BindServerConfig("Voyager", "BoatDamageReductionLevel", 35, "The level at which you start to recieve a damage reduction from damage taken while on the boat");
+            VoyagerImpactResistance = BindServerConfig("Voyager", "VoyagerImpactResistance", true, "Whether or not impact resistance is enabled.");
+            VoyagerImpactResistanceLevel = BindServerConfig("Voyager", "VoyagerImpactResistanceLevel", 75, "The level at which impact resistance is enabled. This prevents the ship from taking damage when it bumps into something.");
 
             EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);

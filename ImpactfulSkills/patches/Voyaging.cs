@@ -50,6 +50,41 @@ namespace ImpactfulSkills.patches
                     // Logger.LogDebug($"Increasing player sailspeed: {bonus}");
                     __result *= bonus;
                 }
+                if (ValConfig.EnableFriendsRowSpeedBonus.Value && __instance.m_players.Count > 1) {
+                    float rowingbonus = 1;
+                    foreach (Player friend in __instance.m_players) {
+                        if (friend == Player.m_localPlayer) { continue; }
+                        rowingbonus += friend.GetSkillFactor(VoyagingSkill) * ValConfig.MaxFriendsRowSpeedBonus.Value;
+                    }
+                    __result *= rowingbonus;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(WearNTear))]
+        public static class ShipDamageReduction {
+            [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.RPC_Damage))]
+            private static void Prefix(WearNTear __instance, ref HitData hit) {
+                if (__instance.m_materialType != WearNTear.MaterialType.Wood || ValConfig.EnableBoatDamageReduction.Value == false) { return; }
+                if (Player.m_localPlayer == null || Player.m_localPlayer.GetSkillLevel(VoyagingSkill) < ValConfig.BoatDamageReductionLevel.Value) {  return; }
+                Ship ship = __instance.GetComponent<Ship>();
+                if (ship == null || !ship.m_players.Contains(Player.m_localPlayer)) { return; }
+
+                float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
+                float dmg_reduction = player_skill * ValConfig.VoyagerDamageReductionAmount.Value;
+                Logger.LogDebug($"Reducing Ship damage by {dmg_reduction * 100}%");
+                hit.m_damage.Modify(1 - dmg_reduction);
+            }
+        }
+
+        [HarmonyPatch(typeof(ImpactEffect))]
+        public static class ShipDamageImpactReduction {
+            [HarmonyPatch(typeof(ImpactEffect), nameof(ImpactEffect.Awake))]
+            private static void Postfix(ImpactEffect __instance) {
+                if (Player.m_localPlayer == null || Player.m_localPlayer.GetSkillLevel(VoyagingSkill) < ValConfig.VoyagerImpactResistanceLevel.Value) {
+                    return;
+                }
+                __instance.m_damageToSelf = false;
             }
         }
 

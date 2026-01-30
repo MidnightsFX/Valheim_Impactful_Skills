@@ -1,3 +1,12 @@
+**0.6.0**
+---
+```
+- Voyager
+	- Adds damage reduction (starts lvl 10, scales with voyager skill)
+	- Adds friend paddling (starts lvl 35, uses friends Voyager skill to increase your boat speed) friends must be attached to the boat.
+	- Adds impact resistance (enabled at lvl 75, prevents damage to the boat when hitting other objects)
+```
+
 **0.5.21**
 ---
 ```

@@ -59,7 +59,7 @@ Parrying provides a tiny bit of bonus XP.
 ### Sneaking
 
 Increases speed based on your sneaking skill.
-Level 50 (configurable) of sneaking starts applying a reduction to your noise generated (similar to how the troll armor works).
+- Level 50 (configurable) of sneaking starts applying a reduction to your noise generated (similar to how the troll armor works).
 
 | Sneak 0 | Sneak 50 | Sneak 100 |
 | ------------- | ------------- | ------------- |
@@ -79,6 +79,12 @@ The run skill now increases your movement speed when running. Instead of only re
 
 Voyager increases your potential speed when sailing in a boat. Along with increasing your ability to handle close hauling, when sailing almost against the wind.
 Provides a bonus to your rowing speed that scales with player skill also.
+
+- Innate - Multiple players on a boat each provide a small bonus to boat speed (scales with everyones skill levels)
+- 25 - Paddle speed increased (scales with level)
+- 35 - Damage done to boat reduced (scales with level)
+- 50 - Reduces penalty from sailing almost against the wind (scales with level)
+- 75 - Boat does not recieve damage from impact
 
 | Voyager 0 | Voyager 50 | Voyager 100 |
 | ------------- | ------------- | ------------- |
