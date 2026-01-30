@@ -104,6 +104,9 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 
 Taming reduces the amount of time it takes to tame creatures. It also increases the amount of drops you get from killing tamed creatures. Removing the need for massive creature farms.
 
+### hauling (new skill)
+
+Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
 
 ### Knowledge Sharing
 

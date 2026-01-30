@@ -91,6 +91,12 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableCooking;
         public static ConfigEntry<float> CookingBurnReduction;
 
+        public static ConfigEntry<bool> EnableHauling;
+        public static ConfigEntry<bool> EnableCarryWeightBonus;
+        public static ConfigEntry<float> HaulingMaxWeightBonus;
+        public static ConfigEntry<bool> EnableHaulingCartMassReduction;
+        public static ConfigEntry<float> HaulingCartMassReduction;
+
         public static ConfigEntry<bool> EnableBloodMagic;
         public static ConfigEntry<float> BloodMagicXPForShieldDamageRatio;
         public static ConfigEntry<float> BloodMagicXP;
@@ -178,6 +184,12 @@ namespace ImpactfulSkills
 
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", false, 0.1f, 1f);
+
+            EnableHauling = BindServerConfig("Hauling", "EnableHauling", true, "Enables the hauling skill.");
+            EnableCarryWeightBonus = BindServerConfig("Hauling", "EnableCarryWeightBonus", true, "Enables the carry weight bonus from the hauling skill.");
+            HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
+            EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
+            HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
 
             EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
             BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
