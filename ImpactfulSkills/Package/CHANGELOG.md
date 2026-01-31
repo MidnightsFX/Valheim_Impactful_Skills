@@ -5,6 +5,10 @@
 	- Adds damage reduction (starts lvl 10, scales with voyager skill)
 	- Adds friend paddling (starts lvl 35, uses friends Voyager skill to increase your boat speed) friends must be attached to the boat.
 	- Adds impact resistance (enabled at lvl 75, prevents damage to the boat when hitting other objects)
+- Hauling (new skill)
+	- Adds a small amount of total carry weight over time
+	- Reduces the mass of carts when heavily loaded (scales, significantly)
+	- Gain XP through moving carts, more xp for a heavier load
 ```
 
 **0.5.21**

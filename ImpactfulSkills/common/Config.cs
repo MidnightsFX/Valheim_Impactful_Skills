@@ -67,6 +67,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;
         public static ConfigEntry<string> GatheringDisallowedItems;
+        public static ConfigEntry<bool> EnableFarmingMultiPlant;
+        public static ConfigEntry<int> FarmingMultiplantRequiredLevel;
+        public static ConfigEntry<int> FarmingMultiplantMaxPlantedAtOnce;
+        public static ConfigEntry<int> FarmingMultiplantSegments;
+        public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -96,6 +101,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> HaulingMaxWeightBonus;
         public static ConfigEntry<bool> EnableHaulingCartMassReduction;
         public static ConfigEntry<float> HaulingCartMassReduction;
+        public static ConfigEntry<float> HaulingXPRate;
+        public static ConfigEntry<int> HaulingXPCheckInterval;
 
         public static ConfigEntry<bool> EnableBloodMagic;
         public static ConfigEntry<float> BloodMagicXPForShieldDamageRatio;
@@ -190,6 +197,8 @@ namespace ImpactfulSkills
             HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
             EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
             HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
+            HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.1f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
+            HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 5, "The frequency that you can gain hauling skill while moving goods.");
 
             EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
             BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
@@ -220,6 +229,12 @@ namespace ImpactfulSkills
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "30,50,70,90,100", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
+            //EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
+            //FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 75, "The level that Multiplant is enabled.", false, 0, 100);
+            //FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 6, "The total number of plants that can be planted at once at maximum gathering.");
+            //FarmingMultiplantSegments = BindServerConfig("Farming", "FarmingMultiplantSegments", 4, "The number of plants to align with the source snapping point (modifying this changes the planting shape.)", true, 1, 12);
+            //FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
+
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
