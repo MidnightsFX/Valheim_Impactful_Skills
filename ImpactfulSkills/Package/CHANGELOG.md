@@ -1,3 +1,13 @@
+**0.6.1**
+---
+```
+- Prevents excessive Voyager skill gain in some scenarios
+- Added Polish Translation (thanks Jagr)
+- Adds compatibility with SNEAKer (removes previous incompatibility)
+- Improves compatiblity with MagicPlugin
+- Improves compatibility with Crystals Magical
+```
+
 **0.6.0**
 ---
 ```

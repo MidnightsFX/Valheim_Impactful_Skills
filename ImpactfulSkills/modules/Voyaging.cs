@@ -34,7 +34,7 @@ namespace ImpactfulSkills.patches
                 //Logger.LogDebug($"Current time: {current_update_time}, Is Player attached to ship: {Player.m_localPlayer.IsAttachedToShip()}");
                 if (__instance.IsPlayerInBoat(Player.m_localPlayer) && update_timer <= current_update_time) {
                     // update the interval
-                    update_timer += (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
+                    update_timer = current_update_time + (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
                     Vector3 pvel = Player.m_localPlayer.GetVelocity();
                     // Only get XP if you are moving
                     bool skill_gain_speed = Mathf.Abs(pvel.x) > 1.5f || Mathf.Abs(pvel.z) > 1.5f;

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +19,11 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_runSpeed)))
-                    ).RemoveInstruction().InsertAndAdvance(
-                    Transpilers.EmitDelegate(ModifyRunSpeedBySkill)
-                    ).ThrowIfNotMatch("Unable to patch Run skill movement increase.");
+                    codeMatcher.MatchStartForward(
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_runSpeed)))
+                        ).RemoveInstruction().InsertAndAdvance(
+                        Transpilers.EmitDelegate(ModifyRunSpeedBySkill)
+                        ).ThrowIfNotMatch("Unable to patch Run skill movement increase.");
 
                 return codeMatcher.Instructions();
             }

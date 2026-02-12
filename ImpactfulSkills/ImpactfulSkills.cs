@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using ImpactfulSkills.common;
 using ImpactfulSkills.patches;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -15,13 +16,15 @@ namespace ImpactfulSkills
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
     [SynchronizationMode(AdminOnlyStrictness.IfOnServer)]
-    [BepInIncompatibility("blacks7ar.SNEAKer")]
     [NetworkCompatibility(CompatibilityLevel.ClientMustHaveMod, VersionStrictness.Minor)]
+    [BepInDependency("blacks7ar.SNEAKer", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("blacks7ar.MagicPlugin", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("dev.crystal.magical", BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.6.0";
+        public const string PluginVersion = "0.6.1";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
@@ -41,6 +44,8 @@ namespace ImpactfulSkills
             AnimalWhisper.SetupAnimalSkill();
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
+
+            Compatibility.CheckModCompat();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             Harmony harmony = new(PluginGUID);
