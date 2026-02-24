@@ -71,7 +71,10 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> FarmingMultiplantRequiredLevel;
         public static ConfigEntry<int> FarmingMultiplantMaxPlantedAtOnce;
         public static ConfigEntry<int> FarmingMultiplantRowCount;
+        public static ConfigEntry<float> FarmingMultiPlantSpacingMultiplier;
+        public static ConfigEntry<bool> FarmingMultiPlantSnapToExisting;
         public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
+        public static ConfigEntry<float> PlantingCostStaminaReduction;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -232,9 +235,11 @@ namespace ImpactfulSkills
             EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
             FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 25, "The level that Multiplant is enabled.", false, 0, 100);
             FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 12, "The total number of plants that can be planted at once at maximum gathering.");
-            FarmingMultiplantRowCount = BindServerConfig("Farming", "FarmingMultiplantRowCount", 4, "The number of plants in a single row before wrapping into a new row", true, 1, 12);
-            //FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
-
+            FarmingMultiplantRowCount = BindServerConfig("Farming", "FarmingMultiplantRowCount", 4, "The number of plants per row (columns) before wrapping to next row", true, 1, 12);
+            FarmingMultiPlantSpacingMultiplier = BindServerConfig("Farming", "FarmingMultiPlantSpacingMultiplier", 2.0f, "Multiplier applied to plant growRadius for spacing (2.0 = 2x radius spacing)", true, 1.0f, 5.0f);
+            FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
+            FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
+            PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
