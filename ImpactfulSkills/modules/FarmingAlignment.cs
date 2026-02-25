@@ -107,28 +107,18 @@ namespace ImpactfulSkills.modules {
             string plantName = Utils.GetPrefabName(placementGhost);
             PlantableDefinitions.TryGetValue(plantName, out Plantable plantDef);
             if (plantDef == null) {
-                // TODO Safety fallback?
+                return; // Safety check
             }
 
-            //Quaternion newRotation = OriginalRotation * Quaternion.Inverse(placementGhost.transform.rotation);
-            //Quaternion AdjustedRotation = OriginalRotation * newRotation;
-
-            Vector3 RowIncrementSpacing = Vector3.right * Spacing;
-            Vector3 ColIncrementSpacing = Vector3.forward * Spacing;
-            RowIncrementSpacing = Quaternion.AngleAxis(22.5f, Vector3.up) * RowIncrementSpacing;
-            ColIncrementSpacing = Quaternion.AngleAxis(22.5f, Vector3.up) * ColIncrementSpacing;
-
-            //Logger.LogDebug($"Rotations old:{OriginalRotation} new:{newRotation} = adjust:{AdjustedRotation} \nSpacing:{Spacing} rowspace:{RowIncrementSpacing} colspace:{ColIncrementSpacing}");
+            // Rotation-aware direction vectors based on current placement ghost rotation
+            Vector3 colIncrementSpacing = placementGhost.transform.rotation * Vector3.right * Spacing;   // Column moves right
+            Vector3 rowIncrementSpacing = placementGhost.transform.rotation * Vector3.forward * Spacing;  // Row moves forward
 
             int row = 0;
-            int column = 1;
+            int column = 0;
+            int gridCols = ValConfig.FarmingMultiplantRowCount.Value;
             foreach(PlantGhost pghost in GhostPlacementGrid) {
-                //Vector3 currentPos = placementGhost.transform.position;
-                //currentPos.x += Spacing * (column - 1);
-                //currentPos.z += Spacing * row;
-                //Heightmap.GetHeight(pghost.Ghost.transform.position, out float height);
-                //currentPos.y = height;
-                Vector3 targetPosition = placementGhost.transform.position + RowIncrementSpacing * row + ColIncrementSpacing * column;
+                Vector3 targetPosition = placementGhost.transform.position + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
                 Heightmap.GetHeight(targetPosition, out float height);
                 targetPosition.y = height;
                 pghost.Ghost.transform.position = targetPosition;
@@ -137,49 +127,53 @@ namespace ImpactfulSkills.modules {
                 // Color code valid/invalid positions
                 bool isValid = IsValidPlantPosition(targetPosition, plantDef.GrowRadius);
                 SetGhostVisibility(pghost.Ghost, isValid);
+                
+                // Increment column and wrap to next row
                 column++;
-                // Increment the row if the current placement is an end
-                if (ValConfig.FarmingMultiplantRowCount.Value % column == 0) {
+                if (column >= gridCols) {
+                    column = 0;
                     row++;
-                    column = 1;
                 }
             }
         }
 
         /// <summary>Calculate grid positions with snap-to-alignment if nearby plants exist</summary>
         private static void CalculateGridPositions(Player player, GameObject originalGhost, int maxToPlace, Plantable plantDef) {
-            // TODO: Snap to grid here?
-
             OriginalRotation = originalGhost.transform.rotation;
 
-            // Rotation-aware direction vectors
-            //Vector3 rightDir = Vector3.right * Spacing;
-            //Vector3 leftDir = Vector3.left * Spacing;
-            //Vector3 forwardDir = Vector3.forward * Spacing;
-            Vector3 RowIncrementSpacing = Vector3.forward;
-            Vector3 ColIncrementSpacing = Vector3.Cross(Vector3.up, RowIncrementSpacing);
-            Logger.LogDebug($"Placement original:{OriginalRotation} \nSpacing:{Spacing} rowspace:{RowIncrementSpacing} colspace:{ColIncrementSpacing}");
+            // Rotation-aware direction vectors based on the original ghost's rotation
+            Vector3 colIncrementSpacing = OriginalRotation * Vector3.right * Spacing;  // Each column moves right
+            Vector3 rowIncrementSpacing = OriginalRotation * Vector3.forward * Spacing; // Each row moves forward
+            
             int row = 0;
-            int column = 1;
-            for (int entry = 1; entry <= maxToPlace; entry++) {
-                Vector3 targetPosition = originalGhost.transform.position + RowIncrementSpacing * row + ColIncrementSpacing * column;
+            int column = 0;
+            int gridCols = ValConfig.FarmingMultiplantRowCount.Value;
+            for (int entry = 0; entry < maxToPlace; entry++) {
+                Vector3 targetPosition = originalGhost.transform.position + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
                 Heightmap.GetHeight(targetPosition, out float height);
                 targetPosition.y = height;
+                if (entry == 0) {
+                    //GhostPlacementGrid.Add(new PlantGhost() { Ghost = originalGhost });
+                    continue;
+                }
+                
                 ZNetView.m_forceDisableInit = true;
                 GameObject ghostGO = GameObject.Instantiate(originalGhost);
                 ghostGO.name = originalGhost.name;
                 ghostGO.transform.position = targetPosition;
+                ghostGO.transform.rotation = originalGhost.transform.rotation;
                 ZNetView.m_forceDisableInit = false;
 
                 // Color code valid/invalid positions
                 bool isValid = IsValidPlantPosition(targetPosition, plantDef.GrowRadius);
                 SetGhostVisibility(ghostGO, isValid);
                 GhostPlacementGrid.Add(new PlantGhost() { Ghost = ghostGO });
+                
+                // Increment column and wrap to next row
                 column++;
-                // Increment the row if the current placement is an end
-                if (ValConfig.FarmingMultiplantRowCount.Value % entry == 0) {
+                if (column >= gridCols) {
+                    column = 0;
                     row++;
-                    targetPosition.z += Spacing;
                 }
             }
         }
