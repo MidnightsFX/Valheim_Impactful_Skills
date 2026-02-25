@@ -110,15 +110,21 @@ namespace ImpactfulSkills.modules {
                 return; // Safety check
             }
 
+            Vector3 gridOrigin = placementGhost.transform.position;
             // Rotation-aware direction vectors based on current placement ghost rotation
             Vector3 colIncrementSpacing = placementGhost.transform.rotation * Vector3.right * Spacing;   // Column moves right
             Vector3 rowIncrementSpacing = placementGhost.transform.rotation * Vector3.forward * Spacing;  // Row moves forward
+            
+            // Try to snap to a nearby existing plant of the same type
+            if (TrySnapToNearbyPlants(gridOrigin, plantName, out Vector3 snappedOrigin)) {
+                gridOrigin = snappedOrigin + rowIncrementSpacing;
+            }
 
             int row = 0;
             int column = 0;
             int gridCols = ValConfig.FarmingMultiplantRowCount.Value;
             foreach(PlantGhost pghost in GhostPlacementGrid) {
-                Vector3 targetPosition = placementGhost.transform.position + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
+                Vector3 targetPosition = gridOrigin + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
                 Heightmap.GetHeight(targetPosition, out float height);
                 targetPosition.y = height;
                 pghost.Ghost.transform.position = targetPosition;
@@ -137,23 +143,70 @@ namespace ImpactfulSkills.modules {
             }
         }
 
+        /// <summary>If very close to an existing plant of the same type, snap grid origin to the nearest one</summary>
+        private static bool TrySnapToNearbyPlants(Vector3 originPos, string plantName, out Vector3 snappedOrigin) {
+            snappedOrigin = originPos;
+
+            if (!ValConfig.FarmingMultiPlantSnapToExisting.Value) {
+                return false;
+            }
+
+            // Search for nearby plants of the same type within snap distance
+            float snapDistance = ValConfig.PlantingSnapDistance.Value;
+            Collider[] nearbyObjects = Physics.OverlapSphere(originPos, snapDistance, plantSpaceMask);
+            
+            Plant nearestPlant = null;
+            float nearestDistance = float.MaxValue;
+
+            foreach (Collider collider in nearbyObjects) {
+                Plant plant = collider.GetComponent<Plant>();
+                if (plant != null) {
+                    // Check if it's the same type
+                    string objectName = Utils.GetPrefabName(collider.gameObject);
+                    if (objectName == plantName) {
+                        float distanceToPlant = Vector3.Distance(originPos, plant.transform.position);
+                        if (distanceToPlant < nearestDistance) {
+                            nearestDistance = distanceToPlant;
+                            nearestPlant = plant;
+                        }
+                    }
+                }
+            }
+
+            if (nearestPlant != null) {
+                snappedOrigin = nearestPlant.transform.position;
+                Logger.LogDebug($"Snapped grid origin to nearest plant at {snappedOrigin} (distance: {nearestDistance})");
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>Calculate grid positions with snap-to-alignment if nearby plants exist</summary>
         private static void CalculateGridPositions(Player player, GameObject originalGhost, int maxToPlace, Plantable plantDef) {
             OriginalRotation = originalGhost.transform.rotation;
-
+            Vector3 gridOrigin = originalGhost.transform.position;
             // Rotation-aware direction vectors based on the original ghost's rotation
             Vector3 colIncrementSpacing = OriginalRotation * Vector3.right * Spacing;  // Each column moves right
             Vector3 rowIncrementSpacing = OriginalRotation * Vector3.forward * Spacing; // Each row moves forward
+
+            // Try to snap to a nearby existing plant of the same type
+            string plantName = Utils.GetPrefabName(originalGhost);
+
+            // Try to snap to a nearby existing plant of the same type
+            if (TrySnapToNearbyPlants(gridOrigin, plantName, out Vector3 snappedOrigin)) {
+                gridOrigin = snappedOrigin + rowIncrementSpacing;
+            }
             
             int row = 0;
             int column = 0;
             int gridCols = ValConfig.FarmingMultiplantRowCount.Value;
             for (int entry = 0; entry < maxToPlace; entry++) {
-                Vector3 targetPosition = originalGhost.transform.position + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
+                Vector3 targetPosition = gridOrigin + (colIncrementSpacing * column) + (rowIncrementSpacing * row);
                 Heightmap.GetHeight(targetPosition, out float height);
                 targetPosition.y = height;
                 if (entry == 0) {
-                    //GhostPlacementGrid.Add(new PlantGhost() { Ghost = originalGhost });
+                    GhostPlacementGrid.Add(new PlantGhost() { Ghost = originalGhost });
                     continue;
                 }
                 

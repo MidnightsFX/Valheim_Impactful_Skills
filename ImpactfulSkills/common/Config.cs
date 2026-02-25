@@ -75,6 +75,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> FarmingMultiPlantSnapToExisting;
         public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
         public static ConfigEntry<float> PlantingCostStaminaReduction;
+        public static ConfigEntry<float> PlantingSnapDistance;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -240,6 +241,7 @@ namespace ImpactfulSkills
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
             FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
+            PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 5f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
