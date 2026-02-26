@@ -75,6 +75,17 @@ The run skill now increases your movement speed when running. Instead of only re
 | ![run_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_0.gif?raw=true) | ![run_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_50.gif?raw=true) | ![run_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Run_100.gif?raw=true) |
 
 
+### Jump
+
+The run skill now can be configured to provide a higher jump bonus as it grows (or less).
+The height at which you can fall and not recieve fall damage increases with skill level (big jumps won't hurt!)
+Total fall damage is reduced with skill level (default 50% at level 100)
+
+| Jump 0 | Jump 50 | Jump 100 |
+| ------------- | ------------- | ------------- |
+| ![jump_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_0.gif?raw=true) | ![jump_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_50.gif?raw=true) | ![jump_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_100.gif?raw=true) |
+
+
 ### Voyager (new skill)
 
 Voyager increases your potential speed when sailing in a boat. Along with increasing your ability to handle close hauling, when sailing almost against the wind.
@@ -113,7 +124,7 @@ Hauling provides a way to gain innate carry weight, and move large amounts of go
 
 | Hauling 0 | Hauling 50 | Hauling 100 |
 | ------------- | ------------- | ------------- |
-| ![voyager_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_0.gif?raw=true) | ![voyager_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_50.gif?raw=true) | ![voyager_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_100.gif?raw=true) |
+| ![hauling_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_0.gif?raw=true) | ![hauling_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_50.gif?raw=true) | ![hauling_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_100.gif?raw=true) |
 
 
 ### Knowledge Sharing
