@@ -108,6 +108,14 @@ Taming reduces the amount of time it takes to tame creatures. It also increases 
 
 Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
 
+- Innate - Provides a carry weight bonus based on skill (50 at lvl 100)
+- Innate - Makes carrying carts easier
+
+| Hauling 0 | Hauling 50 | Hauling 100 |
+| ------------- | ------------- | ------------- |
+| ![voyager_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_0.gif?raw=true) | ![voyager_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_50.gif?raw=true) | ![voyager_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_100.gif?raw=true) |
+
+
 ### Knowledge Sharing
 
 Expertise in one area of knowledge now allows you to gain skills faster in other areas. Being the best builder in the group no longer means you will never level your combat skills.

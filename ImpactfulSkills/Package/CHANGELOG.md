@@ -1,3 +1,18 @@
+**0.7.0**
+---
+```
+- Adds multi-planting for the cultivator
+	- This can be entirely enabled/disabled
+	- Configurable number of max plants
+	- Configurable level for when this perk becomes active
+	- SNAPPING for same plant types (configurable)
+- Adds Jumping skill improvements
+	- lvl 10 your jump height can start increasing (vanilla also increases your jump height)
+	- Jump modifier is a percentage of vanilla (0% removes jumping), default 125%
+	- lvl 25 the distance you can fall before taking damage is increased (configurable, scales)
+	- Fall damage reduction based on jumping skill level (default 50% less fall damage at level 100)
+```
+
 **0.6.1**
 ---
 ```
