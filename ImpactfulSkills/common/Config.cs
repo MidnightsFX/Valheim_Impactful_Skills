@@ -50,6 +50,16 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableRun;
         public static ConfigEntry<float> RunSpeedFactor;
 
+        public static ConfigEntry<bool> EnableJump;
+        public static ConfigEntry<float> JumpHeightFactor;
+        public static ConfigEntry<float> JumpHeightRequiredLevel;
+        public static ConfigEntry<bool> EnableFallDamageReduction;
+        public static ConfigEntry<float> FallDamageReductionFactor;
+        public static ConfigEntry<float> FallDamageReductionRequiredLevel;
+        public static ConfigEntry<float> FallDamageHeightBonus;
+        public static ConfigEntry<float> FallDamageHeightRequiredLevel;
+        public static ConfigEntry<bool> EnableFallDamageHeightBonus;
+
         public static ConfigEntry<bool> EnableAnimalWhisper;
         public static ConfigEntry<float> AnimalTamingSpeedFactor;
         public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
@@ -192,6 +202,16 @@ namespace ImpactfulSkills
 
             EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
             RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
+
+            EnableJump = BindServerConfig("Jump", "EnableJump", true, "Enable jump skill changes.");
+            JumpHeightFactor = BindServerConfig("Jump", "JumpHeightFactor", 125f, "Percentage of original jump height at skill level 100. 100 = no change, 50 = half height, 200 = double height.", false, 50f, 300f);
+            JumpHeightRequiredLevel = BindServerConfig("Jump", "JumpHeightRequiredLevel", 10f, "Minimum jump skill level required to gain jump height bonuses.", false, 0f, 100f);
+            EnableFallDamageReduction = BindServerConfig("Jump", "EnableFallDamageReduction", true, "Enable fall damage reduction based on jump skill.");
+            FallDamageReductionFactor = BindServerConfig("Jump", "FallDamageReductionFactor", 0.5f, "How much fall damage is reduced at skill level 100. 0.5 means 50% reduction at max level.", false, 0f, 1f);
+            FallDamageReductionRequiredLevel = BindServerConfig("Jump", "FallDamageReductionRequiredLevel", 15f, "Minimum jump skill level required to gain fall damage reduction.", false, 0f, 100f);
+            EnableFallDamageHeightBonus = BindServerConfig("Jump", "EnableFallDamageHeightBonus", true, "Enables Jump skill impacting the distance you can fall without recieving any fall damage.");
+            FallDamageHeightRequiredLevel = BindServerConfig("Jump", "FallDamageHeightRequiredLevel", 25f, "The required level to start getting an increase to the height at which you will not recieve any fall damage.", false, 0, 100f);
+            FallDamageHeightBonus = BindServerConfig("Jump", "FallDamageHeightBonus", 3f, "Bonus to max fall height before taking damage at skill level 100 (meters). Scales with skill level (default is 4, and this is added to that).", false, 0f, 50f);
 
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", false, 0.1f, 1f);
