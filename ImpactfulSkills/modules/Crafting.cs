@@ -30,7 +30,7 @@ namespace ImpactfulSkills.patches
         {
             if (!ValConfig.EnableCrafting.Value || Player.m_localPlayer == null)
                 return base_amount_crafted;
-            int num = base_amount_crafted;
+            int craftedTotal = base_amount_crafted;
             CraftingStation currentCraftingStation = Player.m_localPlayer.GetCurrentCraftingStation();
             float skillFactor;
             float skillLevel;
@@ -43,83 +43,93 @@ namespace ImpactfulSkills.patches
                 skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
             }
             
-            if (currentCraftingStation != null && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1)
-                num += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel);
-            if (num != base_amount_crafted)
-            {
-                Vector3 vector3 = ((Component)Player.m_localPlayer).transform.position + Vector3.up;
-                DamageText.instance.ShowText((DamageText.TextType)7, vector3, string.Format("+{0}", (object)(num - base_amount_crafted)), true);
-                instance.m_craftBonusEffect.Create(vector3, Quaternion.identity, (Transform)null, 1f, -1);
+            if (currentCraftingStation != null) {
+                if (instance.m_craftRecipe.m_craftingStation.m_craftingSkill != Skills.SkillType.Cooking && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1) {
+                    return base_amount_crafted;
+                }
+                craftedTotal += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel, instance.m_craftRecipe.m_craftingStation.m_craftingSkill);
             }
-            return num;
+                
+            if (craftedTotal != base_amount_crafted) {
+                Vector3 playerUpPos = Player.m_localPlayer.transform.position + Vector3.up;
+                DamageText.instance.ShowText(DamageText.TextType.Bonus, playerUpPos, $"+{(craftedTotal - base_amount_crafted)}", true);
+                instance.m_craftBonusEffect.Create(playerUpPos, Quaternion.identity, null, 1f, -1);
+            }
+            return craftedTotal;
         }
 
         private static void DetermineCraftingRefund(InventoryGui instance, int num_recipe_crafted)
         {
-            float skillLevel = ((Character)Player.m_localPlayer).GetSkillLevel((Skills.SkillType)107);
-            float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)107);
-            if (!ValConfig.EnableMaterialReturns.Value || (double)skillLevel < (double)ValConfig.CraftingMaterialReturnsLevel.Value)
-                return;
-            Dictionary<ItemDrop, int> dictionary = new Dictionary<ItemDrop, int>();
-            if (instance.m_craftRecipe.m_requireOnlyOneIngredient)
-            {
+            float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
+            float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
+            if (ValConfig.EnableMaterialReturns.Value == false || skillLevel < ValConfig.CraftingMaterialReturnsLevel.Value) { return; }
+
+            Dictionary<ItemDrop, int> resourcesToReturn = new Dictionary<ItemDrop, int>();
+            if (instance.m_craftRecipe.m_requireOnlyOneIngredient) {
                 Logger.LogDebug("Require any resource recipes do not get a refund.");
-            }
-            else
-            {
-                foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources)
-                {
-                    float num1 = UnityEngine.Random.value;
-                    float num2 = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
-                    Logger.LogDebug(string.Format("Checking refund chance for {0} {1} < {2}", (object)((UnityEngine.Object)resource.m_resItem).name, (object)num1, (object)num2));
-                    if ((double)num1 <= (double)num2)
-                    {
-                        if (resource.m_amount > 1)
-                        {
-                            int num3 = Mathf.RoundToInt((float)resource.m_amount * (ValConfig.MaxCraftingMaterialReturnPercent.Value * skillFactor));
-                            dictionary.Add(resource.m_resItem, num3);
+            } else {
+                foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources) {
+                    float roll = UnityEngine.Random.value;
+                    float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
+                    Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");
+                    if (roll <= chance) {
+                        if (resource.m_amount > 1) {
+                            int returnedAmount = Mathf.RoundToInt(resource.m_amount * (ValConfig.MaxCraftingMaterialReturnPercent.Value * skillFactor));
+                            resourcesToReturn.Add(resource.m_resItem, returnedAmount);
+                        } else if (roll < chance / 2.0) {
+                            resourcesToReturn.Add(resource.m_resItem, 1);
                         }
-                        else if ((double)num1 < (double)num2 / 2.0)
-                            dictionary.Add(resource.m_resItem, 1);
                     }
                 }
-                if (dictionary.Count == 0)
-                    return;
-                Vector3 vector3 = ((Component)Player.m_localPlayer).transform.position + Vector3.up;
-                DamageText.instance.ShowText((DamageText.TextType)7, vector3, LocalizationManager.Instance.TryTranslate("$craft_refund"), true);
+                if (resourcesToReturn.Count == 0) { return; }
+
+                Vector3 vector3 = Player.m_localPlayer.transform.position + Vector3.up;
+                DamageText.instance.ShowText(DamageText.TextType.Bonus, vector3, LocalizationManager.Instance.TryTranslate("$craft_refund"), true);
                 instance.m_craftBonusEffect.Create(vector3, Quaternion.identity, (Transform)null, 1f, -1);
-                foreach (KeyValuePair<ItemDrop, int> keyValuePair in dictionary)
-                {
-                    bool flag = ((Humanoid)Player.m_localPlayer).GetInventory().AddItem(((Component)keyValuePair.Key).gameObject, keyValuePair.Value);
-                    Logger.LogDebug(string.Format("Refund to add: {0} {1} | refunded? {2}", (object)((UnityEngine.Object)keyValuePair.Key).name, (object)keyValuePair.Value, (object)flag));
+                foreach (KeyValuePair<ItemDrop, int> keyValuePair in resourcesToReturn) {
+                    bool didRefund = Player.m_localPlayer.GetInventory().AddItem(keyValuePair.Key.gameObject, keyValuePair.Value);
+                    Logger.LogDebug($"Refund to add: {keyValuePair.Key.name} {keyValuePair.Value} | refunded? {didRefund}");
                 }
             }
         }
 
-        private static int GetCraftingItemBonusAmount(
-          InventoryGui instance,
-          int base_amount_crafted,
-          float skill_factor,
-          float player_skill_level)
-        {
+        private static int GetCraftingItemBonusAmount(InventoryGui instance, int base_amount_crafted, float skill_factor, float player_skill_level, Skills.SkillType craftingSkill) {
             int craftingItemBonusAmount = 0;
-            if (!ValConfig.EnableBonusItemCrafting.Value || (double)player_skill_level < (double)ValConfig.CraftingBonusCraftsLevel.Value)
+            
+            if (craftingSkill == Skills.SkillType.Cooking && (ValConfig.EnableCookingBonusItems.Value == false || ValConfig.RequiredLevelForBonusCookingItems.Value > player_skill_level)) {
                 return craftingItemBonusAmount;
-            float success_chance = ValConfig.CraftingBonusChance.Value * skill_factor;
-            int bonusAmount = 1;
-            if (instance.m_craftRecipe.m_amount > 1 && ValConfig.EnableCraftBonusAsFraction.Value)
-            {
-                bonusAmount = Mathf.RoundToInt((float)instance.m_craftRecipe.m_amount * ValConfig.CraftBonusFractionOfCraftNumber.Value);
-                Logger.LogDebug(string.Format("Bonus updated now {0}, using fraction of result.", (object)bonusAmount));
+            } else if (ValConfig.EnableBonusItemCrafting.Value == false || player_skill_level < ValConfig.CraftingBonusCraftsLevel.Value) {
+                return craftingItemBonusAmount;
             }
-            for (int index = 1; index <= ValConfig.CraftingMaxBonus.Value; ++index)
-            {
+            float success_chance;
+            if (craftingSkill == Skills.SkillType.Cooking) {
+                success_chance = ValConfig.ChanceForCookingBonusItems.Value * skill_factor;
+            } else {
+                success_chance = ValConfig.CraftingBonusChance.Value * skill_factor;
+            }
+
+            int bonusAmount = 1;
+            // Bonus amount improvements for things like Nails
+            if (craftingSkill != Skills.SkillType.Cooking && instance.m_craftRecipe.m_amount > 1 && ValConfig.EnableCraftBonusAsFraction.Value) {
+                bonusAmount = Mathf.RoundToInt(instance.m_craftRecipe.m_amount * ValConfig.CraftBonusFractionOfCraftNumber.Value);
+                Logger.LogDebug($"Bonus updated now {bonusAmount}, using fraction of result.");
+            }
+
+            int maxItems;
+            if (craftingSkill == Skills.SkillType.Cooking) {
+                maxItems = ValConfig.CookingBonusItemMaxAmount.Value;
+            } else {
+                maxItems = ValConfig.CraftingMaxBonus.Value;
+            }
+
+            for (int index = 1; index <= maxItems; ++index) {
                 float roll = UnityEngine.Random.Range(0, 1f);
                 Logger.LogDebug($"Bonus crafting roll {index}: {success_chance} >= {roll}");
-                if ((double)success_chance >= (double)roll)
+                if (success_chance >= roll) {
                     craftingItemBonusAmount += bonusAmount;
-                else
+                } else {
                     break;
+                }
             }
             Logger.LogDebug($"Crafting {instance.m_craftRecipe.m_item.m_itemData.m_shared.m_name} with new total {base_amount_crafted} + (bonus) {craftingItemBonusAmount}.");
             return craftingItemBonusAmount;

@@ -108,6 +108,10 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> WeaponSkillParryBonus;
 
         public static ConfigEntry<bool> EnableCooking;
+        public static ConfigEntry<bool> EnableCookingBonusItems;
+        public static ConfigEntry<float> ChanceForCookingBonusItems;
+        public static ConfigEntry<int> RequiredLevelForBonusCookingItems;
+        public static ConfigEntry<int> CookingBonusItemMaxAmount;
         public static ConfigEntry<float> CookingBurnReduction;
 
         public static ConfigEntry<bool> EnableHauling;
@@ -299,7 +303,12 @@ namespace ImpactfulSkills
             CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
             MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
+            
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
+            EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");
+            RequiredLevelForBonusCookingItems = BindServerConfig("Cooking", "RequiredLevelForBonusCookingItems", 10, "Minimum level to start crafting bonus food items.", false, 0, 100);
+            ChanceForCookingBonusItems = BindServerConfig("Cooking", "ChanceForCookingBonusItems", 0.4f, "The chance to craft bonus food items at level 100. 0.4 is a 40% chance.", valmax: 1f);
+            CookingBonusItemMaxAmount = BindServerConfig("Cooking", "CookingBonusItemMaxAmount", 3, "The maximum number of cooked items you can recieve as a bonus, each item is an additional chance roll", true, 0, 10);
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
