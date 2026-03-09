@@ -43,11 +43,10 @@ namespace ImpactfulSkills.patches {
         }
 
         public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null) {
-            if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID())
-                return;
-            float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor((Skills.SkillType)12);
+            if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID()) { return; }
+            float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor(Skills.SkillType.Pickaxes);
             float num1 = (float)(1.0 + (double)ValConfig.MiningDmgMod.Value * ((double)skillFactor * 100.0) / 100.0);
-            Logger.LogDebug(string.Format("Player mining dmg multiplier: {0}", (object)num1));
+            Logger.LogDebug($"Player mining dmg multiplier: {num1}");
             hit.m_damage.m_pickaxe *= num1;
             if (ValConfig.EnableMiningCritHit.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RequiredLevelForMiningCrit.Value && (double)UnityEngine.Random.value <= (double)ValConfig.ChanceForMiningCritHit.Value) {
                 Logger.LogDebug("Mining Critical hit activated");
@@ -111,7 +110,6 @@ namespace ImpactfulSkills.patches {
             } else {
                 Logger.LogDebug($"Player mining aoe activated: {aoe_roll} > {chance}");
                 Vector3 point = hit.m_point;
-                HitData.DamageTypes damage = hit.m_damage;
                 HitData aoedmg = hit;
                 double radius = (double)ValConfig.MiningAOERange.Value * (double)skillFactor;
                 int rockmask = Mining.rockmask;
@@ -128,8 +126,7 @@ namespace ImpactfulSkills.patches {
 
         public static bool ArrayContains(Collider[] group, Collider target) {
             foreach (UnityEngine.Object @object in group) {
-                if (@object == target)
-                    return true;
+                if (@object == target) { return true; }
             }
             return false;
         }
@@ -168,11 +165,11 @@ namespace ImpactfulSkills.patches {
                     if (flag) {
                         colliderArray = mine_targets;
                         for (index = 0; index < colliderArray.Length; ++index) {
+                            if (colliderArray == null || minerock == null) { break; }
                             obj_collider = colliderArray[index];
                             if (!(obj_collider == null)) {
                                 ++iterations;
-                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
-                                    yield return (object)new WaitForSeconds(0.2f);
+                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0) { yield return new WaitForFixedUpdate(); }
                                 if (Mining.ArrayContains(minerock.m_hitAreas, obj_collider)) {
                                     Logger.LogDebug("AOE Damage applying to minerock");
                                     aoedmg.m_point = obj_collider.bounds.center;
@@ -184,14 +181,15 @@ namespace ImpactfulSkills.patches {
                     } else {
                         colliderArray = mine_targets;
                         for (index = 0; index < colliderArray.Length; ++index) {
+                            if (colliderArray == null || minerock5 == null) { break; }
                             obj_collider = colliderArray[index];
                             if (!(obj_collider == null)) {
                                 ++iterations;
                                 if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
-                                    yield return (object)new WaitForSeconds(0.1f);
+                                    yield return new WaitForFixedUpdate();
                                 int areaIndex = minerock5.GetAreaIndex(obj_collider);
                                 if (areaIndex >= 0) {
-                                    Logger.LogDebug(string.Format("AOE Damage applying to minerock5 index: {0}", (object)areaIndex));
+                                    Logger.LogDebug($"AOE Damage applying to minerock5 index: {areaIndex}");
                                     aoedmg.m_point = obj_collider.bounds.center;
                                     aoedmg.m_hitCollider = obj_collider;
                                     minerock5.DamageArea(areaIndex, aoedmg);
@@ -206,12 +204,10 @@ namespace ImpactfulSkills.patches {
         }
 
         public static void IncreaseDestructibleMineDrops(Destructible dmine) {
-            if (dmine.m_spawnWhenDestroyed != null)
-                return;
+            if (dmine.m_spawnWhenDestroyed != null) { return; }
             Vector3 position = ((Component)dmine).transform.position;
             DropOnDestroyed component = ((Component)dmine).GetComponent<DropOnDestroyed>();
-            if (component == null || component.m_dropWhenDestroyed == null)
-                return;
+            if (component == null || component.m_dropWhenDestroyed == null) { return; }
             Mining.IncreaseMiningDrops(component.m_dropWhenDestroyed, position);
         }
 

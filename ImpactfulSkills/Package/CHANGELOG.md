@@ -1,3 +1,14 @@
+**0.7.1**
+---
+```
+- Cooking bonus items now apply to mead bases
+- Added seperate configs for Cooking
+	- Chance of bonus cooking items
+	- Max number of bonus items possible
+	- Required level to activate bonus item chance
+- Fixes for a potential race condition when mining is exploding a whole vein
+```
+
 **0.7.0**
 ---
 ```
