@@ -28,8 +28,9 @@ namespace ImpactfulSkills.patches
 
         private static int CraftableBonus(InventoryGui instance, int base_amount_crafted)
         {
-            if (!ValConfig.EnableCrafting.Value || Player.m_localPlayer == null)
+            if (!ValConfig.EnableCrafting.Value || Player.m_localPlayer == null) {
                 return base_amount_crafted;
+            } 
             int craftedTotal = base_amount_crafted;
             CraftingStation currentCraftingStation = Player.m_localPlayer.GetCurrentCraftingStation();
             float skillFactor;
@@ -43,10 +44,9 @@ namespace ImpactfulSkills.patches
                 skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
             }
             
-            if (currentCraftingStation != null) {
-                if (instance.m_craftRecipe.m_craftingStation.m_craftingSkill != Skills.SkillType.Cooking && instance.m_craftRecipe.m_item.m_itemData.m_shared.m_maxStackSize > 1) {
-                    return base_amount_crafted;
-                }
+            // Skip bonus rolls for upgrades, or if the crafting station is not set
+            if (currentCraftingStation != null && instance.m_craftRecipe.m_craftingStation != null && instance.m_craftUpgradeItem == null) {
+                Logger.LogDebug("Determining crafting recipe bonus amount");
                 craftedTotal += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel, instance.m_craftRecipe.m_craftingStation.m_craftingSkill);
             }
                 

@@ -4,5 +4,6 @@
   "skill_Voyager": "Voyager",
   "skill_Voyager_description": "The speed and skill that you can maneuver your boat.",
   "skill_Hauling": "Hauling",
-  "skill_Hauling_description": "Your ability to carry, store and transport goods."
+  "skill_Hauling_description": "Your ability to carry, store and transport goods.",
+  "craft_refund": "Some materials saved!"
 }

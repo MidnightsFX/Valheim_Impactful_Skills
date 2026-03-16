@@ -1,3 +1,12 @@
+**0.7.2**
+---
+```
+- Fixes crafting bonuses for stacked item not being applied
+- Fixes error while trying to upgrade extremely low cost items
+- Enabled bonus item crafting for whole item pieces (such as armor etc, same as vanilla)
+- Added missing localization for crafting materials refund
+```
+
 **0.7.1**
 ---
 ```
