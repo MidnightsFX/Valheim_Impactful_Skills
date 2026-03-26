@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using ImpactfulSkills.modules;
+using ImpactfulSkills.modules.Multiplant;
 
 namespace ImpactfulSkills.compatibility {
     internal static class PlantEasily {
@@ -20,7 +20,7 @@ namespace ImpactfulSkills.compatibility {
 
             internal static void RegisterPlantEasilyLimit() {
                 register.Invoke(null, new object[] {
-                "ImpactfulSkills.modules.PlantGrid",
+                "ImpactfulSkills.modules.Multiplant.PlantGrid",
                 new Func<int>(() => PlantGrid.MaxToPlantAtOnce())
             });
             }

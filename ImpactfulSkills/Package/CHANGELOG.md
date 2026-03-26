@@ -1,8 +1,12 @@
-**0.7.3**
+**0.8.0**
 ---
 ```
-- Fixes duplicate planting of the first plant when multi-planting
-- Saves rotation of multi-planted entries
+- Adds mod detection and automatic deactivation of Impactful skills multiplanting with other grid-plant mods are available (configurable)
+- Overhauls multi-plant system
+	- Fixes duplicate planting of the first plant when multi-planting
+	- Saves rotation of multi-planted entries
+	- Allows better snapping to nearby plants
+	- Allows snapping to other types of nearby plants
 - Adds a safety reset when AOE harvest is interrupted (default 10s)
 - Improves consistency of AOE harvest reset
 ```

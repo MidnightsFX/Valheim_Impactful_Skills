@@ -21,6 +21,10 @@ namespace ImpactfulSkills
     [BepInDependency("blacks7ar.MagicPlugin", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("dev.crystal.magical", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("advize.PlantEasily", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("fr.galathil.FarmGrid", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.orianaventure.mod.VentureFarmGrid", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("xeio.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("EardwulfDoesMods.Comfy.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
