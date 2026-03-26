@@ -134,8 +134,9 @@ namespace ImpactfulSkills.modules.Multiplant {
                 PlantGhostController.BuildGrid(__instance.m_placementGhost);
 
                 // Restore the rotation the player had before Valheim reset m_placeRotation
-                if (pendingRotation.HasValue)
+                if (pendingRotation.HasValue) {
                     RestorePlaceRotation(__instance, pendingRotation.Value);
+                } 
             }
         }
 

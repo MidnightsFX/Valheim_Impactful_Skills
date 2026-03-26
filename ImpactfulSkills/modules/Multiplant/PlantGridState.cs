@@ -46,25 +46,13 @@ namespace ImpactfulSkills.modules.Multiplant {
         internal static void Update() {
             if (PlacementGhost == null) return;
 
-            UpdateAltPlacement();
-            UpdateBaseTransform();
-            UpdateFixedRotation();
-            UpdateDirectionsAndSnap();
-        }
-
-        private static void UpdateAltPlacement() {
             AltPlacement = ZInput.GetButton("AltPlace");
-        }
-
-        private static void UpdateBaseTransform() {
             BasePosition = PlacementGhost.transform.position;
             BaseRotation = PlacementGhost.transform.rotation;
-        }
-
-        private static void UpdateFixedRotation() {
             Vector3 euler = BaseRotation.eulerAngles;
             euler.y = Mathf.Round(euler.y / 90f) * 90f;
             FixedRotation = Quaternion.Euler(euler);
+            UpdateDirectionsAndSnap();
         }
 
         private static void UpdateDirectionsAndSnap() {
@@ -73,17 +61,17 @@ namespace ImpactfulSkills.modules.Multiplant {
 
             // Default: derive from FixedRotation so grid direction tracks scroll input
             // and naturally persists between placements (Valheim's m_placeRotation is preserved).
-            ResetDirections();
+            // Row = ghost forward, Column = ghost right — follow the actual ghost rotation freely
+            RowDirection = BaseRotation * Vector3.forward;
+            ColumnDirection = BaseRotation * Vector3.right;
 
             if (ValConfig.FarmingMultiPlantSnapToExisting.Value && !AltPlacement) {
                 // SnapSystem will set RowDirection, ColumnDirection, and BasePosition if a snap is found
-                if (SnapSystem.FindSnapPoints(plantName, spacing))
-                    return;
+                if (SnapSystem.FindSnapPoints(plantName, spacing)) { return; }
             }
 
             // If the player has rotated since the last snap, the saved orientation is stale.
-            if (SnapSystem.HasRotationChangedSinceSnap())
-                ResetSavedOrientation();
+            if (SnapSystem.HasRotationChangedSinceSnap()) { ResetSavedOrientation(); }
 
             // No snap — use the saved snapped orientation if available so the grid keeps
             // its alignment after placement (newly placed plants block snap candidates).
@@ -95,12 +83,6 @@ namespace ImpactfulSkills.modules.Multiplant {
                 RowDirection *= spacing;
                 ColumnDirection *= spacing;
             }
-        }
-
-        private static void ResetDirections() {
-            // Row = ghost forward, Column = ghost right — follow the actual ghost rotation freely
-            RowDirection = BaseRotation * Vector3.forward;
-            ColumnDirection = BaseRotation * Vector3.right;
         }
 
         internal static void ResetSavedOrientation() {

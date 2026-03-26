@@ -22,9 +22,6 @@ namespace ImpactfulSkills.modules.Multiplant {
         private static string _lastPlantName = "";
         private static bool _preservePool;
 
-        private static Color invalidColor = new Color(1, 0, 0, 1f);
-        private static Color validColor = new Color(1, 1, 1, 1f);
-
         private static int MaxActiveGhosts => PlantGrid.MaxToPlantAtOnce() - 1;
         private static int TotalCells => 1 + MaxActiveGhosts;
 
@@ -36,8 +33,9 @@ namespace ImpactfulSkills.modules.Multiplant {
                 DestroyPool();
                 return;
             }
+
             DetectPlantChange(rootGhost);
-            if (ShouldPreservePool()) return;
+            if (ShouldPreservePool()) { return; } 
             DestroyPool();
         }
 
@@ -50,8 +48,9 @@ namespace ImpactfulSkills.modules.Multiplant {
         }
 
         internal static void DestroyPool() {
-            foreach (GameObject g in ExtraGhosts)
+            foreach (GameObject g in ExtraGhosts) {
                 if (g != null) UnityEngine.Object.Destroy(g);
+            }
             ExtraGhosts.Clear();
             GhostValid.Clear();
             PlantGrid.GridPlantingActive = false;
@@ -145,10 +144,11 @@ namespace ImpactfulSkills.modules.Multiplant {
             }
 
             bool isValid = IsValidPosition(pos);
-            SetGhostColor(ghost, isValid);
+            ghost.GetComponent<Piece>()?.SetInvalidPlacementHeightlight(!isValid);
 
-            if (index < GhostValid.Count)
+            if (index < GhostValid.Count) {
                 GhostValid[index] = isValid;
+            }
         }
 
         private static GameObject GetGhost(int index) {
@@ -157,8 +157,6 @@ namespace ImpactfulSkills.modules.Multiplant {
             return ei < ExtraGhosts.Count ? ExtraGhosts[ei] : null;
         }
 
-        // ── Validation ─────────────────────────────────────────────────────────
-
         internal static bool IsValidPosition(Vector3 pos) {
             Heightmap heightmap = Heightmap.FindHeightmap(pos);
             if (heightmap == null || PlantGridState.Plant == null) { return false; }
@@ -166,20 +164,6 @@ namespace ImpactfulSkills.modules.Multiplant {
 
             return Physics.OverlapSphere(pos, PlantGridState.Plant.m_growRadius, Plant.m_spaceMask).Length == 0;
         }
-
-        internal static void SetGhostColor(GameObject ghost, bool isValid) {
-            foreach (Renderer r in ghost.GetComponentsInChildren<Renderer>()) {
-                foreach (Material mat in r.materials) {
-                    if (isValid == false) {
-                        mat.color = invalidColor;
-                    } else {
-                        mat.color = validColor;
-                    }
-                }
-            }
-        }
-
-        // ── Pool identity tracking ─────────────────────────────────────────────
 
         private static void DetectPlantChange(GameObject rootGhost) {
             string name = rootGhost.name;
