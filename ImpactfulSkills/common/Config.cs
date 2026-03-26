@@ -80,7 +80,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableFarmingMultiPlant;
         public static ConfigEntry<int> FarmingMultiplantRequiredLevel;
         public static ConfigEntry<int> FarmingMultiplantMaxPlantedAtOnce;
-        public static ConfigEntry<int> FarmingMultiplantRowCount;
+        public static ConfigEntry<int> FarmingMultiplantColumnCount;
         public static ConfigEntry<bool> FarmingMultiPlantSnapToExisting;
         public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
         public static ConfigEntry<float> PlantingCostStaminaReduction;
@@ -90,6 +90,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<string> FarmingSnapStyle;
         public static ConfigEntry<bool> FarmingSnapPreferCardinal;
         public static ConfigEntry<bool> EnableSnappingToOtherPlants;
+        public static ConfigEntry<float> FarmingMultiPlantDistanceBufferModifier;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -264,8 +265,9 @@ namespace ImpactfulSkills
             EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
             FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 25, "The level that Multiplant is enabled.", false, 0, 100);
             FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 12, "The total number of plants that can be planted at once at maximum gathering.");
-            FarmingMultiplantRowCount = BindServerConfig("Farming", "FarmingMultiplantRowCount", 4, "The number of plants per row (columns) before wrapping to next row", true, 1, 12);
+            FarmingMultiplantColumnCount = BindServerConfig("Farming", "FarmingMultiplantColumnCount", 4, "Maximum number of columns in the planting grid. The grid will form the closest square shape possible without exceeding this limit.", true, 1, 12);
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
+            FarmingMultiPlantDistanceBufferModifier = BindServerConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
             FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
             PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 5f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);

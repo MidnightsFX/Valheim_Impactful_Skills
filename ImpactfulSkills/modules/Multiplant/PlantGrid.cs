@@ -126,7 +126,8 @@ namespace ImpactfulSkills.modules.Multiplant {
 
                 Plant plant = __instance.m_placementGhost.GetComponent<Plant>();
                 if (plant != null) {
-                    Spacing = plant.m_growRadius + ValConfig.FarmingMultiPlantBufferSpace.Value;
+                    Spacing = plant.m_growRadius * ValConfig.FarmingMultiPlantDistanceBufferModifier.Value
+                              + ValConfig.FarmingMultiPlantBufferSpace.Value;
                 }
 
                 PlantGridState.SetReferences(__instance.m_placementGhost);

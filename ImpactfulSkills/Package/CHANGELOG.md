@@ -7,6 +7,7 @@
 	- Saves rotation of multi-planted entries
 	- Allows better snapping to nearby plants
 	- Allows snapping to other types of nearby plants
+	- Added configuration to allow limiting the size of the planting grid (FarmingMultiplantColumnCount)
 - Adds a safety reset when AOE harvest is interrupted (default 10s)
 - Improves consistency of AOE harvest reset
 ```

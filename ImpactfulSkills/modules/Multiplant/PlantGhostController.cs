@@ -24,6 +24,13 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         private static int MaxActiveGhosts => PlantGrid.MaxToPlantAtOnce() - 1;
         private static int TotalCells => 1 + MaxActiveGhosts;
+        // Target a square layout, capped by the configured max columns
+        private static int Columns {
+            get {
+                int ideal = Mathf.CeilToInt(Mathf.Sqrt(TotalCells));
+                return Mathf.Clamp(ideal, 1, ValConfig.FarmingMultiplantColumnCount.Value);
+            }
+        }
 
         // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -66,7 +73,7 @@ namespace ImpactfulSkills.modules.Multiplant {
 
             if (PlantGridState.PlacementGhost == null) return;
 
-            int cols = ValConfig.FarmingMultiplantRowCount.Value;
+            int cols = Columns;
 
             // Root ghost is always updated
             UpdateGhost(0, 0, 0);
