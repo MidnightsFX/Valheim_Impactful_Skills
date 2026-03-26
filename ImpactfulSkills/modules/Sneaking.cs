@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using ImpactfulSkills.common;
+using ImpactfulSkills.compatibility;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
@@ -17,7 +17,7 @@ namespace ImpactfulSkills.patches
             [HarmonyPatch("UpdateWalking")]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, null);
-                if (Compatibility.IsSNEAKerEnabled) {
+                if (Modcheck.IsSNEAKerEnabled) {
                     Logger.LogDebug("SNEAKer detected, using compatibility patch.");
                     codeMatcher.MatchStartForward(
                         new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsEncumbered")),

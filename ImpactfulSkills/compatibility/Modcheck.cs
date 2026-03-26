@@ -6,12 +6,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImpactfulSkills.common {
-    internal static class Compatibility {
+namespace ImpactfulSkills.compatibility {
+    internal static class Modcheck {
         // Mod flags
         public static bool IsSNEAKerEnabled = false;
         public static bool IsMagicPluginEnabled = false;
         public static bool IsCrystalMagicalEnabled = false;
+        public static bool IsPlantEasilyEnabled = false;
 
         internal static void CheckModCompat() {
             try {
@@ -26,6 +27,9 @@ namespace ImpactfulSkills.common {
                 }
                 if (plugins.Keys.Contains("dev.crystal.magical")) {
                     IsCrystalMagicalEnabled = true;
+                }
+                if (plugins.Keys.Contains("advize.PlantEasily")) {
+                    IsPlantEasilyEnabled = true;
                 }
             } catch {
                 Logger.LogWarning("Unable to check mod compatibility. Ensure that Bepinex can load.");

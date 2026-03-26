@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using ImpactfulSkills.common;
+using ImpactfulSkills.compatibility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,11 @@ namespace ImpactfulSkills.modules {
         private static int GhostLayer = 0;
         internal static float Spacing = 0;
         internal static Quaternion OriginalRotation = Quaternion.identity;
+        internal static Quaternion SavedPlacementRotation = Quaternion.identity;
+        internal static bool UseSavedPlacementRotation = false;
+        internal static int UserDefinedMax = ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value;
+
+        internal static bool UsePlantEasilyInstead = TryUsePlantEasilyInstead();
 
         internal class PlantGhost {
             public GameObject Ghost { get; set; }
@@ -26,6 +32,13 @@ namespace ImpactfulSkills.modules {
             public float GrowRadius { get; set; }
             public GameObject Refgo { get; set; }
             public List<Piece.Requirement> Seeds { get; set; }
+        }
+
+        public static bool TryUsePlantEasilyInstead() {
+            if (ValConfig.UsePlantEasilyGridInstead.Value && Modcheck.IsPlantEasilyEnabled) {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Build all plantable information when ZNetScene is ready</summary>
@@ -73,7 +86,7 @@ namespace ImpactfulSkills.modules {
         [HarmonyPatch(typeof(Player), nameof(Player.SetupPlacementGhost))]
         static class PlayerSetupPlacementGhost {
             static void Postfix(Player __instance) {
-                if (!ValConfig.EnableFarmingMultiPlant.Value || __instance.m_placementGhost == null || !HoldingCultivator()) {
+                if (ValConfig.EnableFarmingMultiPlant.Value == false || UsePlantEasilyInstead || __instance.m_placementGhost == null || !HoldingCultivator()) {
                     DestroyPlacementGhosts();
                     return;
                 }
@@ -95,9 +108,7 @@ namespace ImpactfulSkills.modules {
         [HarmonyPatch(typeof(Player), nameof(Player.UpdatePlacementGhost))]
         static class AdjustPlacementGhosts {
             static void Postfix(Player __instance) {
-                if (GridPlantingActive == false || HoldingCultivator() == false) {
-                    return;
-                }
+                if (GridPlantingActive == false || HoldingCultivator() == false) { return; }
 
                 UpdateGridGhostPositions(__instance, __instance.m_placementGhost);
             }
@@ -106,15 +117,21 @@ namespace ImpactfulSkills.modules {
         private static void UpdateGridGhostPositions(Player player, GameObject placementGhost) {
             string plantName = Utils.GetPrefabName(placementGhost);
             PlantableDefinitions.TryGetValue(plantName, out Plantable plantDef);
-            if (plantDef == null) {
-                return; // Safety check
+            if (plantDef == null) { return; }
+
+            if (UseSavedPlacementRotation) {
+                Logger.LogDebug($"Using saved rotation {SavedPlacementRotation} current rotation: {placementGhost.transform.transform.rotation}");
+                placementGhost.transform.transform.rotation = SavedPlacementRotation;
+                UseSavedPlacementRotation = false;
             }
 
             Vector3 gridOrigin = placementGhost.transform.position;
             // Rotation-aware direction vectors based on current placement ghost rotation
             Vector3 colIncrementSpacing = placementGhost.transform.rotation * Vector3.right * Spacing;   // Column moves right
             Vector3 rowIncrementSpacing = placementGhost.transform.rotation * Vector3.forward * Spacing;  // Row moves forward
-            
+
+            SavedPlacementRotation = placementGhost.transform.rotation;
+
             // Try to snap to a nearby existing plant of the same type
             if (TrySnapToNearbyPlants(gridOrigin, plantName, out Vector3 snappedOrigin)) {
                 gridOrigin = snappedOrigin + rowIncrementSpacing;
@@ -175,7 +192,7 @@ namespace ImpactfulSkills.modules {
 
             if (nearestPlant != null) {
                 snappedOrigin = nearestPlant.transform.position;
-                Logger.LogDebug($"Snapped grid origin to nearest plant at {snappedOrigin} (distance: {nearestDistance})");
+                //Logger.LogDebug($"Snapped grid origin to nearest plant at {snappedOrigin} (distance: {nearestDistance})");
                 return true;
             }
 
@@ -184,7 +201,14 @@ namespace ImpactfulSkills.modules {
 
         /// <summary>Calculate grid positions with snap-to-alignment if nearby plants exist</summary>
         private static void CalculateGridPositions(Player player, GameObject originalGhost, int maxToPlace, Plantable plantDef) {
+            
+            // Set to saved origin alignment
+            if (SavedPlacementRotation != Quaternion.identity) {
+                Logger.LogDebug($"Restoring saved rotation for planted crops: {SavedPlacementRotation}");
+                originalGhost.transform.rotation = SavedPlacementRotation;
+            }
             OriginalRotation = originalGhost.transform.rotation;
+
             Vector3 gridOrigin = originalGhost.transform.position;
             // Rotation-aware direction vectors based on the original ghost's rotation
             Vector3 colIncrementSpacing = OriginalRotation * Vector3.right * Spacing;  // Each column moves right
@@ -194,7 +218,8 @@ namespace ImpactfulSkills.modules {
             string plantName = Utils.GetPrefabName(originalGhost);
 
             // Try to snap to a nearby existing plant of the same type
-            if (TrySnapToNearbyPlants(gridOrigin, plantName, out Vector3 snappedOrigin)) {
+            // Disable snapping when the alt-place key is held
+            if (ZInput.GetButton("AltPlace") == false && TrySnapToNearbyPlants(gridOrigin, plantName, out Vector3 snappedOrigin)) {
                 gridOrigin = snappedOrigin + rowIncrementSpacing;
             }
             
@@ -259,7 +284,7 @@ namespace ImpactfulSkills.modules {
         }
 
         internal static void CreatePlacementGhosts(GameObject placementGhost, Player player) {
-            if (ValConfig.EnableFarmingMultiPlant.Value == false) {
+            if (ValConfig.EnableFarmingMultiPlant.Value == false || UsePlantEasilyInstead) {
                 return;
             }
 
@@ -277,10 +302,8 @@ namespace ImpactfulSkills.modules {
                 return;
             }
 
-            int maxToPlant = Mathf.RoundToInt(ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value * player.GetSkillFactor(Skills.SkillType.Farming));
-            if (maxToPlant <= 1) {
-                return;
-            }
+            int maxToPlant = MaxToPlantAtOnce();
+            if (maxToPlant == 1) { return; }
 
             Spacing = (plantDef.GrowRadius + ValConfig.FarmingMultiPlantBufferSpace.Value) * ValConfig.FarmingMultiPlantSpacingMultiplier.Value;
             
@@ -302,6 +325,14 @@ namespace ImpactfulSkills.modules {
                     }
                 }
             }
+        }
+
+        internal static int MaxToPlantAtOnce() {
+            int maxToPlant = Mathf.RoundToInt(ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming));
+            if (maxToPlant <= 1) {
+                return 1;
+            }
+            return maxToPlant;
         }
 
         /// <summary>Place all plants in the grid at once</summary>
@@ -330,7 +361,8 @@ namespace ImpactfulSkills.modules {
             float staminaPerPlant = 10f * (ValConfig.PlantingCostStaminaReduction.Value * player.GetSkillFactor(Skills.SkillType.Farming) - 1f);
             float staminacost = 0;
             // Place plants at each valid grid position
-            foreach (PlantGhost gridPos in GhostPlacementGrid) {
+            // Skip the original plant entry as it is going to be planted by the original function
+            foreach (PlantGhost gridPos in GhostPlacementGrid.Skip(1)) {
                 if (!player.HaveStamina(staminacost + staminaPerPlant)) {
                     Logger.LogDebug($"Player does not have enough stamina to plant more, current stamina cost: {staminacost}");
                     break;
@@ -383,8 +415,8 @@ namespace ImpactfulSkills.modules {
 
                 // Place all plants in the grid
                 PlantGhostsWithCosts(__instance, piece.gameObject);
-
                 DestroyPlacementGhosts();
+                UseSavedPlacementRotation = true;
             }
         }
     }

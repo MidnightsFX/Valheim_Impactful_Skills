@@ -1,7 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-using ImpactfulSkills.common;
+using ImpactfulSkills.compatibility;
 using ImpactfulSkills.patches;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -20,6 +20,7 @@ namespace ImpactfulSkills
     [BepInDependency("blacks7ar.SNEAKer", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("blacks7ar.MagicPlugin", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("dev.crystal.magical", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("advize.PlantEasily", BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
@@ -45,7 +46,7 @@ namespace ImpactfulSkills
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
 
-            Compatibility.CheckModCompat();
+            Modcheck.CheckModCompat();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             Harmony harmony = new(PluginGUID);

@@ -99,6 +99,8 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && __instance != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
                     // Only increase drops of the character is also tamed
                     if (__instance.gameObject.GetComponent<Character>()?.m_tamed != true) { return; }
+
+                    Player.m_localPlayer.RaiseSkill(AnimalHandling, 1 * ValConfig.AnimalTamingSkillGainRate.Value);
                     CharacterDrop tamechardrop = __instance.gameObject.GetComponent<CharacterDrop>();
                     if (tamechardrop != null) {
                         float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);

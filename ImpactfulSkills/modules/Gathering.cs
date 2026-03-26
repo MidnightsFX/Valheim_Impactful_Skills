@@ -16,6 +16,7 @@ namespace ImpactfulSkills.patches
         static readonly List<String> UnallowedPickables = new List<String>() { };
         private static List<float> luck_levels = new List<float> { };
         private static bool enabled_aoe_gathering = true;
+        private static float aoe_gathering_activated_at = 0;
 
 
         private static void PickableLuckLevelsChanged(object s, EventArgs e)
@@ -199,11 +200,17 @@ namespace ImpactfulSkills.patches
                     }
 
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming);
+                    //safety reset
+                    if (enabled_aoe_gathering == false && aoe_gathering_activated_at + ValConfig.PlantingAOEHarvestResetSafety.Value < Time.realtimeSinceStartup) {
+                        enabled_aoe_gathering = true;
+                    }
+
                     Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
                     if ((player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
                         Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
+                        aoe_gathering_activated_at = Time.realtimeSinceStartup;
                         enabled_aoe_gathering = false;
                         if (targets.Length <= 5) {
                             foreach (Collider obj_collider in targets) {
@@ -228,21 +235,18 @@ namespace ImpactfulSkills.patches
             }
 
             // Coroutine to handle the AOE gathering of large sets of pickables
-            static IEnumerator PickAOE(Collider[] targets)
-            {
+            static IEnumerator PickAOE(Collider[] targets) {
                 int iterations = 0;
-                foreach (Collider obj_collider in targets)
-                {
+                foreach (Collider obj_collider in targets) {
                     iterations++;
-                    if (iterations % 10 == 0)
-                    {
+                    if (iterations % 10 == 0) {
                         yield return new WaitForSeconds(0.1f);
                     }
                     if (obj_collider == null) { continue; }
                     Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
                     if (pickable_item != null) {
                         //Logger.LogDebug($"Async Checking {pickable_item.gameObject.name} in harvest range.");
-                        if (!UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
+                        if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
                             if (pickable_item.CanBePicked()) {
                                 pickable_item.m_nview.ClaimOwnership();
                                 pickable_item.Interact(Player.m_localPlayer, false, false);

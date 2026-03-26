@@ -1,3 +1,12 @@
+**0.7.3**
+---
+```
+- Fixes duplicate planting of the first plant when multi-planting
+- Saves rotation of multi-planted entries
+- Adds a safety reset when AOE harvest is interrupted (default 10s)
+- Improves consistency of AOE harvest reset
+```
+
 **0.7.2**
 ---
 ```

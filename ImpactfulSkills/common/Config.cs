@@ -86,6 +86,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
         public static ConfigEntry<float> PlantingCostStaminaReduction;
         public static ConfigEntry<float> PlantingSnapDistance;
+        public static ConfigEntry<float> PlantingAOEHarvestResetSafety;
+        public static ConfigEntry<bool> UsePlantEasilyGridInstead;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -266,6 +268,7 @@ namespace ImpactfulSkills
             FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
             PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 5f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
+            PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
@@ -325,6 +328,8 @@ namespace ImpactfulSkills
             SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
             SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
             SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
+
+            UsePlantEasilyGridInstead = BindServerConfig("Mod Compatibility", "UsePlantEasilyGridInstead", true, "When enabled, and PlantEasily is enabled, Impactful skills will set max planting number based on your farming skill.");
         }
 
         internal static void SetupMainFileWatcher() {
