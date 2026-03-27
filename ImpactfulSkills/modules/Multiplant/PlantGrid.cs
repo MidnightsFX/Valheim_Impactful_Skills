@@ -5,8 +5,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ImpactfulSkills.modules.Multiplant {
+
+    /// Many of the classes in this file are roughly based on
+    /// https://github.com/AdvizeGH/Advize_ValheimMods/tree/main/Advize_PlantEasily
+    /// These are modified, but original design and implementation is credited to Advize
+    /// This project uses the GNU 3.0 License also and all references to this implementation must do the same
+
     internal static class PlantGrid {
         internal static bool GridPlantingActive = false;
+        internal static bool MultiplantDisabled = false;
         internal static float Spacing = 0;
         internal static int UserDefinedMax = ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value;
 
@@ -146,7 +153,21 @@ namespace ImpactfulSkills.modules.Multiplant {
             static void Postfix() {
                 if (GridPlantingActive == false || UseOtherPlantGridSystem || HoldingCultivator() == false) { return; }
 
+                if (Player.m_localPlayer != null && ZInput.GetButtonDown("Crouch")) {
+                    MultiplantDisabled = !MultiplantDisabled;
+                    string msg = MultiplantDisabled ? Localization.instance.Localize("$multi_plant_disabled") : Localization.instance.Localize("$multi_plant_enabled");
+                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+                }
+
                 PlantGridState.Update();
+
+                if (MultiplantDisabled) {
+                    foreach (GameObject g in PlantGhostController.ExtraGhosts) {
+                        if (g != null) { g.SetActive(false); }
+                    }
+                    return;
+                }
+
                 PlantGhostController.Update();
             }
         }

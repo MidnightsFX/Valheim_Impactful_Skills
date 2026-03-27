@@ -5,5 +5,7 @@
   "skill_Voyager_description": "The speed and skill that you can maneuver your boat.",
   "skill_Hauling": "Hauling",
   "skill_Hauling_description": "Your ability to carry, store and transport goods.",
-  "craft_refund": "Some materials saved!"
+  "craft_refund": "Some materials saved!",
+  "multi_plant_enabled": "Multi-plant enabled",
+  "multi_plant_disabled": "Multi-plant disabled"
 }

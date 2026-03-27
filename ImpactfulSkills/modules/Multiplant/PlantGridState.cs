@@ -2,6 +2,12 @@ using ImpactfulSkills.common;
 using UnityEngine;
 
 namespace ImpactfulSkills.modules.Multiplant {
+
+    /// Many of the classes in this file are roughly based on
+    /// https://github.com/AdvizeGH/Advize_ValheimMods/tree/main/Advize_PlantEasily
+    /// These are modified, but original design and implementation is credited to Advize
+    /// This project uses the GNU 3.0 License also and all references to this implementation must do the same
+
     /// <summary>
     /// Central per-frame state for ghost grid placement. Updated once per frame in
     /// UpdatePlacementGhost before GhostGrid positions are recalculated.
