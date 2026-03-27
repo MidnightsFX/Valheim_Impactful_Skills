@@ -268,7 +268,7 @@ namespace ImpactfulSkills
             FarmingMultiplantColumnCount = BindServerConfig("Farming", "FarmingMultiplantColumnCount", 4, "Maximum number of columns in the planting grid. The grid will form the closest square shape possible without exceeding this limit.", true, 1, 12);
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
             FarmingMultiPlantDistanceBufferModifier = BindServerConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
-            FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.1f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
+            FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
             PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 5f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
             PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");

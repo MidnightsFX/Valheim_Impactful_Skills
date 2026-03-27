@@ -1,3 +1,11 @@
+**0.8.1**
+---
+```
+- Plant Grid snapping reduced to cardinal directions only (orientation creation of farm still allows a larger degree of freedom)
+- Added a toggle to disable the plant grid (sneak key)
+- Increased default additional buffer space for plants to .2m (instead of .1m, please note you may need to delete or update your config)
+```
+
 **0.8.0**
 ---
 ```

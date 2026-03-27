@@ -15,7 +15,6 @@ namespace ImpactfulSkills.modules.Multiplant {
         internal Vector3 rowDir;
         internal Vector3 colDir;
         internal Vector3 origin;
-        internal bool isCardinal;
 
         internal SnapPoint() {
         }
@@ -30,22 +29,19 @@ namespace ImpactfulSkills.modules.Multiplant {
 
     /// <summary>
     /// Finds snap points near the placement ghost and, when found, commits the snapped position
-    /// and aligned grid directions onto PlantGridState. Closely mirrors PlantEasily's SnapSystem.
+    /// and aligned grid directions onto PlantGridState.
     ///
-    /// Grid snap:  detects an existing grid from neighbour pairs, generates ±row/±col candidates.
-    /// Free snap:  falls back to aligning toward nearby plants (quantized to 22.5° steps).
+    /// Snaps toward the nearest plant, aligning the grid direction to cardinal axes.
     /// </summary>
     internal static class SnapSystem {
         // Includes "Default" so placed plants (which use Default layer in Valheim) are found
         private static readonly int _scanMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "piece_nonsolid");
         private const int MaxPrimaries = 8;
 
-        private static SnapPoint _lastSnap;
         private static bool _hasLastSnap;
         private static Quaternion _lastGhostRotation;
 
         internal static void ResetSnap() {
-            _lastSnap = null;
             _hasLastSnap = false;
         }
 
@@ -63,75 +59,26 @@ namespace ImpactfulSkills.modules.Multiplant {
         /// and returns true.
         /// </summary>
         internal static bool FindSnapPoints(string plantName, float pieceSpacing) {
-            if (TryGridSnap(plantName, pieceSpacing)) return true;
-            if (TryFreeSnap(plantName, pieceSpacing)) return true;
-            return false;
-        }
-
-        // ── Grid snap ──────────────────────────────────────────────────────────
-
-        private static bool TryGridSnap(string plantName, float pieceSpacing) {
-            List<Transform> primaries = ScanForPlants(PlantGridState.BasePosition, ValConfig.PlantingSnapDistance.Value, plantName);
-            SortByDistanceSqr(primaries, PlantGridState.BasePosition);
-
-            List<SnapPoint> snapPoints = new List<SnapPoint>();
-
-            foreach (Transform primary in primaries) {
-                List<Transform> neighbours = ScanNeighbours(primary, pieceSpacing, plantName);
-                bool found = false;
-
-                foreach (Transform neighbour in neighbours) {
-                    if (!TryDetectGrid(primary.position, neighbour.position, pieceSpacing))
-                        continue;
-
-                    if (GenerateCandidates(snapPoints, primary.position, gridDetected: true)) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (found) break;
-            }
-
-            if (snapPoints.Count == 0) return false;
-
-            ApplyRotationHysteresis();
-            SnapPoint nearest = ApplyPositionHysteresis(FindNearestManhattan(snapPoints));
-            CommitSnap(nearest);
-            ApplyGridOrientation(nearest);
-            return true;
-        }
-
-        private static bool TryDetectGrid(Vector3 primary, Vector3 neighbour, float pieceSpacing) {
-            Vector3 delta = neighbour - primary;
-            delta.y = 0;
-            if (delta.sqrMagnitude < 0.000001f) return false;
-
-            Vector3 dir = PlantGridState.FixedRotation * delta.normalized;
-            PlantGridState.RowDirection = dir * pieceSpacing;
-            PlantGridState.ColumnDirection = Vector3.Cross(Vector3.up, dir).normalized * pieceSpacing;
-            return true;
+            return TryFreeSnap(plantName, pieceSpacing);
         }
 
         // ── Free snap ──────────────────────────────────────────────────────────
 
         private static bool TryFreeSnap(string plantName, float pieceSpacing) {
             List<Transform> primaries = ScanForPlants(PlantGridState.BasePosition, ValConfig.PlantingSnapDistance.Value, plantName);
+            if (primaries.Count == 0) return false;
             SortByDistanceSqr(primaries, PlantGridState.BasePosition);
 
+            Transform nearest = primaries[0];
+            ComputeFreeDirections(nearest.position, pieceSpacing);
+
             List<SnapPoint> snapPoints = new List<SnapPoint>();
+            if (!GenerateCandidates(snapPoints, nearest.position)) return false;
 
-            foreach (Transform primary in primaries) {
-                ComputeFreeDirections(primary.position, pieceSpacing);
-                if (GenerateCandidates(snapPoints, primary.position, gridDetected: false)) break;
-            }
-
-            if (snapPoints.Count == 0) return false;
-
-            SnapPoint nearest = FindNearestEuclidean(snapPoints);
-            CommitSnap(nearest);
-            PlantGridState.RowDirection = ChooseDirection(nearest.pos, PlantGridState.RowDirection);
-            PlantGridState.ColumnDirection = ChooseDirection(nearest.pos, PlantGridState.ColumnDirection);
+            SnapPoint snap = FindNearestEuclidean(snapPoints);
+            CommitSnap(snap);
+            PlantGridState.RowDirection = ChooseDirection(snap.pos, PlantGridState.RowDirection);
+            PlantGridState.ColumnDirection = ChooseDirection(snap.pos, PlantGridState.ColumnDirection);
             return true;
         }
 
@@ -145,7 +92,7 @@ namespace ImpactfulSkills.modules.Multiplant {
                 dir.Normalize();
                 if (!PlantGridState.AltPlacement) {
                     float angle = Vector3.SignedAngle(Vector3.forward, dir, Vector3.up);
-                    dir = Quaternion.Euler(0, Mathf.Round(angle / 22.5f) * 22.5f, 0) * Vector3.forward;
+                    dir = Quaternion.Euler(0, Mathf.Round(angle / 90f) * 90f, 0) * Vector3.forward;
                 }
             }
 
@@ -155,21 +102,14 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         // ── Candidate generation ───────────────────────────────────────────────
 
-        private static bool GenerateCandidates(List<SnapPoint> snapPoints, Vector3 fromPos, bool gridDetected) {
+        private static bool GenerateCandidates(List<SnapPoint> snapPoints, Vector3 fromPos) {
             Vector3 row = PlantGridState.RowDirection;
             Vector3 col = PlantGridState.ColumnDirection;
 
-            Vector3[] positions = gridDetected
-                ? new Vector3[] {
-                    fromPos + row,         fromPos - row,
-                    fromPos + col,         fromPos - col,
-                    fromPos + row + col,   fromPos + row - col,
-                    fromPos - row + col,   fromPos - row - col,
-                }
-                : new Vector3[] {
-                    fromPos + row,  fromPos - row,
-                    fromPos + col,  fromPos - col,
-                };
+            Vector3[] positions = new Vector3[] {
+                fromPos + row,  fromPos - row,
+                fromPos + col,  fromPos - col,
+            };
 
             float spacing = row.magnitude;
             bool hasCardinal = false;
@@ -198,10 +138,9 @@ namespace ImpactfulSkills.modules.Multiplant {
             return snapPoints.Count > 0;
         }
 
-        // ── Commit & orientation ───────────────────────────────────────────────
+        // ── Commit ─────────────────────────────────────────────────────────────
 
         private static void CommitSnap(SnapPoint snap) {
-            _lastSnap = snap;
             _hasLastSnap = true;
             _lastGhostRotation = PlantGridState.PlacementGhost.transform.rotation;
 
@@ -211,66 +150,7 @@ namespace ImpactfulSkills.modules.Multiplant {
             PlantGridState.BasePosition = PlantGridState.PlacementGhost.transform.position = snap.pos;
         }
 
-        private static void ApplyGridOrientation(SnapPoint snap) {
-            Vector3 row = ChooseDirection(snap.pos, snap.rowDir);
-            Vector3 col = ChooseDirection(snap.pos, snap.colDir);
-
-            if (PlantGridState.SavedRowDirection != Vector3.zero) {
-                float dot = Mathf.Abs(Vector3.Dot(PlantGridState.SavedRowDirection, row.normalized));
-                bool aligned = dot > 0.95f || dot < 0.05f;
-
-                if (aligned) {
-                    float spacing = row.magnitude;
-                    row = ChooseDirection(snap.pos, PlantGridState.SavedRowDirection * spacing);
-                    col = ChooseDirection(snap.pos, PlantGridState.SavedColumnDirection * spacing);
-                } else {
-                    PlantGridState.ResetSavedOrientation();
-                    PlantGridState.SavedRowDirection = row.normalized;
-                    PlantGridState.SavedColumnDirection = col.normalized;
-                }
-            } else {
-                PlantGridState.SavedRowDirection = row.normalized;
-                PlantGridState.SavedColumnDirection = col.normalized;
-            }
-
-            PlantGridState.RowDirection = row;
-            PlantGridState.ColumnDirection = col;
-        }
-
-        // ── Hysteresis ─────────────────────────────────────────────────────────
-
-        private static void ApplyRotationHysteresis() {
-            const float threshold = 1f;
-            if (_hasLastSnap && Quaternion.Angle(PlantGridState.FixedRotation, _lastGhostRotation) > threshold)
-                _hasLastSnap = false;
-
-            if (PlantGridState.SavedBaseRotation is Quaternion saved &&
-                Quaternion.Angle(saved, _lastGhostRotation) > threshold)
-                PlantGridState.ResetSavedOrientation();
-        }
-
-        private static SnapPoint ApplyPositionHysteresis(SnapPoint nearest) {
-            const float sqrThreshold = 0.05f * 0.05f;
-            if (_hasLastSnap && _lastSnap != null && _lastSnap.origin == nearest.origin) {
-                float lastDist = ManhattanDist(_lastSnap.pos, _lastSnap.rowDir, _lastSnap.colDir);
-                float newDist = ManhattanDist(nearest.pos, nearest.rowDir, nearest.colDir);
-                if (newDist > lastDist - sqrThreshold)
-                    return _lastSnap;
-            }
-            return nearest;
-        }
-
         // ── Nearest selection ──────────────────────────────────────────────────
-
-        private static SnapPoint FindNearestManhattan(List<SnapPoint> snaps) {
-            SnapPoint best = snaps[0];
-            float bestDist = ManhattanDist(best.pos, best.rowDir, best.colDir);
-            for (int i = 1; i < snaps.Count; i++) {
-                float d = ManhattanDist(snaps[i].pos, snaps[i].rowDir, snaps[i].colDir);
-                if (d < bestDist) { bestDist = d; best = snaps[i]; }
-            }
-            return best;
-        }
 
         private static SnapPoint FindNearestEuclidean(List<SnapPoint> snaps) {
             SnapPoint best = snaps[0];
@@ -280,13 +160,6 @@ namespace ImpactfulSkills.modules.Multiplant {
                 if (d < bestSqr) { bestSqr = d; best = snaps[i]; }
             }
             return best;
-        }
-
-        private static float ManhattanDist(Vector3 snapPos, Vector3 rowDir, Vector3 colDir) {
-            Vector3 delta = snapPos - PlantGridState.BasePosition;
-            float r = rowDir.sqrMagnitude > 0.001f ? Mathf.Abs(Vector3.Dot(delta, rowDir.normalized)) : 0;
-            float c = colDir.sqrMagnitude > 0.001f ? Mathf.Abs(Vector3.Dot(delta, colDir.normalized)) : 0;
-            return r + c;
         }
 
         // ── Physics ────────────────────────────────────────────────────────────
@@ -319,29 +192,6 @@ namespace ImpactfulSkills.modules.Multiplant {
                     results.Add(root);
                     if (results.Count >= MaxPrimaries) break;
                 }
-            }
-            return results;
-        }
-
-        private static List<Transform> ScanNeighbours(Transform primary, float expectedSpacing, string plantName) {
-            float tolerance = Mathf.Max(expectedSpacing * 0.01f, 0.005f);
-            float maxDist = expectedSpacing + tolerance;
-            float minSqr = (expectedSpacing - tolerance) * (expectedSpacing - tolerance);
-            float maxSqr = maxDist * maxDist;
-
-            Collider[] hits = Physics.OverlapSphere(primary.position, maxDist, _scanMask);
-            List<Transform> results = new List<Transform>();
-            HashSet<Transform> seen = new HashSet<Transform>();
-
-            foreach (Collider c in hits) {
-                Transform root = c.transform.root;
-                if (root == primary) continue;
-                if (c.gameObject.layer == PlantDefinitions.GhostLayer) continue;
-                if (!ValConfig.EnableSnappingToOtherPlants.Value && Utils.GetPrefabName(c.gameObject) != plantName) continue;
-
-                float distSqr = (root.position - primary.position).sqrMagnitude;
-                if (distSqr >= minSqr && distSqr <= maxSqr && seen.Add(root))
-                    results.Add(root);
             }
             return results;
         }
