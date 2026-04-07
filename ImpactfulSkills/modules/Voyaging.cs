@@ -150,7 +150,7 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Minimap), nameof(Minimap.Explore), typeof(Vector3), typeof(float))]
         private class VoyagerNotSoBlindWhileSailingPatch {
             private static void Prefix(ref float radius) {
-                if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null && Player.m_localPlayer.m_attachedToShip == true) {
+                if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null && Player.m_localPlayer.m_attachedToShip == true && Player.m_localPlayer.IsAttached()) {
                     radius *= (Player.m_localPlayer.GetSkillFactor(VoyagingSkill) * ValConfig.VoyagerIncreaseExplorationRadius.Value) + 1f;
                 }
             }

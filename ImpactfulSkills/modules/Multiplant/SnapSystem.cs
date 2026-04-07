@@ -67,9 +67,7 @@ namespace ImpactfulSkills.modules.Multiplant {
         private static bool TryFreeSnap(string plantName, float pieceSpacing) {
             List<Transform> primaries = ScanForPlants(PlantGridState.BasePosition, ValConfig.PlantingSnapDistance.Value, plantName);
             if (primaries.Count == 0) return false;
-            SortByDistanceSqr(primaries, PlantGridState.BasePosition);
-
-            Transform nearest = primaries[0];
+            Transform nearest = SortByDistance(primaries, PlantGridState.BasePosition);
             ComputeFreeDirections(nearest.position, pieceSpacing);
 
             List<SnapPoint> snapPoints = new List<SnapPoint>();
@@ -196,9 +194,17 @@ namespace ImpactfulSkills.modules.Multiplant {
             return results;
         }
 
-        private static void SortByDistanceSqr(List<Transform> list, Vector3 origin) {
-            list.Sort((a, b) =>
-                (a.position - origin).sqrMagnitude.CompareTo((b.position - origin).sqrMagnitude));
+        private static Transform SortByDistance(List<Transform> list, Vector3 origin) {
+            Transform best = list[0];
+            float current_distance = 9999f;
+            foreach (Transform t in list) {
+                float distance = t.localPosition.DistanceTo(origin);
+                if (distance < current_distance) {
+                    best = t;
+                    current_distance = distance;
+                }
+            }
+            return best;
         }
     }
 }

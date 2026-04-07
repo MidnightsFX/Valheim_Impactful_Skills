@@ -91,6 +91,25 @@ Provides a bonus to your rowing speed that scales with player skill also.
 | ![voyager_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_0.gif?raw=true) | ![voyager_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_50.gif?raw=true) | ![voyager_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Voyager_100.gif?raw=true) |
 
 
+### Jump
+Jumping now increases your jump height and distance (configurable).
+Jumping also increases the distance you can fall before taking fall damage.
+Jump also reduces the damage you take from falling.
+
+| Jump 0 | Jump 50 | Jump 100 |
+| ------------- | ------------- | ------------- |
+| ![jump_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_0.gif?raw=true) | ![jump_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_50.gif?raw=true) | ![voyager_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Jump_100.gif?raw=true) |
+
+
+### hauling (new skill)
+
+Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
+
+| Hauling 0 | Hauling 50 | Hauling 100 |
+| ------------- | ------------- | ------------- |
+| ![hauling_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_0.gif?raw=true) | ![hauling_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_50.gif?raw=true) | ![hauling_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_100.gif?raw=true) |
+
+
 ### Cooking
 
 Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
@@ -104,9 +123,7 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 
 Taming reduces the amount of time it takes to tame creatures. It also increases the amount of drops you get from killing tamed creatures. Removing the need for massive creature farms.
 
-### hauling (new skill)
 
-Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
 
 ### Knowledge Sharing
 
@@ -118,12 +135,10 @@ Changing your primary weapon type now takes considerably less time.
 Please note these are not ordered or guaranteed to be implemented, but are ideas that are being considered.
 I am also always happy to talk ideas and suggestions in the discord!
 - Skill announcements, when gaining a skill level that gives you a specific bonus
-- Crafting can refund costs partially
 - Animal whisper allows taming 1 creature permenantly for your character (lvl 100?)
 - Localization for all languages
 
 ## Suggested Mods to pair with
-- [Skilled Carry Weight](https://thunderstore.io/c/valheim/p/Searica/SkilledCarryWeight/) - Provides a way to gain carry weight that isn't overpowered and feels good.
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius
 - [Deathlink](https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/) - Makes item loss, equipment loss and skill loss on death configurable
 - [FortifySkillsRedux](https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/) - Provides a system to prevent skill degredation but still provides risk.

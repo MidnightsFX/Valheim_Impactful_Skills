@@ -1,3 +1,10 @@
+**0.8.2**
+---
+```
+- Improves ship detection for exploration radius increase for Voyager
+- Improves some plant grid edge cases where snapping would prefer to snap to a further away plant
+```
+
 **0.8.1**
 ---
 ```

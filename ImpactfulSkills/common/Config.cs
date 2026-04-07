@@ -270,7 +270,7 @@ namespace ImpactfulSkills
             FarmingMultiPlantDistanceBufferModifier = BindServerConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
             FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
-            PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 5f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
+            PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 1f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
             PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");
             FarmingSnapStyle = BindServerConfig("Farming", "FarmingSnapStyle", "Grid", "'Grid' detects the existing grid pattern and aligns to it; 'Legacy' snaps to the nearest plant position only.", new AcceptableValueList<string>("Grid", "Legacy"), true);
             FarmingSnapPreferCardinal = BindServerConfig("Farming", "FarmingSnapPreferCardinal", true, "When using Grid snapping, prefer axis-aligned (N/S/E/W) snap candidates over diagonal ones.", advanced: true);
