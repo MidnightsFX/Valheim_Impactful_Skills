@@ -1,3 +1,10 @@
+**0.8.3**
+---
+```
+- Increases default Voyager skill gain XP amount (1 -> 5)
+- Increases default Voyager sailing speed (+100% -> +200%, this is modulated by skill level, full bonus at level 100)
+```
+
 **0.8.2**
 ---
 ```

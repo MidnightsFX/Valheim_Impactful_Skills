@@ -279,7 +279,7 @@ namespace ImpactfulSkills
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
-            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
+            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 2f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 3f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
             VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);
             VoyagerPaddleSpeedBonusLevel = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonusLevel", 25f, "The level that the player starts to get a bonus to paddle speed.", false, 0f, 100f);
@@ -321,8 +321,8 @@ namespace ImpactfulSkills
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
-            AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
-            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 10f);
+            AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 50f);
+            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 5f, "How fast the skill is gained.", false, 1f, 50f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
             SharedKnowledgeIgnoreList = BindServerConfig("SkillRates", "SharedKnowledgeIgnoreList", "", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in. Invalid skill names will be ignored.");
