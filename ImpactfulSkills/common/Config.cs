@@ -169,7 +169,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> BlockPowerFactor;
         public static ConfigEntry<int> BlockStaminaGainRequiredLevel;
         public static ConfigEntry<float> BlockStaminaGainFactor;
-
+        public static ConfigEntry<bool> EnableParryStaminaGain;
 
         public ValConfig(ConfigFile cf)
         {
@@ -353,6 +353,8 @@ namespace ImpactfulSkills
             BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
             BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
             BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much block stamina is returned based on your blocking level. This is modified by your characters blocking level. At level 100 you gain twice your block stamina use's stamina", true, .5f, 2f);
+            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
+
         }
 
         internal static void SetupMainFileWatcher() {

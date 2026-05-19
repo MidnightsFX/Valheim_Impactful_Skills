@@ -32,6 +32,10 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableBlocking.Value != true || Player.m_localPlayer == null || (!__result) || __instance != Player.m_localPlayer) { return; }
 
                 float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Blocking);
+                float m_blockTimer = __instance.m_blockTimer;
+                bool parriedYes = __instance.GetCurrentBlocker().m_shared.m_timedBlockBonus > 1f && m_blockTimer != -1f && m_blockTimer < 0.25f; // parry flag
+
+                if (ValConfig.EnableParryStaminaGain.Value != true && parriedYes) { return; } // no stam gain on parry if configed
 
                 if (skillLevel >= ValConfig.BlockStaminaGainRequiredLevel.Value)
                 {
