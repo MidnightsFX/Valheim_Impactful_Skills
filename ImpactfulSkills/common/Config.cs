@@ -288,7 +288,7 @@ namespace ImpactfulSkills
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
-            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 2f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
+            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1.5f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 3f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
             VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);
             VoyagerPaddleSpeedBonusLevel = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonusLevel", 25f, "The level that the player starts to get a bonus to paddle speed.", false, 0f, 100f);
@@ -306,6 +306,13 @@ namespace ImpactfulSkills
             WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
             WeaponSkillEquipRequiredLevel = BindServerConfig("WeaponSkills", "WeaponSkillEquipRequiredLevel", 45, "The level that equip speed bonuses start being applied based on your skill", true, 0, 100);
             WeaponSkillEquipSpeedFactor = BindServerConfig("WeaponSkills", "WeaponSkillEquipSpeedFactor", 2f, "How much faster your equipment is equipped based on your weapon skill.", true, 0f, 20f);
+
+            EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
+            BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
+            BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
+            BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
+            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much block stamina is returned based on your blocking level. This is modified by your characters blocking level. At level 100 you gain twice your block stamina use's stamina", true, .5f, 2f);
+            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
 
             EnableCrafting = BindServerConfig("Crafting", "EnableCrafting", true, "Enable crafting skill changes.");
             EnableDurabilityLossPrevention = BindServerConfig("Crafting", "EnableDurabilityLossPrevention", true, "Enables durability reduction prevention that can scale with player skill.");
@@ -333,7 +340,7 @@ namespace ImpactfulSkills
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 50f);
-            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 5f, "How fast the skill is gained.", false, 1f, 50f);
+            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 4f, "How fast the skill is gained.", false, 1f, 50f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
             SharedKnowledgeIgnoreList = BindServerConfig("SkillRates", "SharedKnowledgeIgnoreList", "", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in. Invalid skill names will be ignored.");
@@ -347,14 +354,6 @@ namespace ImpactfulSkills
             SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
 
             PreferOtherPlantGrid = BindServerConfig("Mod Compatibility", "PreferOtherPlantGrid", true, "When enabled, and an other planting grid mod is enabled (), Impactful skills planting grid will be disabled.");
-
-            EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
-            BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
-            BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
-            BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
-            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much block stamina is returned based on your blocking level. This is modified by your characters blocking level. At level 100 you gain twice your block stamina use's stamina", true, .5f, 2f);
-            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
-
         }
 
         internal static void SetupMainFileWatcher() {
