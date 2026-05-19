@@ -111,6 +111,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> WeaponSkillStaminaReduction;
         public static ConfigEntry<float> WeaponSkillBowDrawStaminaCostReduction;
         public static ConfigEntry<float> WeaponSkillParryBonus;
+        public static ConfigEntry<float> WeaponSkillEquipSpeedFactor;
+        public static ConfigEntry<int> WeaponSkillEquipRequiredLevel;
 
         public static ConfigEntry<bool> EnableCooking;
         public static ConfigEntry<bool> EnableCookingBonusItems;
@@ -161,6 +163,13 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableSwimStaminaCostReduction;
         public static ConfigEntry<int> SwimStaminaReductionLevel;
         public static ConfigEntry<float> SwimStaminaCostReductionFactor;
+
+        public static ConfigEntry<bool> EnableBlocking;
+        public static ConfigEntry<int> BlockPowerRequiredLevel;
+        public static ConfigEntry<float> BlockPowerFactor;
+        public static ConfigEntry<int> BlockStaminaGainRequiredLevel;
+        public static ConfigEntry<float> BlockStaminaGainFactor;
+        public static ConfigEntry<bool> EnableParryStaminaGain;
 
         public ValConfig(ConfigFile cf)
         {
@@ -295,6 +304,8 @@ namespace ImpactfulSkills
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);
             WeaponSkillParryBonus = BindServerConfig("WeaponSkills", "WeaponSkillParryBonus", 1f, "How much extra XP you get for parrying an attack", false, 0f, 10f);
             WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
+            WeaponSkillEquipRequiredLevel = BindServerConfig("WeaponSkills", "WeaponSkillEquipRequiredLevel", 45, "The level that equip speed bonuses start being applied based on your skill", true, 0, 100);
+            WeaponSkillEquipSpeedFactor = BindServerConfig("WeaponSkills", "WeaponSkillEquipSpeedFactor", 2f, "How much faster your equipment is equipped based on your weapon skill.", true, 0f, 20f);
 
             EnableCrafting = BindServerConfig("Crafting", "EnableCrafting", true, "Enable crafting skill changes.");
             EnableDurabilityLossPrevention = BindServerConfig("Crafting", "EnableDurabilityLossPrevention", true, "Enables durability reduction prevention that can scale with player skill.");
@@ -336,6 +347,14 @@ namespace ImpactfulSkills
             SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
 
             PreferOtherPlantGrid = BindServerConfig("Mod Compatibility", "PreferOtherPlantGrid", true, "When enabled, and an other planting grid mod is enabled (), Impactful skills planting grid will be disabled.");
+
+            EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
+            BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
+            BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
+            BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
+            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much block stamina is returned based on your blocking level. This is modified by your characters blocking level. At level 100 you gain twice your block stamina use's stamina", true, .5f, 2f);
+            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
+
         }
 
         internal static void SetupMainFileWatcher() {

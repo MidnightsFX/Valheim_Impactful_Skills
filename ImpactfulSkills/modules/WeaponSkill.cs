@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
@@ -7,6 +8,7 @@ using System;
 using static ItemDrop;
 using UnityEngine;
 using ImpactfulSkills.common;
+using System.Reflection;
 
 namespace ImpactfulSkills.patches
 {
@@ -139,5 +141,63 @@ namespace ImpactfulSkills.patches
                 Player.m_localPlayer.RaiseSkill(Skills.SkillType.Blocking, ValConfig.WeaponSkillParryBonus.Value);
             }
         }
+
+        static class EquipSpeedHelper
+        {
+            public static float Apply(float duration, ItemDrop.ItemData item)
+            {
+                if (Player.m_localPlayer == null) return duration;
+                float skillFactor = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType) * 100f;
+                float speedMultiplier = 1f + (skillFactor / 100 * ValConfig.WeaponSkillEquipSpeedFactor.Value);
+
+                if (skillFactor > ValConfig.WeaponSkillEquipRequiredLevel.Value)
+                {
+                    return duration / speedMultiplier;
+                }
+                return duration;
+            }
+        }
+
+
+        [HarmonyPatch(typeof(Player), nameof(Player.QueueEquipAction))]
+        public static class ModifyEquipSpeed_On
+        {
+            [HarmonyTranspiler]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable <CodeInstruction> instructions)
+            {
+                FieldInfo equipDurationField = AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), nameof(ItemDrop.ItemData.SharedData.m_equipDuration));
+
+                CodeMatcher codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, equipDurationField));
+
+                codeMatcher.Advance(1);
+                codeMatcher.Insert(
+                    new CodeInstruction(OpCodes.Ldarg_1),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                return codeMatcher.InstructionEnumeration();
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.QueueUnequipAction))]
+        public static class ModifyEquipSpeed_Off
+        {
+            [HarmonyTranspiler]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                FieldInfo equipDurationField = AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), nameof(ItemDrop.ItemData.SharedData.m_equipDuration));
+
+                CodeMatcher codeMatcher = new CodeMatcher(instructions);
+                codeMatcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldfld, equipDurationField));
+
+                codeMatcher.Advance(1);
+                codeMatcher.Insert(
+                    new CodeInstruction(OpCodes.Ldarg_1),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                return codeMatcher.InstructionEnumeration();
+            }
+        }
+
     }
 }
