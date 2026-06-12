@@ -1,3 +1,9 @@
+**0.9.2**
+---
+```
+- Rebuild
+```
+
 **0.9.1**
 ---
 ```
@@ -9,11 +15,14 @@
 - Provides AnimalWhisper XP when nearby creatures breed
 ```
 
-**0.8.3**
+**0.9.0**
 ---
 ```
-- Increases default Voyager skill gain XP amount (1 -> 5)
-- Increases default Voyager sailing speed (+100% -> +200%, this is modulated by skill level, full bonus at level 100)
+- Increases default Voyager skill gain rate by 50%
+- Increases default Voyager sailing speed by 50% (now +150%)
+- Adds Blocking skill perks (Thanks Leslie!)
+	- lvl 25 - block power starts being increased based on skill level (75% vs vanilla 50% at lvl 100, configurable) eg 50% increase
+	- lvl 40 - blocking returns stamina (50% of cost returned at level 100, configurable)
 ```
 
 **0.8.2**
