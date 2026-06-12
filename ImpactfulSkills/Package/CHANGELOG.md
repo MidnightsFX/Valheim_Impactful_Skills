@@ -1,3 +1,14 @@
+**0.9.1**
+---
+```
+- Add configurable keymap for toggling area planting/harvesting
+	- UI Hotkey shown when cultivator is equipped
+	- Can be activated any time, feedback message top left
+- Improves consistency of XP gains for Voyager
+	- Voyager could run into an issue where only one player on a boat would gain XP, that should be fixed
+- Provides AnimalWhisper XP when nearby creatures breed
+```
+
 **0.8.3**
 ---
 ```

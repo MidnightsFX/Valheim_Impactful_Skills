@@ -1,7 +1,15 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using ImpactfulSkills.common;
 using ImpactfulSkills.patches;
+using Jotunn.Entities;
+using Jotunn.Managers;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
+using static ImpactfulSkills.common.DataObjects;
 
 namespace ImpactfulSkills
 {
@@ -9,6 +17,11 @@ namespace ImpactfulSkills
     {
         public static ConfigFile cfg;
         public static ConfigEntry<bool> EnableDebugMode;
+
+        // Runtime-only (non-persisted) shared toggle for the AOE harvesting + AOE planting features.
+        public static bool AOEFeaturesEnabled = true;
+        // Local (per-player, NOT server-synced) hotkey that toggles AOEFeaturesEnabled.
+        public static ConfigEntry<KeyboardShortcut> AOEToggleHotkey;
 
         public static ConfigEntry<bool> EnableWoodcutting;
         public static ConfigEntry<float> WoodCuttingDmgMod;
@@ -69,6 +82,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableBeeBiomeUnrestricted;
         public static ConfigEntry<float> BeeHoneyOutputIncreaseBySkill;
         public static ConfigEntry<float> BeeHarvestXP;
+        public static ConfigEntry<float> AnimalBreedingXP;
+        public static ConfigEntry<float> AnimalBreedingXPRange;
 
         public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<bool> EnableGatheringAOE;
@@ -162,6 +177,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> SwimStaminaReductionLevel;
         public static ConfigEntry<float> SwimStaminaCostReductionFactor;
 
+        // Custom ZRPCs for network state
+        internal static CustomRPC SkillIncreaseXP;
+
         public ValConfig(ConfigFile cf)
         {
             // ensure all the config values are created
@@ -170,6 +188,8 @@ namespace ImpactfulSkills
             CreateConfigValues(cf);
             Logger.setDebugLogging(EnableDebugMode.Value);
             SetupMainFileWatcher();
+
+            SkillIncreaseXP = NetworkManager.Instance.AddRPC("ISKILL_XP_GRANT", OnServerReceiveXPRequest, OnClientReceiveXPGrant);
         }
 
         private void CreateConfigValues(ConfigFile Config)
@@ -180,6 +200,9 @@ namespace ImpactfulSkills
                 null,
                 new ConfigurationManagerAttributes { IsAdvanced = true }));
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
+            AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
+                new KeyboardShortcut(UnityEngine.KeyCode.N),
+                "Hotkey to toggle AOE harvesting and AOE planting on/off.");
             EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
             WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 2 is 2x the loot at level 100.", false, 1f, 10f);
@@ -254,6 +277,8 @@ namespace ImpactfulSkills
             EnableBeeBiomeUnrestricted = BindServerConfig("AnimalHandling", "EnableBeeBiomeUnrestricted", true, "At the specified level, beeshives built by you can produce honey in any biome.");
             BeeBiomeUnrestrictedLevel = BindServerConfig("AnimalHandling", "BeeBiomeUnrestrictedLevel", 25, "At this level, if enabled, beehives built by you can produce honey in any biome.", false, 0, 100);
             BeeHarvestXP = BindServerConfig("AnimalHandling", "BeeHarvestXP", 2f, "The amount of xp for Animal handling provided by harvesting a single honey from a beehive", false, 0f, 20f);
+            AnimalBreedingXP = BindServerConfig("AnimalHandling", "AnimalBreedingXP", 5f, "AnimalHandling XP granted to each nearby player when a tamed animal becomes pregnant or gives birth.", false, 0f, 50f);
+            AnimalBreedingXPRange = BindServerConfig("AnimalHandling", "AnimalBreedingXPRange", 30f, "How close a player must be to a breeding animal to gain the breeding XP.", false, 1f, 100f);
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
@@ -358,6 +383,68 @@ namespace ImpactfulSkills
             // Handle the config file change event
             Logger.LogInfo("Configuration file has been changed, reloading settings.");
             cfg.Reload();
+        }
+
+        // handle XP Znet increases even if this is on an integrated server
+        internal static void SendXPForSkillInArea(XPIncreaseRequest xp_increase) {
+            Logger.LogDebug($"Requesting {xp_increase.Skill} xp increase {xp_increase.Amount}");
+            ZPackage zpack = new ZPackage();
+            var mStream = new MemoryStream();
+            binFormatter.Serialize(mStream, xp_increase);
+            zpack.Write(mStream.ToString());
+
+            if (ZNet.instance.IsServer() && ZNet.instance.IsCurrentServerDedicated()) {
+                SkillIncreaseXP.SendPackage(ZNet.instance.GetServerPeer().m_uid, zpack);
+            } else {
+                SendXPRequestToInRangePlayers(xp_increase, zpack);
+                // Integrated servers need to also impact the local player
+                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, xp_increase.Location) <= xp_increase.Range) {
+                    Player.m_localPlayer.RaiseSkill(xp_increase.Skill, xp_increase.Amount);
+                }
+            }
+        }
+
+        internal static IEnumerator OnServerReceiveXPRequest(long sender, ZPackage pkg) {
+            var mStream = new MemoryStream(pkg.ReadByteArray());
+            XPIncreaseRequest xpdetails = (XPIncreaseRequest)binFormatter.Deserialize(mStream);
+            SendXPRequestToInRangePlayers(xpdetails, pkg);
+
+            yield break;
+        }
+
+        private static void SendXPRequestToInRangePlayers(XPIncreaseRequest xpdetails, ZPackage pkg) {
+            List<ZNetPeer> zpeers = Util.ServerGetPeersInArea(xpdetails.Location, xpdetails.Range);
+            foreach (ZNetPeer peer in zpeers) {
+                SkillIncreaseXP.SendPackage(peer.m_uid, pkg);
+            }
+        }
+
+        internal static IEnumerator OnClientReceiveXPGrant(long sender, ZPackage pkg) {
+            if (pkg != null && Player.m_localPlayer != null) {
+                var mStream = new MemoryStream(pkg.ReadByteArray());
+                XPIncreaseRequest xpdetails = (XPIncreaseRequest)binFormatter.Deserialize(mStream);
+                Player.m_localPlayer.RaiseSkill(xpdetails.Skill, xpdetails.Amount);
+            }
+            yield break;
+        }
+
+        /// <summary>
+        /// Helper to bind a local (per-player) keybind config. Unlike BindServerConfig, this is NOT
+        /// admin-only / server-synced, so each player can set their own hotkey while on a server.
+        /// Mirrors the non-synced EnableDebugMode pattern (IsAdminOnly = false).
+        /// </summary>
+        /// <param name="category"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<KeyboardShortcut> BindClientConfig(string category, string key, KeyboardShortcut value, string description, bool advanced = false)
+        {
+            return cfg.Bind(category, key, value,
+                new ConfigDescription(description, null,
+                    new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
+                );
         }
 
         /// <summary>

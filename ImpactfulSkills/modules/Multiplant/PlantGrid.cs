@@ -153,12 +153,7 @@ namespace ImpactfulSkills.modules.Multiplant {
             static void Postfix() {
                 if (GridPlantingActive == false || UseOtherPlantGridSystem || HoldingCultivator() == false) { return; }
 
-                if (Player.m_localPlayer != null && ZInput.GetButtonDown("Crouch")) {
-                    MultiplantDisabled = !MultiplantDisabled;
-                    string msg = MultiplantDisabled ? Localization.instance.Localize("$multi_plant_disabled") : Localization.instance.Localize("$multi_plant_enabled");
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
-                }
-
+                // MultiplantDisabled is driven by the configurable AOE toggle hotkey (see AOEToggle.cs).
                 PlantGridState.Update();
 
                 if (MultiplantDisabled) {

@@ -10,8 +10,6 @@ namespace ImpactfulSkills.patches
     public static class Voyaging
     {
         public static Skills.SkillType VoyagingSkill = 0;
-        private static float update_timer = 0f;
-        private static float current_update_time = 0f;
         public static void SetupSailingSkill()
         {
             SkillConfig voyage = new SkillConfig();
@@ -26,24 +24,11 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Ship), nameof(Ship.GetSailForce))]
         public static class VoyagerSpeedPatch
         {
-            private static void Postfix(Ship __instance, ref Vector3 __result, float dt) {
+            private static void Postfix(Ship __instance, ref Vector3 __result) {
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
-                current_update_time += dt;
-                
-                //Logger.LogDebug($"Current time: {current_update_time}, Is Player attached to ship: {Player.m_localPlayer.IsAttachedToShip()}");
-                if (__instance.IsPlayerInBoat(Player.m_localPlayer) && update_timer <= current_update_time) {
-                    // update the interval
-                    update_timer = current_update_time + (1 * ValConfig.VoyagerSkillXPCheckFrequency.Value);
-                    Vector3 pvel = Player.m_localPlayer.GetVelocity();
-                    // Only get XP if you are moving
-                    bool skill_gain_speed = Mathf.Abs(pvel.x) > 1.5f || Mathf.Abs(pvel.z) > 1.5f;
-                    Logger.LogDebug($"Checking to raise voyager: x-vel: {pvel.x}, z-vel: {pvel.z} | skill gain speed? {skill_gain_speed}");
-                    if (skill_gain_speed) {
-                        Logger.LogDebug($"Raising player voyager skill.");
-                        Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
-                    }
-                }
+                // NOTE: XP gain is handled in VoyagerXPPatch (Ship.UpdateSail). GetSailForce only
+                // runs on the boat's ZDO owner (the driver), so awarding XP here skipped passengers.
                 float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
                 if (player_skill > 0f) {
                     float bonus = 1f + (player_skill * ValConfig.VoyagerSailingSpeedFactor.Value);
@@ -57,6 +42,40 @@ namespace ImpactfulSkills.patches
                         rowingbonus += friend.GetSkillFactor(VoyagingSkill) * ValConfig.MaxFriendsRowSpeedBonus.Value;
                     }
                     __result *= rowingbonus;
+                }
+            }
+        }
+
+        // Awards Voyager XP to whoever is locally aboard a moving boat. Hooks Ship.UpdateSail,
+        // which Ship.CustomFixedUpdate runs on every client BEFORE its m_nview.IsOwner() return,
+        // so passengers (not just the ZDO-owning driver) gain XP. Mirrors Hauling.VagonXPPatch:
+        // a throttled position-delta check, which is reliable on non-owner clients (where
+        // rigidbody velocity is not).
+        [HarmonyPatch(typeof(Ship))]
+        public static class VoyagerXPPatch {
+            static Vector3 lastPosition = Vector3.zero;
+            static float lastTimer = 0f;
+
+            [HarmonyPatch("UpdateSail")]
+            private static void Postfix(Ship __instance) {
+                if (ValConfig.EnableVoyager.Value == false || Player.m_localPlayer == null) { return; }
+                // Only the boat the LOCAL player is actually aboard (driver or passenger).
+                if (!__instance.IsPlayerInBoat(Player.m_localPlayer)) { return; }
+
+                if (lastPosition == Vector3.zero || lastTimer == 0) {
+                    lastPosition = __instance.transform.position;
+                    lastTimer = Time.realtimeSinceStartup;
+                }
+                if (Time.realtimeSinceStartup > lastTimer + ValConfig.VoyagerSkillXPCheckFrequency.Value) {
+                    lastTimer = Time.realtimeSinceStartup;
+                    float distance = Vector3.Distance(lastPosition, __instance.transform.position);
+                    Logger.LogDebug($"Checking voyager distance traveled: {distance}");
+                    // Threshold avoids idle bob/drift granting XP on an anchored boat.
+                    if (distance > 2f) {
+                        Logger.LogDebug($"Raising player voyager skill.");
+                        Player.m_localPlayer.RaiseSkill(VoyagingSkill, (ValConfig.VoyagerSkillGainRate.Value * 1f));
+                        lastPosition = __instance.transform.position;
+                    }
                 }
             }
         }

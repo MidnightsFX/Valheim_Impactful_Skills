@@ -192,7 +192,7 @@ namespace ImpactfulSkills.patches
 
             private static void Postfix(ref bool __result, Pickable __instance, Humanoid character)
             {
-                if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
+                if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && ValConfig.AOEFeaturesEnabled && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
                 {
                     if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
                         Logger.LogDebug($"Pickable is not a gathering item.");

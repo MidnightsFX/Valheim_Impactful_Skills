@@ -1,7 +1,10 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using Jotunn.Configs;
+using Jotunn.Entities;
 using Jotunn.Managers;
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -18,6 +21,51 @@ namespace ImpactfulSkills.patches
             animalh.Identifier = "midnightsfx.animalwhisper";
             animalh.IncreaseStep = 0.1f;
             AnimalHandling = SkillManager.Instance.AddSkill(animalh);
+
+        }
+
+        public static void GiveNearbyBreedingXP(Vector3 position) {
+            if (ValConfig.EnableAnimalWhisper.Value == false || ZNet.instance == null) { return; }
+            float xp = ValConfig.AnimalBreedingXP.Value;
+            if (xp <= 0f) { return; }
+
+            DataObjects.XPIncreaseRequest xp_inc = new DataObjects.XPIncreaseRequest();
+            xp_inc.Location = position;
+            xp_inc.Skill = AnimalHandling;
+            xp_inc.Range = ValConfig.AnimalBreedingXPRange.Value;
+            xp_inc.Amount = xp;
+            ValConfig.SendXPForSkillInArea(xp_inc);
+        }
+
+        [HarmonyPatch(typeof(Procreation), nameof(Procreation.MakePregnant))]
+        public static class AnimalPregnancyXP
+        {
+            private static void Postfix(Procreation __instance)
+            {
+                if (ValConfig.EnableAnimalWhisper.Value == true) {
+                    GiveNearbyBreedingXP(__instance.transform.position);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Procreation), nameof(Procreation.Procreate))]
+        public static class AnimalBirthXP
+        {
+            // Birth is inlined in Procreate: when pregnant & due it calls ResetPregnancy() (clearing
+            // the pregnant flag) then spawns the offspring. A pregnant -> not-pregnant transition across
+            // the call therefore means a birth occurred. The MakePregnant path is a separate call's
+            // else-branch, so the two never collide.
+            private static void Prefix(Procreation __instance, out bool __state)
+            {
+                __state = ValConfig.EnableAnimalWhisper.Value == true && __instance.IsPregnant();
+            }
+
+            private static void Postfix(Procreation __instance, bool __state)
+            {
+                if (__state && __instance.IsPregnant() == false) {
+                    GiveNearbyBreedingXP(__instance.transform.position);
+                }
+            }
         }
 
         [HarmonyPatch(typeof(Tameable), nameof(Tameable.DecreaseRemainingTime))]

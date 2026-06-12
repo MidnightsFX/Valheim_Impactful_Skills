@@ -122,7 +122,7 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 ### Animal Whisper (new skill)
 
 Taming reduces the amount of time it takes to tame creatures. It also increases the amount of drops you get from killing tamed creatures. Removing the need for massive creature farms.
-
+Breeding gives XP
 
 
 ### Knowledge Sharing
