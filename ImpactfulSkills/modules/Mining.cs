@@ -182,6 +182,13 @@ namespace ImpactfulSkills.patches {
                         colliderArray = mine_targets;
                         for (index = 0; index < colliderArray.Length; ++index) {
                             if (colliderArray == null || minerock5 == null) { break; }
+                            // We call the private DamageArea directly, bypassing MineRock5.Damage/RPC_Damage,
+                            // which normally guard on nview validity. When an earlier iteration destroys the
+                            // last hit area, DamageArea calls m_nview.Destroy() -> ResetZDO() (m_zdo = null).
+                            // The GameObject is only destroyed at end of frame, so minerock5 == null is still
+                            // false here; the next DamageArea -> LoadHealth dereferences a null ZDO and throws.
+                            // Stop hitting the deposit once its ZDO is gone.
+                            if (minerock5.m_nview == null || !minerock5.m_nview.IsValid() || minerock5.m_allDestroyed) { break; }
                             obj_collider = colliderArray[index];
                             if (!(obj_collider == null)) {
                                 ++iterations;
@@ -370,7 +377,12 @@ namespace ImpactfulSkills.patches {
             public static void Postfix(MineRock5 __instance, long sender, int index, float health) {
                 if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null) || (double)health > 0.0)
                     return;
-                Mining.IncreaseMiningDrops(__instance.m_dropItems, ((Component)__instance).gameObject.transform.position);
+                // Drop bonus loot at the fractured piece, not the whole deposit's pivot.
+                // m_bound.m_pos is the area's world collider center captured at Awake, so it
+                // stays valid even though UpdateMesh has already disabled the broken collider.
+                MineRock5.HitArea hitArea = __instance.GetHitArea(index);
+                Vector3 piecePos = hitArea != null ? hitArea.m_bound.m_pos : ((Component)__instance).gameObject.transform.position;
+                Mining.IncreaseMiningDrops(__instance.m_dropItems, piecePos);
             }
         }
 

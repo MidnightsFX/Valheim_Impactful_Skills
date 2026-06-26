@@ -127,7 +127,7 @@ namespace ImpactfulSkills.patches
 
             static int DetermineExtraDrops(Pickable __instance)
             {
-                if (Player.m_localPlayer == null || __instance.m_picked == true) { return 0; }
+                if (Player.m_localPlayer == null || __instance.m_picked == true || __instance.m_itemPrefab == null) { return 0; }
                 if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)) {
                     Logger.LogDebug($"Pickable is not an allowed gathering item.");
                     return 0;
@@ -192,7 +192,7 @@ namespace ImpactfulSkills.patches
 
             private static void Postfix(ref bool __result, Pickable __instance, Humanoid character)
             {
-                if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && ValConfig.AOEFeaturesEnabled && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null)
+                if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && ValConfig.AOEFeaturesEnabled && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null && __instance.m_itemPrefab != null)
                 {
                     if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
                         Logger.LogDebug($"Pickable is not a gathering item.");
@@ -217,7 +217,7 @@ namespace ImpactfulSkills.patches
                                 Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
                                 if (pickable_item != null) {
                                     Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
-                                    if (!UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
+                                    if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
                                         if (pickable_item.CanBePicked()) {
                                             pickable_item.m_nview.ClaimOwnership();
                                             pickable_item.Interact(Player.m_localPlayer, false, false);

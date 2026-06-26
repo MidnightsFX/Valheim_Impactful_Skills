@@ -1,3 +1,11 @@
+**0.9.3**
+---
+```
+- Fixes gathering causing an error when trying to gather from a prefab with a null drop (a pickable that has no pickable...)
+- Fixes some mine rocks droping their loot at an incorrect location (center of object, not destroyed leaflet)
+- Fixes a concurrent modification exception with mine rocks referencing an already destroyed vein
+```
+
 **0.9.2**
 ---
 ```
