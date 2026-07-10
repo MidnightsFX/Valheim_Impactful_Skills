@@ -49,6 +49,7 @@ namespace ImpactfulSkills
             AnimalWhisper.SetupAnimalSkill();
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
+            AOEToggleKeyHint.Setup();
 
             Modcheck.CheckModCompat();
 
