@@ -127,10 +127,13 @@ namespace ImpactfulSkills.patches
             int drop_amount = 0;
             float player_woodcutting_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
             
-            float min_drop = drops.m_dropMin * (ValConfig.WoodCuttingLootFactor.Value * (player_woodcutting_skill_factor * 100f)) / 100f;
-            float max_drop = drops.m_dropMax * (ValConfig.WoodCuttingLootFactor.Value * (player_woodcutting_skill_factor * 100f)) / 100f;
-            if (min_drop <= 1f || max_drop <= 1f) {
-                // no need to increase drops
+            // (F - 1) so the factor is a true total multiplier: the vanilla drop still spawns, and we add
+            // (F - 1) x base on top, scaled by skill. F = 1 -> no bonus (vanilla), F = 2 -> 2x at level 100.
+            float wood_bonus_factor = (ValConfig.WoodCuttingLootFactor.Value - 1f) * player_woodcutting_skill_factor;
+            float min_drop = drops.m_dropMin * wood_bonus_factor;
+            float max_drop = drops.m_dropMax * wood_bonus_factor;
+            if (max_drop < 1f) {
+                // bonus rounds to nothing
                 return;
             }
 

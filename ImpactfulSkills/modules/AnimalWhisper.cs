@@ -154,8 +154,12 @@ namespace ImpactfulSkills.patches
                         float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
                         foreach (var drop in tamechardrop.m_drops){
                             int drop_amount = 0;
-                            float min_drop = drop.m_amountMin * (ValConfig.TamedAnimalLootIncreaseFactor.Value * (player_skill_factor * 100f)) / 100f;
-                            float max_drop = drop.m_amountMax * (ValConfig.TamedAnimalLootIncreaseFactor.Value * (player_skill_factor * 100f)) / 100f;
+                            // (F - 1) so the factor is a true total multiplier: the vanilla CharacterDrop still
+                            // spawns, and we add (F - 1) x base on top, scaled by skill. F = 1 -> vanilla,
+                            // F = 3 -> 3x at level 100.
+                            float tamed_bonus_factor = (ValConfig.TamedAnimalLootIncreaseFactor.Value - 1f) * player_skill_factor;
+                            float min_drop = drop.m_amountMin * tamed_bonus_factor;
+                            float max_drop = drop.m_amountMax * tamed_bonus_factor;
                             if (min_drop > 0 && max_drop > 0 && min_drop != max_drop) {
                                 drop_amount = UnityEngine.Random.Range((int)min_drop, (int)max_drop);
                             } else if (min_drop == max_drop) {

@@ -225,6 +225,10 @@ namespace ImpactfulSkills.patches {
             } else {
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
                 float mineSkillFactor = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
+                // (F - 1) so the factor is a true total multiplier for drop amounts: the vanilla drop still
+                // spawns, and we add (F - 1) x base on top, scaled by skill. F = 1 -> vanilla, F = 2 -> 2x at
+                // level 100. mineSkillFactor above is kept for the optional drop-chance bonus below.
+                float mineLootAmountFactor = (ValConfig.MiningLootFactor.Value - 1f) * (skillFactor * 100f);
                 Dictionary<GameObject, int> drops1 = new Dictionary<GameObject, int>();
                 if (drops.m_drops != null) {
                     foreach (DropTable.DropData drop in drops.m_drops) {
@@ -245,8 +249,8 @@ namespace ImpactfulSkills.patches {
                         } else {
                             int dropAmountExtra = 0;
                             Logger.LogDebug(string.Format("Mining rock drop current: {0}, max_drop: {1}", drops.m_dropMin, drops.m_dropMax));
-                            float minInclusive = (float)(drops.m_dropMin * mineSkillFactor / 100.0);
-                            float maxExclusive = (float)(drops.m_dropMax * mineSkillFactor / 100.0);
+                            float minInclusive = (float)(drops.m_dropMin * mineLootAmountFactor / 100.0);
+                            float maxExclusive = (float)(drops.m_dropMax * mineLootAmountFactor / 100.0);
                             if (ValConfig.ReducedChanceDropsForLowAmountDrops.Value == true && minInclusive > 0.0 && maxExclusive > 0.0 && minInclusive != 1f) {
                                 float dropAmountChanceRoll = UnityEngine.Random.Range(minInclusive, maxExclusive);
                                 float dropAmountRandomChanceRoll = UnityEngine.Random.value;

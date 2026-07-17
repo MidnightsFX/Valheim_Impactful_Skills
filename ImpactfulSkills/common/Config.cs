@@ -215,7 +215,7 @@ namespace ImpactfulSkills
                 "Hotkey to toggle AOE harvesting and AOE planting on/off.");
             EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
-            WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 2 is 2x the loot at level 100.", false, 1f, 10f);
+            WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
 
             EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
             MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
@@ -223,7 +223,7 @@ namespace ImpactfulSkills
             RequiredLevelForMiningCrit = BindServerConfig("Mining", "RequiredLevelForMiningCrit", 25, "Level the player must be for critical mining hits to activate", false, 0, 100);
             ChanceForMiningCritHit = BindServerConfig("Mining", "ChanceForMiningCritHit", 0.1f, "Chance for a critical hit when mining", valmax: 1f);
             CriticalHitDmgMult = BindServerConfig("Mining", "CriticalHitDmgMult", 3f, "Multipler for damage from a critical hit", valmin: 1f, valmax: 20f);
-            MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 2 is 2x the loot at level 100.");
+            MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
             EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
             ChanceForAOEOnHit = BindServerConfig("Mining", "ChanceForAOEOnHit", 0.3f, "Once AOE Mining is enabled, this is the chance for it to activate on any hit", valmax: 1f);
             ChanceForAOEOnHitScalesWithSkill = BindServerConfig("Mining", "ChanceForAOEOnHitScalesWithSkill", true, "Increases your chance for an AOE strike based on player skill");
@@ -280,7 +280,7 @@ namespace ImpactfulSkills
 
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
-            TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 3 is 3x the loot at level 100", false, 1f, 10f);
+            TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
             EnableBeeBonuses = BindServerConfig("AnimalHandling", "EnableBeeBonuses", true, "Enables Animal Handling bonuses related to Bees.");
             BetterBeesLevel = BindServerConfig("AnimalHandling", "BetterBeesLevel", 15, "The level at which Bee productivity traits kick in", false, 0, 100);
             BeeHoneyOutputIncreaseBySkill = BindServerConfig("AnimalHandling", "BeeHoneyOutputIncreaseBySkill", 1f, "At level 100 skill, and 1.0 this results in a 100% increase in honey gathered.");

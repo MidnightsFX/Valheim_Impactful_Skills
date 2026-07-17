@@ -1,3 +1,9 @@
+**0.9.4**
+---
+```
+- Fixes Woodcutting, Mining and AnimalWhisper to properly scale drops, resulting in a lower scaling of drops overall
+```
+
 **0.9.3**
 ---
 ```
