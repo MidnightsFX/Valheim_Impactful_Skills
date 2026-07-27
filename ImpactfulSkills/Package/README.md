@@ -105,6 +105,8 @@ Jump also reduces the damage you take from falling.
 
 Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
 
+Hauling is trained by moving goods around: pulling a loaded cart, or covering ground on foot while your inventory is heavily loaded (by default, at or above 80% of your maximum carry weight). The heavier you are, the faster it trains.
+
 | Hauling 0 | Hauling 50 | Hauling 100 |
 | ------------- | ------------- | ------------- |
 | ![hauling_0](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_0.gif?raw=true) | ![hauling_50](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_50.gif?raw=true) | ![hauling_100](https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/Hauling_100.gif?raw=true) |

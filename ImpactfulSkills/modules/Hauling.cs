@@ -76,5 +76,58 @@ namespace ImpactfulSkills.patches {
                 }
             }
         }
+
+        /// <summary>
+        /// Grants hauling XP for travelling under a heavy load, so that carrying goods on foot is
+        /// rewarded and not just carting them. Rather than running its own timer this piggybacks on
+        /// the Run skill, which vanilla raises roughly once a second while actually running
+        /// (Player.CheckRun). That inherits all of vanilla's conditions for free - moving, on the
+        /// ground, not crouched, stamina remaining - so we only have to check distance and weight.
+        /// Note that vanilla blocks running entirely while encumbered, so this stops paying out
+        /// above 100% of your carry weight.
+        /// </summary>
+        [HarmonyPatch(typeof(Player))]
+        private static class PlayerCarryWeightXPPatch {
+            static Vector3 lastPosition = Vector3.zero;
+            static bool hasLastPosition = false;
+            static int runIncreases = 0;
+
+            [HarmonyPatch(nameof(Player.RaiseSkill))]
+            private static void Postfix(Player __instance, Skills.SkillType skill) {
+                if (ValConfig.EnableHauling.Value == false || ValConfig.EnableHaulingCarryWeightXP.Value == false || Player.m_localPlayer == null) { return; }
+                // Only counting run increases for the local player. This also stops the hauling
+                // award below from recursing back into here, since it raises a different skill.
+                if (skill != Skills.SkillType.Run || __instance != Player.m_localPlayer) { return; }
+
+                if (hasLastPosition == false) {
+                    lastPosition = __instance.transform.position;
+                    hasLastPosition = true;
+                    runIncreases = 0;
+                    return;
+                }
+
+                runIncreases++;
+                if (runIncreases < ValConfig.HaulingCarryWeightXPInterval.Value) { return; }
+                runIncreases = 0;
+
+                // If you haven't moved far enough, don't update the last position. That lets slow or
+                // interrupted travel accumulate across checks instead of being discarded, and stops
+                // running in circles from paying out.
+                float distance = Vector3.Distance(lastPosition, __instance.transform.position);
+                if (distance < ValConfig.HaulingCarryWeightXPMinDistance.Value) { return; }
+                lastPosition = __instance.transform.position;
+
+                // GetMaxCarryWeight already includes the hauling bonus applied by PlayerCarryWeightPatch
+                // as well as any Megingjord effect, so this ratio matches the on-screen weight bar.
+                float maxWeight = __instance.GetMaxCarryWeight();
+                if (maxWeight <= 0f) { return; }
+                float loadRatio = __instance.GetInventory().GetTotalWeight() / maxWeight;
+                if (loadRatio < (ValConfig.HaulingCarryWeightXPThreshold.Value / 100f)) { return; }
+
+                float xp = ValConfig.HaulingCarryWeightXPRate.Value * loadRatio;
+                Logger.LogDebug($"Raising hauling skill from carried weight: {xp} = {loadRatio} load ratio * {ValConfig.HaulingCarryWeightXPRate.Value}");
+                __instance.RaiseSkill(HaulingSkill, xp);
+            }
+        }
     }
 }

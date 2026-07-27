@@ -106,6 +106,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> FarmingSnapPreferCardinal;
         public static ConfigEntry<bool> EnableSnappingToOtherPlants;
         public static ConfigEntry<float> FarmingMultiPlantDistanceBufferModifier;
+        public static ConfigEntry<bool> FarmingMultiPlantPersistOrientation;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -143,6 +144,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> HaulingCartMassReduction;
         public static ConfigEntry<float> HaulingXPRate;
         public static ConfigEntry<int> HaulingXPCheckInterval;
+        public static ConfigEntry<bool> EnableHaulingCarryWeightXP;
+        public static ConfigEntry<float> HaulingCarryWeightXPThreshold;
+        public static ConfigEntry<float> HaulingCarryWeightXPRate;
+        public static ConfigEntry<int> HaulingCarryWeightXPInterval;
+        public static ConfigEntry<float> HaulingCarryWeightXPMinDistance;
 
         public static ConfigEntry<bool> EnableBloodMagic;
         public static ConfigEntry<float> BloodMagicXPForShieldDamageRatio;
@@ -263,8 +269,13 @@ namespace ImpactfulSkills
             HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
             EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
             HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
-            HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.1f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
+            HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.2f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
             HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 5, "The frequency that you can gain hauling skill while moving goods.");
+            EnableHaulingCarryWeightXP = BindServerConfig("Hauling", "EnableHaulingCarryWeightXP", true, "Enables gaining hauling XP while moving around with a heavily loaded inventory.");
+            HaulingCarryWeightXPThreshold = BindServerConfig("Hauling", "HaulingCarryWeightXPThreshold", 80f, "The percentage of your maximum carry weight that you must be carrying to gain hauling XP from your inventory weight.", false, 1f, 200f);
+            HaulingCarryWeightXPRate = BindServerConfig("Hauling", "HaulingCarryWeightXPRate", 3f, "The amount of XP that is gained each interval while heavily loaded. This is scaled by how loaded you are.", false, 0.01f, 10f);
+            HaulingCarryWeightXPInterval = BindServerConfig("Hauling", "HaulingCarryWeightXPInterval", 5, "How long to wait between checking for hauling XP, roughly how many seconds between skill checks.", false, 5, 100);
+            HaulingCarryWeightXPMinDistance = BindServerConfig("Hauling", "HaulingCarryWeightXPMinDistance", 1f, "How far you must travel within the check interval to gain hauling XP from the weight you are carrying.", true, 0f, 50f);
 
             EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
             BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
@@ -308,8 +319,9 @@ namespace ImpactfulSkills
             PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 1f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
             PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");
             FarmingSnapStyle = BindServerConfig("Farming", "FarmingSnapStyle", "Grid", "'Grid' detects the existing grid pattern and aligns to it; 'Legacy' snaps to the nearest plant position only.", new AcceptableValueList<string>("Grid", "Legacy"), true);
-            FarmingSnapPreferCardinal = BindServerConfig("Farming", "FarmingSnapPreferCardinal", true, "When using Grid snapping, prefer axis-aligned (N/S/E/W) snap candidates over diagonal ones.", advanced: true);
+            FarmingSnapPreferCardinal = BindServerConfig("Farming", "FarmingSnapPreferCardinal", true, "Legacy snap style only: prefer axis-aligned (N/S/E/W) snap candidates over diagonal ones. Grid style is always lattice-aligned and ignores this.", advanced: true);
             EnableSnappingToOtherPlants = BindServerConfig("Farming", "EnableSnappingToOtherPlants", true, "When enabled, allows plant grid snapping to plants which are not the same kind as the currently planting one");
+            FarmingMultiPlantPersistOrientation = BindServerConfig("Farming", "FarmingMultiPlantPersistOrientation", true, "After planting, keep the same grid orientation for the next planting instead of resetting to the direction you're facing. Rotate (scroll) to change it.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);

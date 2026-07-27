@@ -19,8 +19,6 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         internal static bool UseOtherPlantGridSystem = IsOtherPlantGridSystemAvailable();
 
-        // Rotation saved at placement time, restored to Valheim's m_placeRotation on next SetupPlacementGhost
-        private static Quaternion? _pendingGhostRotation;
 
         public static bool IsOtherPlantGridSystemAvailable() {
             if (ValConfig.PreferOtherPlantGrid.Value && Modcheck.OtherFarmingGridModPresent()) {
@@ -107,11 +105,14 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         [HarmonyPatch(typeof(Player), nameof(Player.SetupPlacementGhost))]
         static class PlayerSetupPlacementGhost {
-            static void Postfix(Player __instance) {
-                // Consume pending rotation regardless of path so it is never applied stale
-                Quaternion? pendingRotation = _pendingGhostRotation;
-                _pendingGhostRotation = null;
+            // Snapshot the rotation counter before Valheim's random-init (m_randomInitBuildRotation) can
+            // scramble it inside SetupPlacementGhost. This method can fire several times per placement
+            // (other mods rebuild the ghost), each re-randomizing — so we re-assert on every call.
+            static void Prefix(Player __instance, out int __state) {
+                __state = __instance.m_placeRotation;
+            }
 
+            static void Postfix(Player __instance, int __state) {
                 if (ValConfig.EnableFarmingMultiPlant.Value == false || UseOtherPlantGridSystem ||
                     __instance.m_placementGhost == null || !HoldingCultivator()) {
                     PlantGhostController.DestroyPool();
@@ -141,10 +142,13 @@ namespace ImpactfulSkills.modules.Multiplant {
                 PlantGhostController.Prepare(__instance.m_placementGhost);
                 PlantGhostController.BuildGrid(__instance.m_placementGhost);
 
-                // Restore the rotation the player had before Valheim reset m_placeRotation
-                if (pendingRotation.HasValue) {
-                    RestorePlaceRotation(__instance, pendingRotation.Value);
-                } 
+                // Undo the random-init rotation this SetupPlacementGhost applied so the grid keeps its heading.
+                if (ValConfig.FarmingMultiPlantPersistOrientation.Value && __instance.m_placeRotation != __state) {
+                    if (ValConfig.EnableDebugMode.Value) {
+                        Logger.LogDebug($"[Multiplant/setup] restoring placeRot {__instance.m_placeRotation} -> {__state}");
+                    }
+                    __instance.m_placeRotation = __state;
+                }
             }
         }
 
@@ -169,19 +173,28 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         [HarmonyPatch(typeof(Player), nameof(Player.PlacePiece))]
         public static class PlaceMultiPlantPieces {
-            private static void Postfix(Player __instance, Piece piece) {
+            // Snapshot the rotation counter before PlacePiece's own random-init runs.
+            private static void Prefix(Player __instance, out int __state) {
+                __state = __instance.m_placeRotation;
+            }
+
+            private static void Postfix(Player __instance, Piece piece, int __state) {
                 if (GridPlantingActive == false || UseOtherPlantGridSystem || IsPlantable(piece.gameObject) == false) { return; }
 
-                // Save rotation before Valheim resets m_placeRotation on the next SetupPlacementGhost call
-                _pendingGhostRotation = PlantGridState.BaseRotation;
+                if (ValConfig.FarmingMultiPlantPersistOrientation.Value) {
+                    // Remember the orientation we just planted with (covers snap-aligned headings), and
+                    // undo the random-init rotation PlacePiece applied so the next ghost keeps the heading.
+                    PlantGridState.SaveOrientation();
+                    __instance.m_placeRotation = __state;
+                    if (ValConfig.EnableDebugMode.Value) {
+                        Logger.LogDebug($"[Multiplant/place] persist=True randomInit={piece.m_randomInitBuildRotation} " +
+                            $"placeRot restored to {__state} baseYaw={PlantGridState.BaseRotation.eulerAngles.y:F0} " +
+                            $"savedRow={PlantGridState.HeadingOf(PlantGridState.SavedRowDirection):F0}");
+                    }
+                }
+
                 PlantGhostsWithCosts(__instance, piece.gameObject);
             }
-        }
-
-        /// <summary>Write back the Y rotation to Valheim's m_placeRotation counter so
-        /// UpdatePlacementGhost continues to use the saved angle on subsequent frames.</summary>
-        private static void RestorePlaceRotation(Player player, Quaternion rotation) {
-            player.m_placeRotation = Mathf.RoundToInt(rotation.eulerAngles.y / player.m_placeRotationDegrees);
         }
     }
 }

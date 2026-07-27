@@ -1,3 +1,22 @@
+**0.9.6**
+---
+```
+- Hauling now grants XP while travelling with a heavily loaded inventory, not just while pulling a cart.
+	- Configurable via the new HaulingCarryWeightXP settings (defaults to 80% of your maximum carry weight)
+	- HaulingCarryWeightXPInterval allows frequency tuning
+	- HaulingCarryWeightXPMinDistance allows configuring required distance covered to provide XP
+	- HaulingCarryWeightXPThreshold allows configuring the percentage of your carry weight that must be in use to gain XP
+	- HaulingCarryWeightXPRate allows tuning specifically XP granted by moving with a heavily loaded inventory
+```
+
+
+**0.9.5**
+---
+```
+- Improves plant grid snapping, new default grid snapping has stronger orientation snapping and will not form diagonals
+- Planting grid orientation is now preserved between placements
+```
+
 **0.9.4**
 ---
 ```

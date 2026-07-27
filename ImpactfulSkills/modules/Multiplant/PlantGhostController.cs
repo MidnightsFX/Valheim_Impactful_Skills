@@ -67,7 +67,6 @@ namespace ImpactfulSkills.modules.Multiplant {
             ExtraGhosts.Clear();
             GhostValid.Clear();
             PlantGrid.GridPlantingActive = false;
-            SnapSystem.ResetSnap();
             PlantGridState.ResetSavedOrientation();
         }
 

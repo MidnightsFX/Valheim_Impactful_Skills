@@ -48,6 +48,10 @@ namespace ImpactfulSkills.modules.Multiplant {
             Plant = null;
         }
 
+        // Diagnostics — only used when EnableDebugMode is on
+        private static bool _snapEngaged;
+        private static string _dbgSig;
+
         /// <summary>Run once per frame in UpdatePlacementGhost before ghost positions are updated.</summary>
         internal static void Update() {
             if (PlacementGhost == null) return;
@@ -59,30 +63,34 @@ namespace ImpactfulSkills.modules.Multiplant {
             euler.y = Mathf.Round(euler.y / 90f) * 90f;
             FixedRotation = Quaternion.Euler(euler);
             UpdateDirectionsAndSnap();
+            DebugTrace();
         }
 
         private static void UpdateDirectionsAndSnap() {
             float spacing = PlantGrid.Spacing;
             string plantName = Utils.GetPrefabName(PlacementGhost);
+            _snapEngaged = false;
 
-            // Default: derive from FixedRotation so grid direction tracks scroll input
-            // and naturally persists between placements (Valheim's m_placeRotation is preserved).
-            // Row = ghost forward, Column = ghost right — follow the actual ghost rotation freely
+            // Default: Row = ghost forward, Column = ghost right — follow the actual ghost rotation freely.
             RowDirection = BaseRotation * Vector3.forward;
             ColumnDirection = BaseRotation * Vector3.right;
 
             if (ValConfig.FarmingMultiPlantSnapToExisting.Value && !AltPlacement) {
                 // SnapSystem will set RowDirection, ColumnDirection, and BasePosition if a snap is found
-                if (SnapSystem.FindSnapPoints(plantName, spacing)) { return; }
+                if (SnapSystem.FindSnapPoints(plantName, spacing)) { _snapEngaged = true; return; }
             }
 
-            // If the player has rotated since the last snap, the saved orientation is stale.
-            if (SnapSystem.HasRotationChangedSinceSnap()) { ResetSavedOrientation(); }
+            // No snap. If the player has rotated the ghost since the orientation was saved, they are
+            // intentionally re-aiming — drop the saved orientation so the new facing takes over.
+            if (OrientationRotatedAway()) { ResetSavedOrientation(); }
 
-            // No snap — use the saved snapped orientation if available so the grid keeps
-            // its alignment after placement (newly placed plants block snap candidates).
-            // Fall back to ghost rotation only when no orientation has been established yet.
-            if (SavedRowDirection != Vector3.zero) {
+            // Reuse the orientation saved at the last placement so rows stay aligned across placements
+            // (the ghost's yaw is randomized by Valheim after each plant). Skip while AltPlace is held
+            // (free placement) or when the feature is disabled.
+            bool useSaved = ValConfig.FarmingMultiPlantPersistOrientation.Value
+                            && !AltPlacement
+                            && SavedRowDirection != Vector3.zero;
+            if (useSaved) {
                 RowDirection = SavedRowDirection * spacing;
                 ColumnDirection = SavedColumnDirection * spacing;
             } else {
@@ -91,10 +99,44 @@ namespace ImpactfulSkills.modules.Multiplant {
             }
         }
 
+        /// <summary>Capture the current grid orientation so subsequent placements can reuse it.</summary>
+        internal static void SaveOrientation() {
+            if (RowDirection.sqrMagnitude < 1e-4f || ColumnDirection.sqrMagnitude < 1e-4f) { return; }
+            SavedRowDirection = RowDirection.normalized;
+            SavedColumnDirection = ColumnDirection.normalized;
+            SavedBaseRotation = BaseRotation;
+        }
+
+        /// <summary>
+        /// True once the player has rotated the ghost more than half a rotate step (≈11°, one scroll
+        /// notch of Valheim's 22.5° step) away from the orientation that was saved — i.e. an intentional
+        /// re-aim rather than the post-placement random-rotation jitter (which we cancel out).
+        /// </summary>
+        internal static bool OrientationRotatedAway() {
+            return SavedBaseRotation.HasValue && Quaternion.Angle(BaseRotation, SavedBaseRotation.Value) > 11f;
+        }
+
         internal static void ResetSavedOrientation() {
             SavedBaseRotation = null;
             SavedRowDirection = Vector3.zero;
             SavedColumnDirection = Vector3.zero;
+        }
+
+        // Horizontal heading of a step vector, in degrees (0 = +Z / north).
+        internal static float HeadingOf(Vector3 v) {
+            v.y = 0;
+            return v.sqrMagnitude < 1e-6f ? 0f : Mathf.Atan2(v.x, v.z) * Mathf.Rad2Deg;
+        }
+
+        // Logs the orientation decision only when it changes, so a short repro produces a readable trace.
+        private static void DebugTrace() {
+            if (!ValConfig.EnableDebugMode.Value) { return; }
+            string saved = SavedRowDirection == Vector3.zero ? "none" : $"{HeadingOf(SavedRowDirection):F0}";
+            string sig = $"snap={_snapEngaged} alt={AltPlacement} ghostYaw={BaseRotation.eulerAngles.y:F0} " +
+                         $"row={HeadingOf(RowDirection):F0} saved={saved} rotAway={OrientationRotatedAway()}";
+            if (sig == _dbgSig) { return; }
+            _dbgSig = sig;
+            Logger.LogDebug($"[Multiplant/orient] {sig}");
         }
     }
 }
