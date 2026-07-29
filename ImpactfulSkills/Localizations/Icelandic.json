@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Dýrahald",
+  "skill_AnimalHandling_description": "Aukinn taminghraði, meira herfang, meira herfang við slátrun og engar lífbeltatakmarkanir fyrir býflugur. Hærra stig veitir aðgang að betri fríðindum.",
+  "skill_Voyager": "Sæfari",
+  "skill_Voyager_description": "Hraðinn og færnin sem þú stýrir bátnum þínum með.",
+  "skill_Hauling": "Flutningur",
+  "skill_Hauling_description": "Geta þín til að bera, geyma og flytja varning.",
+  "craft_refund": "Efni sparaðist!",
+  "aoe_enabled": "Svæðisgróðursetning/-uppskera virk",
+  "aoe_disabled": "Svæðisgróðursetning/-uppskera óvirk",
+  "aoe_toggle_hint": "Víxla svæðisgróðursetningu/-uppskeru"
+}

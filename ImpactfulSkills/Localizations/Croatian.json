@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Stočarstvo",
+  "skill_AnimalHandling_description": "Povećana brzina pripitomljavanja, više plijena, više plijena pri klanju i bez ograničenja bioma za pčele. Viša razina otključava bolje pogodnosti.",
+  "skill_Voyager": "Moreplovac",
+  "skill_Voyager_description": "Brzina i vještina kojom upravljaš svojim brodom.",
+  "skill_Hauling": "Prijevoz",
+  "skill_Hauling_description": "Tvoja sposobnost nošenja, skladištenja i prijevoza robe.",
+  "craft_refund": "Ušteđen materijal!",
+  "aoe_enabled": "Sadnja/žetva po području uključena",
+  "aoe_disabled": "Sadnja/žetva po području isključena",
+  "aoe_toggle_hint": "Uključi/isključi sadnju i žetvu po području"
+}

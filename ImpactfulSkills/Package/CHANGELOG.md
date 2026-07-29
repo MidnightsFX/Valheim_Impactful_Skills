@@ -1,3 +1,17 @@
+**0.9.7**
+---
+```
+- Adds full localization support for valheims supported languages
+	- Localization can be edited in `Bepinex/config/ImpactfulSkills`, a restart is required for changes to take effect.
+- Hauling movement XP is now granted from a single check (you can gain both at once)
+	- Hauling XP from carrying goods no longer requires running, walking counts too.
+	- Being over your maximum carry weight now grants hauling XP
+	- HaulingMaxLoadRatio caps how much bonus XP an overloaded inventory can provide (defaults to 1.5x)
+- HaulingCarryWeightXPMinWeight replaces HaulingCarryWeightXPThreshold, and is a flat inventory weight rather than a percentage (defaults to 275)
+- HaulingCarryWeightXPMinDistance is now HaulingXPMinDistance, and applies to cart hauling as well. Set it to 0 to gain hauling XP without moving.
+- HaulingCarryWeightXPInterval has been removed, HaulingXPCheckInterval replaces it (frequency of XP check, default 3s)
+```
+
 **0.9.6**
 ---
 ```

@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Dressage",
+  "skill_AnimalHandling_description": "Vitesse d'apprivoisement, butin et butin d'abattage accrus, et aucune restriction de biome pour les abeilles. Un niveau plus élevé donne accès à de meilleurs avantages.",
+  "skill_Voyager": "Navigateur",
+  "skill_Voyager_description": "La vitesse et l'habileté avec lesquelles vous manœuvrez votre bateau.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Votre capacité à porter, stocker et transporter des marchandises.",
+  "craft_refund": "Matériaux économisés !",
+  "aoe_enabled": "Plantation/récolte de zone activée",
+  "aoe_disabled": "Plantation/récolte de zone désactivée",
+  "aoe_toggle_hint": "Basculer plantation/récolte de zone"
+}

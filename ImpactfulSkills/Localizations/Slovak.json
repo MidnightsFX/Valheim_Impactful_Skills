@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Chov zvierat",
+  "skill_AnimalHandling_description": "Vyššia rýchlosť skrotenia, viac koristi, viac koristi z porážky a žiadne obmedzenia biómu pre včely. Vyššia úroveň odomyká lepšie výhody.",
+  "skill_Voyager": "Moreplavec",
+  "skill_Voyager_description": "Rýchlosť a zručnosť, s akou ovládaš svoju loď.",
+  "skill_Hauling": "Preprava",
+  "skill_Hauling_description": "Tvoja schopnosť nosiť, skladovať a prepravovať tovar.",
+  "craft_refund": "Ušetrený materiál!",
+  "aoe_enabled": "Plošná sadba/zber zapnuté",
+  "aoe_disabled": "Plošná sadba/zber vypnuté",
+  "aoe_toggle_hint": "Prepnúť plošnú sadbu/zber"
+}

@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "馴養",
+  "skill_AnimalHandling_description": "提高馴服速度、掉落物與屠宰掉落，蜜蜂不再受生態域限制。等級越高，可解鎖越好的加成。",
+  "skill_Voyager": "航海",
+  "skill_Voyager_description": "你操控船隻的速度與技巧。",
+  "skill_Hauling": "負重",
+  "skill_Hauling_description": "你搬運、存放與運輸貨物的能力。",
+  "craft_refund": "節省了一些材料！",
+  "aoe_enabled": "範圍種植/收穫已啟用",
+  "aoe_disabled": "範圍種植/收穫已停用",
+  "aoe_toggle_hint": "切換範圍種植/收穫"
+}

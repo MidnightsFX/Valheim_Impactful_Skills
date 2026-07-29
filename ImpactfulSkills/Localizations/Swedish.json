@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Djurhantering",
+  "skill_AnimalHandling_description": "Ökad tämjningshastighet, mer byte, mer byte vid slakt och inga biomrestriktioner för bin. Högre nivå ger tillgång till bättre förmåner.",
+  "skill_Voyager": "Sjöfarare",
+  "skill_Voyager_description": "Hastigheten och skickligheten med vilken du manövrerar din båt.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Din förmåga att bära, förvara och transportera gods.",
+  "craft_refund": "Material sparades!",
+  "aoe_enabled": "Områdesplantering/skörd på",
+  "aoe_disabled": "Områdesplantering/skörd av",
+  "aoe_toggle_hint": "Växla områdesplantering/skörd"
+}

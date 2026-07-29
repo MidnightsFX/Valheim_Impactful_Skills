@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "驯养",
+  "skill_AnimalHandling_description": "提高驯服速度、掉落物和屠宰掉落，蜜蜂不再受生物群系限制。等级越高，可解锁越好的加成。",
+  "skill_Voyager": "航海",
+  "skill_Voyager_description": "你操控船只的速度与技巧。",
+  "skill_Hauling": "负重",
+  "skill_Hauling_description": "你搬运、存放和运输货物的能力。",
+  "craft_refund": "节省了一些材料！",
+  "aoe_enabled": "范围种植/收获已启用",
+  "aoe_disabled": "范围种植/收获已禁用",
+  "aoe_toggle_hint": "切换范围种植/收获"
+}

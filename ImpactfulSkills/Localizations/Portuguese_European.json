@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Trato com Animais",
+  "skill_AnimalHandling_description": "Maior velocidade de domesticação, mais espólio, mais espólio ao abater e sem restrições de bioma para as abelhas. Níveis mais altos dão acesso a melhores benefícios.",
+  "skill_Voyager": "Navegador",
+  "skill_Voyager_description": "A velocidade e a perícia com que manobras o teu barco.",
+  "skill_Hauling": "Transporte",
+  "skill_Hauling_description": "A tua capacidade de carregar, armazenar e transportar mercadorias.",
+  "craft_refund": "Materiais poupados!",
+  "aoe_enabled": "Plantar/colher em área ativado",
+  "aoe_disabled": "Plantar/colher em área desativado",
+  "aoe_toggle_hint": "Alternar plantar/colher em área"
+}

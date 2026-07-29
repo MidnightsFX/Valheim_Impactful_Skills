@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Tierhaltung",
+  "skill_AnimalHandling_description": "Erhöhte Zähmungsgeschwindigkeit, mehr Beute, mehr Schlachtbeute und keine Biom-Beschränkungen für Bienen. Höhere Stufen schalten bessere Boni frei.",
+  "skill_Voyager": "Seefahrer",
+  "skill_Voyager_description": "Die Geschwindigkeit und das Geschick, mit dem du dein Boot steuerst.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Deine Fähigkeit, Waren zu tragen, zu lagern und zu transportieren.",
+  "craft_refund": "Material gespart!",
+  "aoe_enabled": "Flächen-Pflanzen/Ernten aktiviert",
+  "aoe_disabled": "Flächen-Pflanzen/Ernten deaktiviert",
+  "aoe_toggle_hint": "Flächen-Pflanzen/Ernten umschalten"
+}

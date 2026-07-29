@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Chov zvířat",
+  "skill_AnimalHandling_description": "Vyšší rychlost ochočování, více kořisti, více kořisti z porážky a žádná omezení biomu pro včely. Vyšší úroveň odemyká lepší výhody.",
+  "skill_Voyager": "Mořeplavec",
+  "skill_Voyager_description": "Rychlost a dovednost, s jakou ovládáš svou loď.",
+  "skill_Hauling": "Přeprava",
+  "skill_Hauling_description": "Tvoje schopnost nosit, skladovat a přepravovat zboží.",
+  "craft_refund": "Ušetřen materiál!",
+  "aoe_enabled": "Plošná sadba/sklizeň zapnuta",
+  "aoe_disabled": "Plošná sadba/sklizeň vypnuta",
+  "aoe_toggle_hint": "Přepnout plošnou sadbu/sklizeň"
+}

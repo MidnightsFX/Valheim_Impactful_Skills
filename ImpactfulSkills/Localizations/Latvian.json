@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Lopkopība",
+  "skill_AnimalHandling_description": "Palielināts pieradināšanas ātrums, laupījums un laupījums no kaušanas, kā arī nav bioma ierobežojumu bitēm. Augstāks līmenis atver labākas priekšrocības.",
+  "skill_Voyager": "Jūrasbraucējs",
+  "skill_Voyager_description": "Ātrums un prasme, ar kādu tu vadi savu laivu.",
+  "skill_Hauling": "Pārvadāšana",
+  "skill_Hauling_description": "Tava spēja nest, uzglabāt un pārvadāt preces.",
+  "craft_refund": "Ietaupīti materiāli!",
+  "aoe_enabled": "Laukuma stādīšana/ražas novākšana ieslēgta",
+  "aoe_disabled": "Laukuma stādīšana/ražas novākšana izslēgta",
+  "aoe_toggle_hint": "Pārslēgt laukuma stādīšanu/ražas novākšanu"
+}

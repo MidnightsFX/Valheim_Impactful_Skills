@@ -105,7 +105,7 @@ Jump also reduces the damage you take from falling.
 
 Hauling provides a way to gain innate carry weight, and move large amounts of goods easier.
 
-Hauling is trained by moving goods around: pulling a loaded cart, or covering ground on foot while your inventory is heavily loaded (by default, at or above 80% of your maximum carry weight). The heavier you are, the faster it trains.
+Hauling is trained by moving goods around: pulling a loaded cart, or covering ground on foot while your inventory is heavily loaded (by default, carrying at least 275 weight). Walking counts just as much as running, and the heavier you are the faster it trains - including when you are over your carry limit, which trains hauling faster than anything else.
 
 | Hauling 0 | Hauling 50 | Hauling 100 |
 | ------------- | ------------- | ------------- |

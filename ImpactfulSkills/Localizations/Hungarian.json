@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Állattartás",
+  "skill_AnimalHandling_description": "Gyorsabb szelídítés, több zsákmány, több vágási zsákmány és nincs biomkorlátozás a méheknek. Magasabb szint jobb előnyöket nyit meg.",
+  "skill_Voyager": "Hajós",
+  "skill_Voyager_description": "A sebesség és ügyesség, amellyel a hajódat kormányzod.",
+  "skill_Hauling": "Teherhordás",
+  "skill_Hauling_description": "Képességed áruk cipelésére, tárolására és szállítására.",
+  "craft_refund": "Anyagot spóroltál!",
+  "aoe_enabled": "Területi ültetés/aratás bekapcsolva",
+  "aoe_disabled": "Területi ültetés/aratás kikapcsolva",
+  "aoe_toggle_hint": "Területi ültetés/aratás váltása"
+}

@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Eläintenhoito",
+  "skill_AnimalHandling_description": "Nopeampi kesyttäminen, enemmän saalista, enemmän teurastussaalista eikä biomirajoituksia mehiläisille. Korkeampi taso avaa parempia etuja.",
+  "skill_Voyager": "Merenkulkija",
+  "skill_Voyager_description": "Nopeus ja taito, jolla ohjaat venettäsi.",
+  "skill_Hauling": "Kuljetus",
+  "skill_Hauling_description": "Kykysi kantaa, varastoida ja kuljettaa tavaroita.",
+  "craft_refund": "Materiaaleja säästyi!",
+  "aoe_enabled": "Alueistutus/-sadonkorjuu käytössä",
+  "aoe_disabled": "Alueistutus/-sadonkorjuu pois käytöstä",
+  "aoe_toggle_hint": "Vaihda alueistutus/-sadonkorjuu"
+}

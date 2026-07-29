@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Hayvan Yetiştirme",
+  "skill_AnimalHandling_description": "Artan evcilleştirme hızı, daha fazla ganimet, daha fazla kesim ganimeti ve arılar için biyom kısıtlaması yok. Yüksek seviye daha iyi avantajların kilidini açar.",
+  "skill_Voyager": "Denizci",
+  "skill_Voyager_description": "Teknenizi kullanma hızınız ve beceriniz.",
+  "skill_Hauling": "Taşıma",
+  "skill_Hauling_description": "Mal taşıma, depolama ve nakletme yeteneğiniz.",
+  "craft_refund": "Malzeme tasarrufu!",
+  "aoe_enabled": "Alan ekimi/hasadı açık",
+  "aoe_disabled": "Alan ekimi/hasadı kapalı",
+  "aoe_toggle_hint": "Alan ekimi/hasadını değiştir"
+}

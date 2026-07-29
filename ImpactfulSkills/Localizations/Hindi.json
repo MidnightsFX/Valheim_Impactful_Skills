@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "पशुपालन",
+  "skill_AnimalHandling_description": "पालतू बनाने की गति, लूट और वध से मिलने वाली लूट बढ़ती है, और मधुमक्खियों पर कोई बायोम प्रतिबंध नहीं। उच्च स्तर बेहतर लाभ खोलता है।",
+  "skill_Voyager": "नाविक",
+  "skill_Voyager_description": "वह गति और कौशल जिससे आप अपनी नाव चलाते हैं।",
+  "skill_Hauling": "ढुलाई",
+  "skill_Hauling_description": "सामान ढोने, संग्रहीत करने और परिवहन करने की आपकी क्षमता।",
+  "craft_refund": "कुछ सामग्री बच गई!",
+  "aoe_enabled": "क्षेत्र रोपण/कटाई चालू",
+  "aoe_disabled": "क्षेत्र रोपण/कटाई बंद",
+  "aoe_toggle_hint": "क्षेत्र रोपण/कटाई बदलें"
+}

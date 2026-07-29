@@ -18,6 +18,9 @@ namespace ImpactfulSkills
         public static ConfigFile cfg;
         public static ConfigEntry<bool> EnableDebugMode;
 
+        // Folder under BepInEx/config that holds this mods on-disk data (currently just the Localizations folder).
+        public const string cfgFolder = "ImpactfulSkills";
+
         // Runtime-only (non-persisted) shared toggle for the AOE harvesting + AOE planting features.
         public static bool AOEFeaturesEnabled = true;
         // Local (per-player, NOT server-synced) hotkey that toggles AOEFeaturesEnabled.
@@ -144,11 +147,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> HaulingCartMassReduction;
         public static ConfigEntry<float> HaulingXPRate;
         public static ConfigEntry<int> HaulingXPCheckInterval;
+        public static ConfigEntry<float> HaulingXPMinDistance;
         public static ConfigEntry<bool> EnableHaulingCarryWeightXP;
-        public static ConfigEntry<float> HaulingCarryWeightXPThreshold;
+        public static ConfigEntry<float> HaulingCarryWeightXPMinWeight;
         public static ConfigEntry<float> HaulingCarryWeightXPRate;
-        public static ConfigEntry<int> HaulingCarryWeightXPInterval;
-        public static ConfigEntry<float> HaulingCarryWeightXPMinDistance;
+        public static ConfigEntry<float> HaulingMaxLoadRatio;
 
         public static ConfigEntry<bool> EnableBloodMagic;
         public static ConfigEntry<float> BloodMagicXPForShieldDamageRatio;
@@ -270,12 +273,13 @@ namespace ImpactfulSkills
             EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
             HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
             HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.2f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
-            HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 5, "The frequency that you can gain hauling skill while moving goods.");
+            HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 3, "How many seconds between checks for hauling XP while moving goods, both by cart and by carrying them.", false, 1, 60);
+            HaulingXPCheckInterval.SettingChanged += HaulingXPTracker.OnIntervalChanged;
+            HaulingXPMinDistance = BindServerConfig("Hauling", "HaulingXPMinDistance", 1f, "How far you must travel within the check interval to gain hauling XP. Set to 0 to gain hauling XP without moving.", false, 0f, 50f);
             EnableHaulingCarryWeightXP = BindServerConfig("Hauling", "EnableHaulingCarryWeightXP", true, "Enables gaining hauling XP while moving around with a heavily loaded inventory.");
-            HaulingCarryWeightXPThreshold = BindServerConfig("Hauling", "HaulingCarryWeightXPThreshold", 80f, "The percentage of your maximum carry weight that you must be carrying to gain hauling XP from your inventory weight.", false, 1f, 200f);
+            HaulingCarryWeightXPMinWeight = BindServerConfig("Hauling", "HaulingCarryWeightXPMinWeight", 275f, "The minimum total inventory weight you must be carrying to gain hauling XP from your load.", false, 0f, 2000f);
             HaulingCarryWeightXPRate = BindServerConfig("Hauling", "HaulingCarryWeightXPRate", 3f, "The amount of XP that is gained each interval while heavily loaded. This is scaled by how loaded you are.", false, 0.01f, 10f);
-            HaulingCarryWeightXPInterval = BindServerConfig("Hauling", "HaulingCarryWeightXPInterval", 5, "How long to wait between checking for hauling XP, roughly how many seconds between skill checks.", false, 5, 100);
-            HaulingCarryWeightXPMinDistance = BindServerConfig("Hauling", "HaulingCarryWeightXPMinDistance", 1f, "How far you must travel within the check interval to gain hauling XP from the weight you are carrying.", true, 0f, 50f);
+            HaulingMaxLoadRatio = BindServerConfig("Hauling", "HaulingMaxLoadRatio", 1.5f, "The maximum load ratio that hauling XP will scale with. Being over your carry weight grants bonus XP, this caps how much.", true, 1f, 5f);
 
             EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
             BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);

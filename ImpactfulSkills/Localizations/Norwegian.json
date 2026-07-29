@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Dyrehold",
+  "skill_AnimalHandling_description": "Økt temmehastighet, mer bytte, mer slaktebytte og ingen biomebegrensninger for bier. Høyere nivå gir tilgang til bedre fordeler.",
+  "skill_Voyager": "Sjøfarer",
+  "skill_Voyager_description": "Hastigheten og ferdigheten du manøvrerer båten din med.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Din evne til å bære, lagre og transportere varer.",
+  "craft_refund": "Materialer spart!",
+  "aoe_enabled": "Områdeplanting/-høsting på",
+  "aoe_disabled": "Områdeplanting/-høsting av",
+  "aoe_toggle_hint": "Veksle områdeplanting/-høsting"
+}

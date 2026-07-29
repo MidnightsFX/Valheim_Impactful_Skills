@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "동물 사육",
+  "skill_AnimalHandling_description": "길들이기 속도, 전리품, 도축 전리품이 증가하고 꿀벌의 생물군계 제한이 사라집니다. 레벨이 높을수록 더 좋은 특전이 열립니다.",
+  "skill_Voyager": "항해",
+  "skill_Voyager_description": "배를 조종하는 속도와 기술.",
+  "skill_Hauling": "운반",
+  "skill_Hauling_description": "물품을 나르고, 보관하고, 운송하는 능력.",
+  "craft_refund": "재료를 절약했습니다!",
+  "aoe_enabled": "범위 심기/수확 활성화",
+  "aoe_disabled": "범위 심기/수확 비활성화",
+  "aoe_toggle_hint": "범위 심기/수확 전환"
+}

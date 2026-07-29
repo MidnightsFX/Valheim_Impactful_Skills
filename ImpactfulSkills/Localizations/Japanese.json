@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "動物飼育",
+  "skill_AnimalHandling_description": "テイム速度、戦利品、解体時の戦利品が増加し、ミツバチのバイオーム制限がなくなります。レベルが高いほど良い効果が解放されます。",
+  "skill_Voyager": "航海",
+  "skill_Voyager_description": "船を操る速度と技術。",
+  "skill_Hauling": "運搬",
+  "skill_Hauling_description": "物資を持ち運び、保管し、輸送する能力。",
+  "craft_refund": "素材を節約した！",
+  "aoe_enabled": "範囲植え付け/収穫が有効",
+  "aoe_disabled": "範囲植え付け/収穫が無効",
+  "aoe_toggle_hint": "範囲植え付け/収穫を切り替え"
+}

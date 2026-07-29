@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Manejo de animales",
+  "skill_AnimalHandling_description": "Mayor velocidad de domesticación, más botín, más botín al sacrificar y sin restricciones de bioma para las abejas. Un nivel más alto da acceso a mejores ventajas.",
+  "skill_Voyager": "Navegante",
+  "skill_Voyager_description": "La velocidad y la habilidad con la que manejas tu barco.",
+  "skill_Hauling": "Transporte",
+  "skill_Hauling_description": "Tu capacidad para llevar, almacenar y transportar mercancías.",
+  "craft_refund": "¡Materiales ahorrados!",
+  "aoe_enabled": "Plantar/cosechar en área activado",
+  "aoe_disabled": "Plantar/cosechar en área desactivado",
+  "aoe_toggle_hint": "Alternar plantar/cosechar en área"
+}

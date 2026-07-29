@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Gyvulininkystė",
+  "skill_AnimalHandling_description": "Didesnis prijaukinimo greitis, daugiau grobio, daugiau grobio skerdžiant ir jokių biomo apribojimų bitėms. Aukštesnis lygis atveria geresnių privalumų.",
+  "skill_Voyager": "Jūreivis",
+  "skill_Voyager_description": "Greitis ir įgūdis, su kuriuo valdai savo valtį.",
+  "skill_Hauling": "Krovimas",
+  "skill_Hauling_description": "Tavo gebėjimas nešti, laikyti ir gabenti prekes.",
+  "craft_refund": "Sutaupyta medžiagų!",
+  "aoe_enabled": "Ploto sodinimas/derliaus nuėmimas įjungtas",
+  "aoe_disabled": "Ploto sodinimas/derliaus nuėmimas išjungtas",
+  "aoe_toggle_hint": "Perjungti ploto sodinimą/derliaus nuėmimą"
+}

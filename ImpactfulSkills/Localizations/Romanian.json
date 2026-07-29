@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Îngrijirea animalelor",
+  "skill_AnimalHandling_description": "Viteză de îmblânzire, pradă și pradă la sacrificare sporite, fără restricții de biom pentru albine. Nivelurile mai mari oferă acces la avantaje mai bune.",
+  "skill_Voyager": "Navigator",
+  "skill_Voyager_description": "Viteza și îndemânarea cu care îți manevrezi barca.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Capacitatea ta de a căra, depozita și transporta mărfuri.",
+  "craft_refund": "Materiale economisite!",
+  "aoe_enabled": "Plantare/recoltare pe zonă activată",
+  "aoe_disabled": "Plantare/recoltare pe zonă dezactivată",
+  "aoe_toggle_hint": "Comută plantarea/recoltarea pe zonă"
+}

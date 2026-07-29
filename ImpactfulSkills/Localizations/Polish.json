@@ -1,8 +1,12 @@
-﻿{
+{
   "skill_AnimalHandling": "Hodowca",
   "skill_AnimalHandling_description": "Szybkość oswajania, zwiekszony loot, lepsza produktywność i brak ograniczeń biomu dla pszczół.",
   "skill_Voyager": "Nawigator",
   "skill_Voyager_description": "Szybkość łodzi, obszar odkrywania, redukcja obrażeń łodzi.",
   "skill_Hauling": "Przewoźnik",
-  "skill_Hauling_description": "Zwiększony udźwig, łatwiejsze pchanie wózka"
+  "skill_Hauling_description": "Zwiększony udźwig, łatwiejsze pchanie wózka.",
+  "craft_refund": "Zaoszczędzono materiały!",
+  "aoe_enabled": "Sadzenie/zbieranie obszarowe włączone",
+  "aoe_disabled": "Sadzenie/zbieranie obszarowe wyłączone",
+  "aoe_toggle_hint": "Przełącz sadzenie/zbieranie obszarowe"
 }

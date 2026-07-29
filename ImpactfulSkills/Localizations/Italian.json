@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Addestramento animali",
+  "skill_AnimalHandling_description": "Maggiore velocità di addomesticamento, bottino e bottino da macellazione, e nessuna restrizione di bioma per le api. Un livello più alto dà accesso a vantaggi migliori.",
+  "skill_Voyager": "Navigatore",
+  "skill_Voyager_description": "La velocità e l'abilità con cui manovri la tua barca.",
+  "skill_Hauling": "Trasporto",
+  "skill_Hauling_description": "La tua capacità di portare, immagazzinare e trasportare merci.",
+  "craft_refund": "Materiali risparmiati!",
+  "aoe_enabled": "Semina/raccolta ad area attivata",
+  "aoe_disabled": "Semina/raccolta ad area disattivata",
+  "aoe_toggle_hint": "Attiva/disattiva semina e raccolta ad area"
+}

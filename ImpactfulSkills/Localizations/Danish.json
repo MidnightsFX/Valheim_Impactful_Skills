@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Dyrehold",
+  "skill_AnimalHandling_description": "Øget tæmningshastighed, mere bytte, mere slagtebytte og ingen biomebegrænsninger for bier. Højere niveau giver adgang til bedre fordele.",
+  "skill_Voyager": "Søfarer",
+  "skill_Voyager_description": "Hastigheden og evnen hvormed du manøvrerer din båd.",
+  "skill_Hauling": "Transport",
+  "skill_Hauling_description": "Din evne til at bære, opbevare og transportere gods.",
+  "craft_refund": "Materialer sparet!",
+  "aoe_enabled": "Områdeplantning/-høst slået til",
+  "aoe_disabled": "Områdeplantning/-høst slået fra",
+  "aoe_toggle_hint": "Skift områdeplantning/-høst"
+}

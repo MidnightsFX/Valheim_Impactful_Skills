@@ -1,0 +1,12 @@
+{
+  "skill_AnimalHandling": "Dierverzorging",
+  "skill_AnimalHandling_description": "Hogere temsnelheid, meer buit, meer slachtbuit en geen biomebeperkingen voor bijen. Een hoger niveau geeft toegang tot betere voordelen.",
+  "skill_Voyager": "Zeevaarder",
+  "skill_Voyager_description": "De snelheid en vaardigheid waarmee je je boot bestuurt.",
+  "skill_Hauling": "Sjouwen",
+  "skill_Hauling_description": "Je vermogen om goederen te dragen, op te slaan en te vervoeren.",
+  "craft_refund": "Materialen bespaard!",
+  "aoe_enabled": "Gebiedsplanten/-oogsten aan",
+  "aoe_disabled": "Gebiedsplanten/-oogsten uit",
+  "aoe_toggle_hint": "Gebiedsplanten/-oogsten schakelen"
+}
