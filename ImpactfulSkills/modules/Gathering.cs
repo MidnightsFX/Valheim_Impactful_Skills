@@ -205,7 +205,7 @@ namespace ImpactfulSkills.patches
                         enabled_aoe_gathering = true;
                     }
 
-                    Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
+                    Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) >= ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
                     if ((player_skill_factor * 100f) > ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);

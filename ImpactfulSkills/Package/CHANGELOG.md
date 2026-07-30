@@ -10,6 +10,7 @@
 - HaulingCarryWeightXPMinWeight replaces HaulingCarryWeightXPThreshold, and is a flat inventory weight rather than a percentage (defaults to 275)
 - HaulingCarryWeightXPMinDistance is now HaulingXPMinDistance, and applies to cart hauling as well. Set it to 0 to gain hauling XP without moving.
 - HaulingCarryWeightXPInterval has been removed, HaulingXPCheckInterval replaces it (frequency of XP check, default 3s)
+- Fixes farming multiplant requiring one extra level than defined
 ```
 
 **0.9.6**

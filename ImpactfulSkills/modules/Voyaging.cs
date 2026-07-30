@@ -15,6 +15,7 @@ namespace ImpactfulSkills.patches
             SkillConfig voyage = new SkillConfig();
             voyage.Name = "$skill_Voyager";
             voyage.Description = "$skill_Voyager_description";
+            // Assets/Custom/Icons/skill_icons/hauling.png
             voyage.Icon = ImpactfulSkills.EmbeddedResourceBundle.LoadAsset<Sprite>("Assets/Custom/Icons/skill_icons/voyager.png");
             voyage.Identifier = "midnightsfx.voyager";
             voyage.IncreaseStep = 0.15f;
