@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using Jotunn.Configs;
 using Jotunn.Managers;
 using System.Collections.Generic;
@@ -118,7 +119,7 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch paddle speed improvement.",
                     new CodeMatch(OpCodes.Ldarg_0),
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_body))),
                     new CodeMatch(OpCodes.Ldloc_S),
@@ -126,9 +127,11 @@ namespace ImpactfulSkills.patches
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Ship), nameof(Ship.m_body))),
                     new CodeMatch(OpCodes.Callvirt),
                     new CodeMatch(OpCodes.Ldarg_1)
-                    ).Advance(3).InsertAndAdvance(
-                    Transpilers.EmitDelegate(PaddleSpeedImprovement)
-                    ).ThrowIfNotMatch("Unable to patch paddle speed improvement."); ;
+                )) {
+                    codeMatcher.Advance(3).InsertAndAdvance(
+                        Transpilers.EmitDelegate(PaddleSpeedImprovement)
+                    );
+                }
                 return codeMatcher.Instructions();
             }
 

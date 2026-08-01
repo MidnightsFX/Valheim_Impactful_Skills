@@ -19,11 +19,13 @@ namespace ImpactfulSkills.patches
                 var codeMatcher = new CodeMatcher(instructions);
 
                 // Find where m_jumpForce is loaded and modify it
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch jump force modification.",
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_jumpForce)))
-                    ).RemoveInstruction().InsertAndAdvance(
+                )) {
+                    codeMatcher.RemoveInstruction().InsertAndAdvance(
                         Transpilers.EmitDelegate(ModifyJumpForceBySkill)
-                    ).ThrowIfNotMatch("Unable to patch jump force modification.");
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }
@@ -64,27 +66,37 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher
-                .MatchStartForward(
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.IsPlayer)))
-                ).Advance(2).MatchStartForward(
-                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.IsPlayer)))
-                ).MatchForward(true, new CodeMatch(OpCodes.Ldc_R4))
-                .RemoveInstruction()
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_0),
-                    Transpilers.EmitDelegate(ModifyMinFallHeightForDamageBySkill)
-                ).ThrowIfNotMatch("Unable to patch min damage height increase.")
-                .MatchStartForward(
+                const string heightFailure = "Unable to patch min damage height increase.";
+                if (codeMatcher.TryMatchStartForward(heightFailure,
+                        new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.IsPlayer)))
+                    )
+                    && codeMatcher.Advance(2).TryMatchStartForward(heightFailure,
+                        new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.IsPlayer)))
+                    )
+                    && codeMatcher.TryMatchEndForward(heightFailure, new CodeMatch(OpCodes.Ldc_R4))
+                ) {
+                    codeMatcher.RemoveInstruction()
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(ModifyMinFallHeightForDamageBySkill)
+                    );
+                }
+
+                // Independent of the height edit above, so start over rather than continuing from
+                // wherever that one left off.
+                codeMatcher.Start();
+                if (codeMatcher.TryMatchStartForward("Unable to patch Fall damage reduction.",
                     //new CodeMatch(OpCodes.Ldloc_2),
                     //new CodeMatch(OpCodes.Ldloca_S),
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(SEMan), nameof(SEMan.ModifyFallDamage)))
-                ).Advance(1).InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldloc_2), // Load the fall damage to be taken
-                    new CodeInstruction(OpCodes.Ldarg_0),
-                    Transpilers.EmitDelegate(ModifyFallDamageBySkill),
-                    new CodeInstruction(OpCodes.Stloc_2)
-                ).ThrowIfNotMatch("Unable to patch Fall damage reduction.");
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldloc_2), // Load the fall damage to be taken
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(ModifyFallDamageBySkill),
+                        new CodeInstruction(OpCodes.Stloc_2)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }

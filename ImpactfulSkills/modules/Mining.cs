@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -352,14 +353,17 @@ namespace ImpactfulSkills.patches {
         [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/) {
             var codeMatcher = new CodeMatcher(instructions);
-            codeMatcher.MatchEndForward(
-                new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MineRock), nameof(MineRock.m_destroyedEffect)))
-                ).MatchEndForward(
-                new CodeMatch(OpCodes.Pop)
-                ).InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldarg_0), // load __instance
-                Transpilers.EmitDelegate(ApplyIncreasedMiningDrops)
-                ).ThrowIfNotMatch("Unable to patch Minerock Drop increase.");
+            const string failure = "Unable to patch Minerock Drop increase.";
+            if (codeMatcher.TryMatchEndForward(failure,
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MineRock), nameof(MineRock.m_destroyedEffect)))
+                ) && codeMatcher.TryMatchEndForward(failure,
+                    new CodeMatch(OpCodes.Pop)
+                )) {
+                codeMatcher.InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldarg_0), // load __instance
+                    Transpilers.EmitDelegate(ApplyIncreasedMiningDrops)
+                );
+            }
 
             return codeMatcher.Instructions();
         }

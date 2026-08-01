@@ -106,12 +106,13 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions , ILGenerator generator)
             {
                 var codeMatcher = new CodeMatcher(instructions, generator);
-                codeMatcher.MatchStartForward(
-                        new CodeMatch(OpCodes.Ldc_I4_0), 
+                if (codeMatcher.TryMatchStartForward("Unable remove vanilla pickable luckydrop.",
+                        new CodeMatch(OpCodes.Ldc_I4_0),
                         new CodeMatch(OpCodes.Stloc_0), // int bonus_num = 0;
                         new CodeMatch(OpCodes.Ldarg_0),
                         new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Pickable), nameof(Pickable.m_picked)))
-                    )
+                    )) {
+                    codeMatcher
                     .Advance(2)
                     .Insert(
                         new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
@@ -120,8 +121,8 @@ namespace ImpactfulSkills.patches
                     )
                     .Advance(3)
                     .CreateLabelOffset(out Label label, offset: 59)
-                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label))
-                    .ThrowIfNotMatch("Unable remove vanilla pickable luckydrop.");
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label));
+                }
                 return codeMatcher.Instructions();
             }
 
@@ -176,11 +177,12 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to increase vanilla harvest max range.",
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Attack), nameof(Attack.m_harvestRadiusMaxLevel)))
-                    ).Advance(1).InsertAndAdvance(
-                    Transpilers.EmitDelegate(IncreaseHarvestWeaponRange))
-                    .ThrowIfNotMatch("Unable to increase vanilla harvest max range.");
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        Transpilers.EmitDelegate(IncreaseHarvestWeaponRange));
+                }
 
                 return codeMatcher.Instructions();
             }

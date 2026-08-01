@@ -16,27 +16,33 @@ namespace ImpactfulSkills.patches
         {
             [HarmonyTranspiler]
             [HarmonyPatch(nameof(Character.UpdateWalking))]
+            // See SneakSpeedPatch - same reasoning, m_runSpeed is just as attractive an anchor.
+            [HarmonyPriority(Priority.First)]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                    codeMatcher.MatchStartForward(
-                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_runSpeed)))
-                        ).RemoveInstruction().InsertAndAdvance(
-                        Transpilers.EmitDelegate(ModifyRunSpeedBySkill)
-                        ).ThrowIfNotMatch("Unable to patch Run skill movement increase.");
+                // Add onto the run speed instead of replacing the field load, so that other mods
+                // anchoring on the same 'ldfld m_runSpeed' can still find it regardless of order.
+                if (codeMatcher.TryMatchStartForward("Unable to patch Run skill movement increase.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), nameof(Character.m_runSpeed)))
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(RunSpeedBonus),
+                        new CodeInstruction(OpCodes.Add)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }
 
-            public static float ModifyRunSpeedBySkill(Character __instance)
+            public static float RunSpeedBonus(Character __instance)
             {
                 if (ValConfig.EnableRun.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer) {
                     float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Run);
-                    float run_speed_bonus = ValConfig.RunSpeedFactor.Value * (player_skill_factor * 100f);
-                    float modified_run_speed = __instance.m_runSpeed + run_speed_bonus;
-                    return modified_run_speed;
+                    return ValConfig.RunSpeedFactor.Value * (player_skill_factor * 100f);
                 }
-                return __instance.m_runSpeed;
+                return 0f;
             }
         }
     }
