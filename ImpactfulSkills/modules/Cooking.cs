@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -17,12 +18,14 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch Food degrading improvement.",
                     new CodeMatch(OpCodes.Div),
                     new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Mathf), nameof(Mathf.Clamp01)))
-                    ).RemoveInstructions(2).InsertAndAdvance(
-                    Transpilers.EmitDelegate(ClampFoodWithBonus)
-                    ).ThrowIfNotMatch("Unable to patch Food degrading improvement.");
+                )) {
+                    codeMatcher.RemoveInstructions(2).InsertAndAdvance(
+                        Transpilers.EmitDelegate(ClampFoodWithBonus)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }

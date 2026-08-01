@@ -51,12 +51,14 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch Stamina reduction for bows compatibility.",
                     new CodeMatch(OpCodes.Dup),
                     new CodeMatch(OpCodes.Ldc_R4)
-                ).Advance(1).RemoveInstructions(1).InsertAndAdvance(
-                    Transpilers.EmitDelegate(ModifyStaminaDrainCostForBow)
-                ).ThrowIfNotMatch("Unable to patch Stamina reduction for bows compatibility.");
+                )) {
+                    codeMatcher.Advance(1).RemoveInstructions(1).InsertAndAdvance(
+                        Transpilers.EmitDelegate(ModifyStaminaDrainCostForBow)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }
@@ -70,12 +72,14 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch extra XP for Parry block.",
                     new CodeMatch(OpCodes.Ldarg_0),
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Humanoid), nameof(Humanoid.m_perfectBlockEffect)))
-                    ).Advance(2).InsertAndAdvance(
-                    Transpilers.EmitDelegate(ExtraXPForParryBlock)
-                    ).ThrowIfNotMatch("Unable to patch extra XP for Parry block.");
+                )) {
+                    codeMatcher.Advance(2).InsertAndAdvance(
+                        Transpilers.EmitDelegate(ExtraXPForParryBlock)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }
@@ -92,7 +96,7 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch stamina cost reduction modification, inherit modifier compatibility.",
                     new CodeMatch(OpCodes.Ldloc_0),
                     new CodeMatch(OpCodes.Ldloc_0),
                     new CodeMatch(OpCodes.Ldc_R4),
@@ -101,15 +105,16 @@ namespace ImpactfulSkills.patches
                     new CodeMatch(OpCodes.Mul),
                     new CodeMatch(OpCodes.Sub),
                     new CodeMatch(OpCodes.Stloc_0)
-                )
-                .RemoveInstruction()
-                .Advance(2)
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldloc_1),
-                    Transpilers.EmitDelegate(ModifyWeaponStaminaCostBySkillLevelInheritFactor)
-                )
-                .RemoveInstructions(4)
-                .ThrowIfNotMatch("Unable to patch stamina cost reduction modification, inherit modifier compatibility.");
+                )) {
+                    codeMatcher
+                    .RemoveInstruction()
+                    .Advance(2)
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldloc_1),
+                        Transpilers.EmitDelegate(ModifyWeaponStaminaCostBySkillLevelInheritFactor)
+                    )
+                    .RemoveInstructions(4);
+                }
                 return codeMatcher.Instructions();
             }
         }
@@ -168,13 +173,13 @@ namespace ImpactfulSkills.patches
                 FieldInfo equipDurationField = AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), nameof(ItemDrop.ItemData.SharedData.m_equipDuration));
 
                 CodeMatcher codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, equipDurationField));
-
-                codeMatcher.Advance(1);
-                codeMatcher.Insert(
-                    new CodeInstruction(OpCodes.Ldarg_1),
-                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                if (codeMatcher.TryMatchStartForward("Unable to patch equip speed.",
+                    new CodeMatch(OpCodes.Ldfld, equipDurationField))) {
+                    codeMatcher.Advance(1);
+                    codeMatcher.Insert(
+                        new CodeInstruction(OpCodes.Ldarg_1),
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                }
                 return codeMatcher.InstructionEnumeration();
             }
         }
@@ -188,13 +193,13 @@ namespace ImpactfulSkills.patches
                 FieldInfo equipDurationField = AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), nameof(ItemDrop.ItemData.SharedData.m_equipDuration));
 
                 CodeMatcher codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, equipDurationField));
-
-                codeMatcher.Advance(1);
-                codeMatcher.Insert(
-                    new CodeInstruction(OpCodes.Ldarg_1),
-                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                if (codeMatcher.TryMatchStartForward("Unable to patch unequip speed.",
+                    new CodeMatch(OpCodes.Ldfld, equipDurationField))) {
+                    codeMatcher.Advance(1);
+                    codeMatcher.Insert(
+                        new CodeInstruction(OpCodes.Ldarg_1),
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EquipSpeedHelper), nameof(EquipSpeedHelper.Apply))));
+                }
                 return codeMatcher.InstructionEnumeration();
             }
         }

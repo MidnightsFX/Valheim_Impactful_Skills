@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +19,14 @@ namespace ImpactfulSkills.patches
             [HarmonyPatch("UpdateSwimming")]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch Swim skill movement increase.",
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (Character), "m_swimSpeed"))
-                ).RemoveInstruction()
-                .InsertAndAdvance(
-                    Transpilers.EmitDelegate(ModifySwimSpeedbySkill)
-                ).ThrowIfNotMatch("Unable to patch Swim skill movement increase.");
+                )) {
+                    codeMatcher.RemoveInstruction()
+                    .InsertAndAdvance(
+                        Transpilers.EmitDelegate(ModifySwimSpeedbySkill)
+                    );
+                }
                 return codeMatcher.Instructions();
             }
 
@@ -45,16 +48,16 @@ namespace ImpactfulSkills.patches
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch Swim Stamina cost reduction.",
                     new CodeMatch(OpCodes.Mul),
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.UseStamina)))
-                )
-                .Advance(1)
-                .InsertAndAdvance(
-                    // new CodeInstruction(OpCodes.Ldarg_0),
-                    Transpilers.EmitDelegate(ModifySwimCost)
-                )
-                .ThrowIfNotMatch("Unable to patch Swim Stamina cost reduction.");
+                )) {
+                    codeMatcher.Advance(1)
+                    .InsertAndAdvance(
+                        // new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(ModifySwimCost)
+                    );
+                }
                 return codeMatcher.Instructions();
             }
 

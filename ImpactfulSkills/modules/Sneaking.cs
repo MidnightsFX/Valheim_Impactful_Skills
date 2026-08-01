@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using ImpactfulSkills.compatibility;
+using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
@@ -15,44 +15,53 @@ namespace ImpactfulSkills.patches
             //[HarmonyDebug]
             [HarmonyTranspiler]
             [HarmonyPatch("UpdateWalking")]
+            // Run before mods that replace the crouch speed field load outright, so that our
+            // non-destructive insert happens while the anchor still exists and theirs still finds it.
+            [HarmonyPriority(Priority.First)]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, null);
-                if (Modcheck.IsSNEAKerEnabled) {
-                    Logger.LogDebug("SNEAKer detected, using compatibility patch.");
-                    codeMatcher.MatchStartForward(
-                        new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsEncumbered")),
-                        new CodeMatch(OpCodes.Brfalse),
-                        new CodeMatch(OpCodes.Ldarg_0),
-                        new CodeMatch(OpCodes.Call)
-                    ).Advance(4)
+
+                // Add our bonus onto the crouch speed rather than replacing the field load, so that
+                // mods which anchor on the same 'ldfld m_crouchSpeed' (SNEAKer, TalentTree's Silent
+                // Stride) still find it no matter which of us transpiles first.
+                if (codeMatcher.TryMatchStartForward("Unable to patch Sneak skill movement increase.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), "m_crouchSpeed"))
+                )) {
+                    codeMatcher.Advance(1)
                     .InsertAndAdvance(
                         new CodeInstruction(OpCodes.Ldarg_0),
-                        Transpilers.EmitDelegate(Sneaking.SneakSpeedPatch.ModifySneakSpeedBonusOnly),
+                        Transpilers.EmitDelegate(Sneaking.SneakSpeedPatch.SneakSpeedBonus),
                         new CodeInstruction(OpCodes.Add)
-                    ).ThrowIfNotMatch("Unable to patch Sneak skill movement increase with SNEAKer.");
-                } else {
-                    codeMatcher.MatchStartForward(
-                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Character), "m_crouchSpeed"))
-                    ).RemoveInstruction()
-                    .InsertAndAdvance(
-                        Transpilers.EmitDelegate(Sneaking.SneakSpeedPatch.ModifyMovementSpeedBySkill)
-                    ).ThrowIfNotMatch("Unable to patch Sneak skill movement increase.");
+                    );
+                    return codeMatcher.Instructions();
                 }
+
+                // The field load is gone, so another mod replaced it with its own speed calculation.
+                // Fall back to appending our bonus after that calculation instead.
+                Logger.LogDebug("Crouch speed already patched by another mod, using compatibility anchor.");
+                codeMatcher.Start();
+                if (codeMatcher.TryMatchStartForward("Unable to patch Sneak skill movement increase for mod compatibility.",
+                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), "IsEncumbered")),
+                    new CodeMatch(OpCodes.Brfalse),
+                    new CodeMatch(OpCodes.Ldarg_0),
+                    new CodeMatch(OpCodes.Call)
+                )) {
+                    codeMatcher.Advance(4)
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(Sneaking.SneakSpeedPatch.SneakSpeedBonus),
+                        new CodeInstruction(OpCodes.Add)
+                    );
+                }
+
                 return codeMatcher.Instructions();
             }
 
-            public static float ModifySneakSpeedBonusOnly(Character __instance) {
+            public static float SneakSpeedBonus(Character __instance) {
                 if (!ValConfig.EnableStealth.Value || __instance.IsEncumbered()) { return 0f; }
-                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Sneak);
-                float num = ValConfig.SneakSpeedFactor.Value * (skillFactor * 100f);
-                return num;
-            }
-
-            public static float ModifyMovementSpeedBySkill(Character __instance) {
-                if (!ValConfig.EnableStealth.Value || __instance.IsEncumbered()) { return __instance.m_crouchSpeed; }
                 float skillFactor = __instance.GetSkillFactor(Skills.SkillType.Sneak);
                 float num = ValConfig.SneakSpeedFactor.Value * (skillFactor * 100f);
-                return __instance.m_crouchSpeed + num;
+                return num;
             }
         }
 
@@ -85,13 +94,15 @@ namespace ImpactfulSkills.patches
                 [HarmonyPatch("DoMeleeAttack")]
                 public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                     CodeMatcher codeMatcher = new CodeMatcher(instructions, null);
-                    codeMatcher.MatchStartForward(
+                    if (codeMatcher.TryMatchStartForward("Unable to patch Melee Backstab.",
                             new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), "m_backstabBonus"))
-                        ).Advance(1)
+                        )) {
+                        codeMatcher.Advance(1)
                         .InsertAndAdvance(
                             new CodeInstruction(OpCodes.Ldarg_0),
                             Transpilers.EmitDelegate(Sneaking.SneakingBackstabBonusDmg.ModifyBackstab)
-                        ).ThrowIfNotMatch("Unable to patch Melee Backstab.");
+                        );
+                    }
                     return codeMatcher.Instructions();
                 }
             }
@@ -103,13 +114,15 @@ namespace ImpactfulSkills.patches
                 [HarmonyPatch("FireProjectileBurst")]
                 public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                     CodeMatcher codeMatcher = new CodeMatcher(instructions, null);
-                    codeMatcher.MatchStartForward(
+                    if (codeMatcher.TryMatchStartForward("Unable to patch Ranged Backstab.",
                         new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), "m_backstabBonus"))
-                    ).Advance(1)
-                    .InsertAndAdvance(
-                        new CodeInstruction(OpCodes.Ldarg_0),
-                        Transpilers.EmitDelegate(Sneaking.SneakingBackstabBonusDmg.ModifyBackstab)
-                    ).ThrowIfNotMatch("Unable to patch Ranged Backstab.");
+                    )) {
+                        codeMatcher.Advance(1)
+                        .InsertAndAdvance(
+                            new CodeInstruction(OpCodes.Ldarg_0),
+                            Transpilers.EmitDelegate(Sneaking.SneakingBackstabBonusDmg.ModifyBackstab)
+                        );
+                    }
                     return codeMatcher.Instructions();
                 }
             }

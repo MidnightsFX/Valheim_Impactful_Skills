@@ -144,12 +144,13 @@ namespace ImpactfulSkills.patches
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[1]
-                {
-          new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1).RemoveInstructions(4).InsertAndAdvance(
-                    Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost)
-                ).ThrowIfNotMatch("Unable to patch Block Durability reduction.", Array.Empty<CodeMatch>());
+                if (codeMatcher.TryMatchStartForward("Unable to patch Block Durability reduction.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
+                )) {
+                    codeMatcher.Advance(1).RemoveInstructions(4).InsertAndAdvance(
+                        Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost)
+                    );
+                }
                 return codeMatcher.Instructions();
             }
         }
@@ -163,12 +164,12 @@ namespace ImpactfulSkills.patches
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null))
-                .Advance(1)
-                .InsertAndAdvance(
-                    Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost))
-                .ThrowIfNotMatch("Unable to patch Ranged attack durability reduction.", Array.Empty<CodeMatch>());
+                if (codeMatcher.TryMatchStartForward("Unable to patch Ranged attack durability reduction.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null))) {
+                    codeMatcher.Advance(1)
+                    .InsertAndAdvance(
+                        Transpilers.EmitDelegate(Crafting.CheckAndReduceDurabilityCost));
+                }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -182,12 +183,12 @@ namespace ImpactfulSkills.patches
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[1]
-                {
-          new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
-                }).Advance(1)
-                .InsertAndAdvance(Transpilers.EmitDelegate(CheckAndReduceDurabilityCost))
-                .ThrowIfNotMatch("Unable to patch Melee attack durability reduction.", Array.Empty<CodeMatch>());
+                if (codeMatcher.TryMatchStartForward("Unable to patch Melee attack durability reduction.",
+                    new CodeMatch(new OpCode?(OpCodes.Ldfld), (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain"), (string) null)
+                )) {
+                    codeMatcher.Advance(1)
+                    .InsertAndAdvance(Transpilers.EmitDelegate(CheckAndReduceDurabilityCost));
+                }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -199,10 +200,11 @@ namespace ImpactfulSkills.patches
             [HarmonyPatch(nameof(Attack.DoNonAttack))]
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch(OpCodes.Ldfld, (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain")))
-                .Advance(1)
-                .InsertAndAdvance(Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost)))
-                .ThrowIfNotMatch("Unable to patch DoNonAttack durability reduction.", Array.Empty<CodeMatch>());
+                if (codeMatcher.TryMatchStartForward("Unable to patch DoNonAttack durability reduction.",
+                    new CodeMatch(OpCodes.Ldfld, (object) AccessTools.Field(typeof (ItemDrop.ItemData.SharedData), "m_useDurabilityDrain")))) {
+                    codeMatcher.Advance(1)
+                    .InsertAndAdvance(Transpilers.EmitDelegate<Func<float, float>>(new Func<float, float>(Crafting.CheckAndReduceDurabilityCost)));
+                }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }
@@ -214,23 +216,24 @@ namespace ImpactfulSkills.patches
             [HarmonyPatch(nameof(InventoryGui.DoCrafting))]
             static IEnumerable<CodeInstruction> ConstructorTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, generator);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch Crafting bonus.",
                     // int num4 = 0;
                     new CodeMatch(OpCodes.Ldc_I4_0),
                     new CodeMatch(OpCodes.Stloc_S), // Convert.ToSByte(6)
                     new CodeMatch(OpCodes.Ldloc_S), // Convert.ToSByte(5)
                     new CodeMatch(OpCodes.Ldnull),
-                    new CodeMatch(OpCodes.Call))
-                .Advance(2)
-                .InsertAndAdvance(
-                  new CodeInstruction(OpCodes.Ldarg_0),
-                  new CodeInstruction(OpCodes.Ldloc_2),
-                  Transpilers.EmitDelegate(Crafting.CraftableBonus),
-                  new CodeInstruction(OpCodes.Stloc_2)
-                )
-                .CreateLabelOffset(out Label label, offset: 45)
-                .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label))
-                .ThrowIfNotMatch("Unable to patch Crafting bonus.");
+                    new CodeMatch(OpCodes.Call))) {
+                    codeMatcher
+                    .Advance(2)
+                    .InsertAndAdvance(
+                      new CodeInstruction(OpCodes.Ldarg_0),
+                      new CodeInstruction(OpCodes.Ldloc_2),
+                      Transpilers.EmitDelegate(Crafting.CraftableBonus),
+                      new CodeInstruction(OpCodes.Stloc_2)
+                    )
+                    .CreateLabelOffset(out Label label, offset: 45)
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label));
+                }
                 return codeMatcher.Instructions();
             }
         }
@@ -244,15 +247,16 @@ namespace ImpactfulSkills.patches
               IEnumerable<CodeInstruction> instructions)
             {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                codeMatcher.MatchStartForward(new CodeMatch[1]
-                {
-          new CodeMatch(new OpCode?(OpCodes.Callvirt), (object) AccessTools.Method(typeof (Player), "ConsumeResources", (Type[]) null, (Type[]) null), (string) null)
-                }).Advance(1).InsertAndAdvance(new CodeInstruction[3]
-                {
+                if (codeMatcher.TryMatchStartForward("Unable to patch Crafting Refunds.",
+                    new CodeMatch(new OpCode?(OpCodes.Callvirt), (object) AccessTools.Method(typeof (Player), "ConsumeResources", (Type[]) null, (Type[]) null), (string) null)
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(new CodeInstruction[3]
+                    {
           new CodeInstruction(OpCodes.Ldarg_0, (object) null),
           new CodeInstruction(OpCodes.Ldloc_S, (object) 14),
           Transpilers.EmitDelegate<Action<InventoryGui, int>>(new Action<InventoryGui, int>(Crafting.DetermineCraftingRefund))
-                }).ThrowIfNotMatch("Unable to patch Crafting Refunds.", Array.Empty<CodeMatch>());
+                    });
+                }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
             }
         }

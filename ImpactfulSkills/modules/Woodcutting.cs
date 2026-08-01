@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -70,13 +71,15 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
-                codeMatcher.MatchStartForward(
+                if (codeMatcher.TryMatchStartForward("Unable to patch drop increase for trees.",
                     new CodeMatch(OpCodes.Ldloc_0),
                     new CodeMatch(OpCodes.Ldc_R4)
-                    ).Advance(3).InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
-                    Transpilers.EmitDelegate(IncreaseTreeDrops)
-                    ).ThrowIfNotMatch("Unable to patch drop increase for trees.");
+                )) {
+                    codeMatcher.Advance(3).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
+                        Transpilers.EmitDelegate(IncreaseTreeDrops)
+                    );
+                }
 
                 return codeMatcher.Instructions();
             }
