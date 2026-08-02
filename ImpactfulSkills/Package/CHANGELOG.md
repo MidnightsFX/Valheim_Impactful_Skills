@@ -1,7 +1,7 @@
 **0.10.0**
 ---
 ```
-- Adds compatbility for SkillTree by M2
+- Adds compatibility for SkillTree by M2
 - Transpiler improvements to prevent errors with other commonly patched methods
 ```
 
