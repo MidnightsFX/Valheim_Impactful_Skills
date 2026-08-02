@@ -119,7 +119,8 @@ namespace ImpactfulSkills.patches {
             // If you haven't moved far enough, don't update the last position. That lets slow or
             // interrupted travel accumulate across checks instead of being discarded, and stops
             // running in circles from paying out. Setting the distance to 0 disables this check.
-            Logger.LogDebug($"Checking distance traveled: {distance}");
+            // This logging is a bit noisy
+            //Logger.LogDebug($"Checking distance traveled: {distance}");
             if (distance < ValConfig.HaulingXPMinDistance.Value) { return; }
             lastPosition = player.transform.position;
 

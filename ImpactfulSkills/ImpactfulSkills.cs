@@ -27,7 +27,7 @@ namespace ImpactfulSkills
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.9.7";
+        public const string PluginVersion = "0.10.0";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
