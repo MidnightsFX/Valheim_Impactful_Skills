@@ -1,3 +1,10 @@
+**0.11.1**
+---
+```
+- Adds extra logging for plant luck rolls
+- Bumps required jotunn version to current
+```
+
 **0.11.0**
 ---
 ```
