@@ -15,9 +15,10 @@ namespace ImpactfulSkills.modules.Multiplant {
         internal static bool GridPlantingActive = false;
         internal static bool MultiplantDisabled = false;
         internal static float Spacing = 0;
-        internal static int UserDefinedMax = ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value;
 
-        internal static bool UseOtherPlantGridSystem = IsOtherPlantGridSystemAvailable();
+        // Evaluated on demand: PreferOtherPlantGrid is server-synced, so caching this at type-init
+        // meant a mid-session change never took effect.
+        internal static bool UseOtherPlantGridSystem => IsOtherPlantGridSystemAvailable();
 
 
         public static bool IsOtherPlantGridSystemAvailable() {
@@ -88,7 +89,8 @@ namespace ImpactfulSkills.modules.Multiplant {
                 }
 
                 staminaCost += staminaPerPlant;
-                GameObject.Instantiate(primaryPlantablePrefab, ghost.transform.position, primaryPlantablePrefab.transform.rotation);
+                // Plant at the ghost's own rotation so the result matches the preview the player saw.
+                GameObject.Instantiate(primaryPlantablePrefab, ghost.transform.position, ghost.transform.rotation);
                 plantsPlaced++;
             }
 
@@ -158,15 +160,10 @@ namespace ImpactfulSkills.modules.Multiplant {
                 if (GridPlantingActive == false || UseOtherPlantGridSystem || HoldingCultivator() == false) { return; }
 
                 // MultiplantDisabled is driven by the configurable AOE toggle hotkey (see AOEToggle.cs).
+                // It is handled inside the controller rather than by returning early here: the layout
+                // collapses to a single cell, the extra ghosts are hidden, and the root ghost still
+                // gets positioned and its placement status re-asserted for the post-snap position.
                 PlantGridState.Update();
-
-                if (MultiplantDisabled) {
-                    foreach (GameObject g in PlantGhostController.ExtraGhosts) {
-                        if (g != null) { g.SetActive(false); }
-                    }
-                    return;
-                }
-
                 PlantGhostController.Update();
             }
         }

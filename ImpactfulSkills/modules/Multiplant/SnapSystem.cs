@@ -8,6 +8,10 @@ namespace ImpactfulSkills.modules.Multiplant {
     /// https://github.com/AdvizeGH/Advize_ValheimMods/tree/main/Advize_PlantEasily
     /// These are modified, but original design and implementation is credited to Advize
     /// This project uses the GNU 3.0 License also and all references to this implementation must do the same
+    ///
+    /// The Grid-style rotation snap below (mutually-closest pair + 90 degree fold) is adapted from
+    /// https://github.com/blaxxun-boop/Farming/blob/master/Farming/MassPlant.cs
+    /// which itself derives from https://github.com/Xeio/MassFarming (MIT).
 
 
     internal class SnapPoint {
@@ -31,20 +35,33 @@ namespace ImpactfulSkills.modules.Multiplant {
     /// Finds snap points near the placement ghost and, when found, commits the snapped position
     /// and aligned grid directions onto PlantGridState.
     ///
-    /// Snaps toward the nearest plant, aligning the grid direction to cardinal axes.
+    /// All comparisons here are horizontal (XZ) only. Plants on a terraced or sloped field sit at
+    /// different heights, and folding Y into the distances made snapping engage at different
+    /// horizontal ranges on a hill than on flat ground.
     /// </summary>
     internal static class SnapSystem {
-        // Includes "Default" so placed plants (which use Default layer in Valheim) are found
-        private static readonly int _scanMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "piece_nonsolid");
-        private const int MaxPrimaries = 8;
+        // Same layer set the ghosts validate against, and the same one Valheim's own
+        // Plant.HaveGrowSpace uses. Shared so the two can never drift apart.
+        private static int ScanMask => PlantDefinitions.plantSpaceMask;
+
+        // Sanity bound on how many nearby plants we keep after sorting.
+        private const int MaxPrimaries = 16;
+
+        // How far out the 1x1 layout may look for a free cell, in cells.
+        private const int FreeCellSearch = 2;
+
+        // Reused per-frame scratch so a scan that runs every frame does not churn the GC.
+        private static readonly List<Transform> _nearbyPlants = new List<Transform>();
+        private static readonly HashSet<Transform> _scanSeen = new HashSet<Transform>();
+        private static readonly Collider[] _scanBuffer = new Collider[512];
+        private static readonly List<Vector2> _snapOffsets = new List<Vector2>();
 
         /// <summary>
         /// Try to snap. On success sets PlantGridState.BasePosition, RowDirection, ColumnDirection
         /// and returns true.
         ///
-        /// "Grid" style (default) detects the lattice implied by the surrounding plants and snaps the
-        /// ghost to the nearest free cell of that lattice — so it never lands diagonally/off-phase when
-        /// multiple plants are nearby. "Legacy" keeps the original nearest-plant behavior.
+        /// "Grid" style (default) detects the lattice implied by the surrounding plants and aligns the
+        /// whole grid to it. "Legacy" keeps the original nearest-plant behavior.
         /// </summary>
         internal static bool FindSnapPoints(string plantName, float pieceSpacing) {
             if (ValConfig.FarmingSnapStyle?.Value == "Legacy") {
@@ -53,27 +70,22 @@ namespace ImpactfulSkills.modules.Multiplant {
             return TryGridSnap(plantName, pieceSpacing);
         }
 
-        // ── Free snap ──────────────────────────────────────────────────────────
+        // ── Free snap (Legacy) ─────────────────────────────────────────────────
 
         private static bool TryFreeSnap(string plantName, float pieceSpacing) {
-            List<Transform> primaries = ScanForPlants(PlantGridState.BasePosition, ValConfig.PlantingSnapDistance.Value, plantName);
-            if (primaries.Count == 0) return false;
-            Transform nearest = SortByDistance(primaries, PlantGridState.BasePosition);
+            if (ScanForPlants(PlantGridState.BasePosition, ValConfig.PlantingSnapDistance.Value, plantName) == 0) return false;
+            Transform nearest = SortByDistance(_nearbyPlants, PlantGridState.BasePosition);
             ComputeFreeDirections(nearest.position, pieceSpacing);
 
             List<SnapPoint> snapPoints = new List<SnapPoint>();
             if (!GenerateCandidates(snapPoints, nearest.position)) return false;
 
-            SnapPoint snap = FindNearestEuclidean(snapPoints);
-            CommitSnap(snap);
-            PlantGridState.RowDirection = ChooseDirection(snap.pos, PlantGridState.RowDirection);
-            PlantGridState.ColumnDirection = ChooseDirection(snap.pos, PlantGridState.ColumnDirection);
+            CommitSnap(FindNearestEuclidean(snapPoints));
             return true;
         }
 
         private static void ComputeFreeDirections(Vector3 target, float pieceSpacing) {
-            Vector3 dir = PlantGridState.BasePosition - target;
-            dir.y = 0;
+            Vector3 dir = Flatten(PlantGridState.BasePosition - target);
 
             if (dir.sqrMagnitude < 0.001f) {
                 dir = Vector3.forward;
@@ -91,70 +103,120 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         // ── Grid snap ──────────────────────────────────────────────────────────
 
-        // Holds one candidate anchor's lattice (its own spacing/axes) and the cell the cursor projects to.
-        private class GridAnchor {
-            internal Vector3 pos;      // anchor world position (lattice origin)
-            internal Vector3 axisRow;  // unit, horizontal
-            internal Vector3 axisCol;  // unit, horizontal, perpendicular to axisRow
-            internal float spacing;    // anchor's own grid spacing
-            internal int cRow, cCol;   // integer cell the cursor projects to on this lattice
-            internal Vector3 idealPos; // world position of that cell (before occupancy resolution)
-        }
-
-        // How many cells out to search for a free cell when the projected cell is occupied.
-        private const int CellSearchRadius = 3;
-
         /// <summary>
-        /// Detect the lattice implied by the surrounding plants and snap the ghost onto the nearest
-        /// free cell of it. Unlike the Legacy path (which only offsets ±one cell from the single nearest
-        /// plant), this projects the cursor onto a plant's grid, so the result is always on-grid — never
-        /// diagonal/off-phase relative to that plant — and can jump over occupied cells.
+        /// Snap the grid onto the lattice implied by the surrounding plants, without ever changing the
+        /// player's heading or moving the block away from the cursor.
+        ///
+        /// Rotation is the player's alone. The axes below come straight from the ghost, which Valheim
+        /// already quantizes to 22.5 degree steps, and nothing here rotates them. Position snapping
+        /// then works along those axes, so the grid aligns to nearby plants while keeping the heading
+        /// that was chosen — cells tile perfectly when that heading matches the patch, which is the
+        /// player's call to make.
         /// </summary>
         private static bool TryGridSnap(string plantName, float heldSpacing) {
+            if (heldSpacing <= 0.001f) return false;
+
             Vector3 cursor = PlantGridState.BasePosition;
-            List<Transform> primaries = ScanForPlants(cursor, ValConfig.PlantingSnapDistance.Value, plantName);
-            if (primaries.Count == 0) return false;
+            int found = ScanForPlants(cursor, ScanRadius(heldSpacing), plantName);
+            if (found == 0) return false;
 
-            // Pick the anchor whose lattice puts a plant closest to the cursor. This is what fixes the
-            // multi-plant diagonal: two out-of-phase patches no longer flip-flop by raw distance — we
-            // choose the phase that actually aligns nearest to where the player is pointing.
-            GridAnchor best = null;
+            // ── Axes: the ghost's own heading, untouched ───────────────────────
+            Vector3 axisRow = Flatten(PlantGridState.RowDirection);
+            if (axisRow.sqrMagnitude < 1e-6f) { axisRow = Vector3.forward; }
+            axisRow.Normalize();
+            Vector3 axisCol = Vector3.Cross(Vector3.up, axisRow);
+
+            // ── Spacing ────────────────────────────────────────────────────────
+            Transform anchor = _nearbyPlants[0];
+            Vector3 anchorPos = anchor.position;
+            float anchorSpacing = SpacingForAnchor(anchor, heldSpacing);
+
+            // Adopt the existing patch's spacing only when it is at least as generous as the held plant
+            // needs. A tighter patch would crowd our own cells against each other, and IsValidPosition
+            // cannot catch that: the ghosts sit on the ghost layer and do not see one another. Report
+            // no snap in that case and let the caller place freely — there is nothing left to align,
+            // since rotation is the player's and we never touch it.
+            if (anchorSpacing < heldSpacing - 0.001f) { return false; }
+
+            float step = anchorSpacing;
+            PlantGridState.RowDirection = axisRow * step;
+            PlantGridState.ColumnDirection = axisCol * step;
+
+            // ── Translation ────────────────────────────────────────────────────
+            // Align a CELL to the lattice rather than the grid's center. When an axis is centered
+            // across an even number of cells its offsets are half-integers (the default 4-wide grid
+            // gives -1.5, -0.5, +0.5, +1.5), so snapping the center would leave every cell sitting
+            // exactly half a cell off the existing pattern and a second batch could never line up.
+            // Every offset differs from the reference by a whole number of cells, so putting the
+            // reference cell on a lattice point puts the entire block on it.
+            PlantGhostController.GetCellOffsets(_snapOffsets);
+            if (_snapOffsets.Count == 0) { return false; }
+            Vector2 refOffset = _snapOffsets[0];
+            Vector3 refToBase = (axisRow * refOffset.x + axisCol * refOffset.y) * step;
+
+            // Round onto the lattice cell nearest the CURSOR. The anchor supplies only the lattice's
+            // origin and phase, never its own position as a target — so the block lands within half a
+            // cell of where the player points and never centers itself on the anchor plant.
+            Vector3 delta = Flatten(cursor + refToBase - anchorPos);
+            int nc = Mathf.RoundToInt(Vector3.Dot(delta, axisRow) / step);
+            int mc = Mathf.RoundToInt(Vector3.Dot(delta, axisCol) / step);
+
+            // A single plant may hop to the nearest free cell; a whole block never moves. Cells of a
+            // block that do not fit simply report invalid and are skipped, which is what lets a
+            // partial batch plant at all.
+            if (_snapOffsets.Count == 1) {
+                FindFreeCell(anchorPos, axisRow, axisCol, step, refToBase, cursor, ref nc, ref mc);
+            }
+
+            Vector3 snapped = anchorPos + (axisRow * nc + axisCol * mc) * step - refToBase;
+            // Keep the cursor's height; every cell resamples the heightmap for itself.
+            snapped.y = cursor.y;
+            CommitSnap(new SnapPoint(snapped, PlantGridState.RowDirection, PlantGridState.ColumnDirection, anchorPos));
+            return true;
+        }
+
+        /// <summary>
+        /// For a 1x1 layout only: if the rounded cell is not plantable, take the nearest one that is.
+        /// The rounded cell is tested first so the common case costs a single check.
+        ///
+        /// Uses PlantGhostController.IsValidPosition so the search agrees exactly with what the ghost
+        /// highlights and what PlacePiece will accept — cultivated ground included. Scoring purely on
+        /// plant occupancy was what let the old slide search wander onto unfarmed dirt.
+        /// </summary>
+        private static void FindFreeCell(Vector3 anchorPos, Vector3 axisRow, Vector3 axisCol, float step,
+                                         Vector3 refToBase, Vector3 cursor, ref int nc, ref int mc) {
+            Vector3 CellPos(int n, int m) {
+                Vector3 p = anchorPos + (axisRow * n + axisCol * m) * step - refToBase;
+                Heightmap.GetHeight(p, out float h);
+                p.y = h;
+                return p;
+            }
+
+            if (PlantGhostController.IsValidPosition(CellPos(nc, mc))) { return; }
+
+            int bestN = nc, bestM = mc;
             float bestSqr = float.MaxValue;
-            foreach (Transform t in primaries) {
-                float spacing = SpacingForAnchor(t, heldSpacing);
-                if (spacing <= 0.001f) continue;
-
-                Vector3 anchorPos = t.position;
-                Vector3 axisRow = AxisRowFor(anchorPos, spacing, primaries);
-                Vector3 axisCol = Vector3.Cross(Vector3.up, axisRow);
-
-                Vector3 delta = cursor - anchorPos;
-                delta.y = 0;
-                int cRow = Mathf.RoundToInt(Vector3.Dot(delta, axisRow) / spacing);
-                int cCol = Mathf.RoundToInt(Vector3.Dot(delta, axisCol) / spacing);
-                Vector3 idealPos = anchorPos + axisRow * (spacing * cRow) + axisCol * (spacing * cCol);
-
-                float sqr = (idealPos - cursor).sqrMagnitude;
-                if (sqr < bestSqr) {
-                    bestSqr = sqr;
-                    best = new GridAnchor {
-                        pos = anchorPos, axisRow = axisRow, axisCol = axisCol,
-                        spacing = spacing, cRow = cRow, cCol = cCol, idealPos = idealPos,
-                    };
+            bool found = false;
+            for (int dn = -FreeCellSearch; dn <= FreeCellSearch; dn++) {
+                for (int dm = -FreeCellSearch; dm <= FreeCellSearch; dm++) {
+                    if (dn == 0 && dm == 0) continue;
+                    Vector3 pos = CellPos(nc + dn, mc + dm);
+                    if (!PlantGhostController.IsValidPosition(pos)) continue;
+                    float sqr = FlatSqrDistance(pos, cursor);
+                    if (sqr < bestSqr) { bestSqr = sqr; bestN = nc + dn; bestM = mc + dm; found = true; }
                 }
             }
-            if (best == null) return false;
+            // Nothing free in range: stay on the rounded cell so the ghost shows red rather than jumping.
+            if (found) { nc = bestN; mc = bestM; }
+        }
 
-            if (!TryFindFreeCell(best, cursor, out Vector3 snapped)) return false;
-
-            // Extra ghosts extend at the HELD plant's spacing (keeps the planted block internally healthy);
-            // only the corner is aligned to the anchor's lattice.
-            PlantGridState.RowDirection = best.axisRow * heldSpacing;
-            PlantGridState.ColumnDirection = best.axisCol * heldSpacing;
-            CommitSnap(new SnapPoint(snapped, PlantGridState.RowDirection, PlantGridState.ColumnDirection, best.pos));
-            PlantGridState.RowDirection = ChooseDirection(snapped, PlantGridState.RowDirection);
-            PlantGridState.ColumnDirection = ChooseDirection(snapped, PlantGridState.ColumnDirection);
-            return true;
+        // How far out to look for plants. Covers the block itself plus a margin for lattice detection,
+        // and the free-cell search when the layout is a single plant. Scales with the plant's own
+        // spacing so a large-radius plant is not stuck with a search area smaller than one of its cells.
+        private static float ScanRadius(float spacing) {
+            float halfExtent = Mathf.Max(PlantGhostController.Rows, PlantGhostController.Columns) * 0.5f;
+            float search = PlantGhostController.LayoutCells == 1 ? FreeCellSearch : 1f;
+            return spacing * (halfExtent + search) + Mathf.Max(0f, ValConfig.PlantingSnapDistance.Value);
         }
 
         // Spacing an anchor's own patch was built with. Mirrors PlantGrid.Spacing so a same-species anchor
@@ -162,54 +224,12 @@ namespace ImpactfulSkills.modules.Multiplant {
         private static float SpacingForAnchor(Transform anchorRoot, float fallback) {
             Plant p = anchorRoot.GetComponentInChildren<Plant>();
             if (p == null) return fallback;
-            return p.m_growRadius * ValConfig.FarmingMultiPlantDistanceBufferModifier.Value
-                   + ValConfig.FarmingMultiPlantBufferSpace.Value;
+            float spacing = p.m_growRadius * ValConfig.FarmingMultiPlantDistanceBufferModifier.Value
+                            + ValConfig.FarmingMultiPlantBufferSpace.Value;
+            return spacing <= 0.001f ? fallback : spacing;
         }
 
-        // Orientation of the anchor's lattice: the direction to its nearest axis-adjacent neighbour
-        // (distance ≈ one spacing) reveals a real grid axis, including rotated patches. Diagonal
-        // neighbours sit at ~1.41× spacing and are excluded by the tolerance window; isolated anchors
-        // fall back to the ghost's quantized (world-cardinal) rotation.
-        private static Vector3 AxisRowFor(Vector3 anchorPos, float spacing, List<Transform> primaries) {
-            Vector3 bestDir = Vector3.zero;
-            float bestDist = float.MaxValue;
-            float lo = spacing * 0.6f, hi = spacing * 1.4f;
-            foreach (Transform t in primaries) {
-                Vector3 d = t.position - anchorPos;
-                d.y = 0;
-                float dist = d.magnitude;
-                if (dist < 0.001f || dist < lo || dist > hi) continue;
-                if (dist < bestDist) { bestDist = dist; bestDir = d / dist; }
-            }
-            if (bestDir == Vector3.zero) {
-                bestDir = PlantGridState.FixedRotation * Vector3.forward;
-                bestDir.y = 0;
-            }
-            if (bestDir.sqrMagnitude < 1e-4f) return Vector3.forward;
-            bestDir.Normalize();
-            return bestDir;
-        }
-
-        // Nearest free cell to the cursor, searched outward from the projected cell. Returns false if
-        // every cell in range is occupied (caller then leaves the ghost unsnapped).
-        private static bool TryFindFreeCell(GridAnchor a, Vector3 cursor, out Vector3 result) {
-            result = Vector3.zero;
-            float bestSqr = float.MaxValue;
-            bool found = false;
-            for (int dr = -CellSearchRadius; dr <= CellSearchRadius; dr++) {
-                for (int dc = -CellSearchRadius; dc <= CellSearchRadius; dc++) {
-                    Vector3 pos = a.pos
-                        + a.axisRow * (a.spacing * (a.cRow + dr))
-                        + a.axisCol * (a.spacing * (a.cCol + dc));
-                    if (PositionHasCollisions(pos)) continue;
-                    float sqr = (pos - cursor).sqrMagnitude;
-                    if (sqr < bestSqr) { bestSqr = sqr; result = pos; found = true; }
-                }
-            }
-            return found;
-        }
-
-        // ── Candidate generation ───────────────────────────────────────────────
+        // ── Candidate generation (Legacy only) ─────────────────────────────────
 
         private static bool GenerateCandidates(List<SnapPoint> snapPoints, Vector3 fromPos) {
             Vector3 row = PlantGridState.RowDirection;
@@ -225,7 +245,7 @@ namespace ImpactfulSkills.modules.Multiplant {
             List<(Vector3 pos, bool isCardinal)> valid = new List<(Vector3, bool)>();
 
             foreach (Vector3 pos in positions) {
-                if (PositionHasCollisions(pos)) continue;
+                if (!PlantGhostController.IsValidPosition(pos)) continue;
 
                 Vector3 dir = pos - fromPos;
                 bool isCardinal =
@@ -257,53 +277,78 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         private static SnapPoint FindNearestEuclidean(List<SnapPoint> snaps) {
             SnapPoint best = snaps[0];
-            float bestSqr = (best.pos - PlantGridState.BasePosition).sqrMagnitude;
+            float bestDist = DistanceXZ(best.pos, PlantGridState.BasePosition);
             for (int i = 1; i < snaps.Count; i++) {
-                float d = (snaps[i].pos - PlantGridState.BasePosition).sqrMagnitude;
-                if (d < bestSqr) { bestSqr = d; best = snaps[i]; }
+                float d = DistanceXZ(snaps[i].pos, PlantGridState.BasePosition);
+                if (d < bestDist) { bestDist = d; best = snaps[i]; }
             }
             return best;
         }
 
-        // ── Physics ────────────────────────────────────────────────────────────
+        // ── Geometry helpers ───────────────────────────────────────────────────
 
-        // Point-occupancy check: is this position blocked by any existing piece/plant?
-        private static bool PositionHasCollisions(Vector3 pos) =>
-            Physics.CheckCapsule(pos, pos + Vector3.up * 0.1f, Mathf.Epsilon, _scanMask);
+        private static Vector3 Flatten(Vector3 v) {
+            v.y = 0f;
+            return v;
+        }
 
-        // Pick direction or its opposite — whichever has free space
-        private static Vector3 ChooseDirection(Vector3 origin, Vector3 direction) {
-            if (!PositionHasCollisions(origin + direction)) return direction;
-            if (!PositionHasCollisions(origin - direction)) return -direction;
-            return direction;
+        private static float DistanceXZ(Vector3 a, Vector3 b) {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        private static float FlatSqrDistance(Vector3 a, Vector3 b) {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return dx * dx + dz * dz;
         }
 
         // ── Scanning ───────────────────────────────────────────────────────────
 
-        private static List<Transform> ScanForPlants(Vector3 origin, float radius, string plantName) {
-            Collider[] hits = Physics.OverlapSphere(origin, radius, _scanMask);
-            List<Transform> results = new List<Transform>();
-            HashSet<Transform> seen = new HashSet<Transform>();
+        /// <summary>
+        /// Fill _nearbyPlants with every plant root within <paramref name="radius"/>, sorted by
+        /// horizontal distance. Returns the count.
+        ///
+        /// Deliberately uncapped: the occupancy set is built from the whole list, and truncating it
+        /// would report cells outside the kept set as free and place plants on top of them. Only the
+        /// O(n^2) pair search reads a capped prefix (MaxPrimaries).
+        /// </summary>
+        private static int ScanForPlants(Vector3 origin, float radius, string plantName) {
+            _nearbyPlants.Clear();
+            _scanSeen.Clear();
 
-            foreach (Collider c in hits) {
+            int hits = Physics.OverlapSphereNonAlloc(origin, radius, _scanBuffer, ScanMask);
+            for (int i = 0; i < hits; i++) {
+                Collider c = _scanBuffer[i];
+                if (c == null) continue;
                 if (c.gameObject.layer == PlantDefinitions.GhostLayer) continue;
                 if (c.GetComponent<Plant>() == null) continue;
                 if (!ValConfig.EnableSnappingToOtherPlants.Value && Utils.GetPrefabName(c.gameObject) != plantName) continue;
 
                 Transform root = c.transform.root;
-                if (seen.Add(root)) {
-                    results.Add(root);
-                    if (results.Count >= MaxPrimaries) break;
-                }
+                // OverlapSphere is a 3D test; re-check horizontally so a plant further down a slope
+                // is not dropped despite being within range on the ground plane.
+                if (DistanceXZ(root.position, origin) > radius) continue;
+                if (_scanSeen.Add(root)) { _nearbyPlants.Add(root); }
             }
-            return results;
+
+            // Sort so the anchor and the pair search are stable. OverlapSphere does not guarantee a
+            // stable order, and picking anchors out of an unordered list made the grid jitter.
+            _nearbyPlants.Sort((a, b) => {
+                int cmp = FlatSqrDistance(a.position, origin).CompareTo(FlatSqrDistance(b.position, origin));
+                if (cmp != 0) return cmp;
+                cmp = a.position.x.CompareTo(b.position.x);
+                return cmp != 0 ? cmp : a.position.z.CompareTo(b.position.z);
+            });
+            return _nearbyPlants.Count;
         }
 
         private static Transform SortByDistance(List<Transform> list, Vector3 origin) {
             Transform best = list[0];
-            float current_distance = 9999f;
+            float current_distance = float.MaxValue;
             foreach (Transform t in list) {
-                float distance = t.localPosition.DistanceTo(origin);
+                float distance = DistanceXZ(t.position, origin);
                 if (distance < current_distance) {
                     best = t;
                     current_distance = distance;

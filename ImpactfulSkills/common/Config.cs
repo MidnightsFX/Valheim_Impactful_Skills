@@ -110,6 +110,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableSnappingToOtherPlants;
         public static ConfigEntry<float> FarmingMultiPlantDistanceBufferModifier;
         public static ConfigEntry<bool> FarmingMultiPlantPersistOrientation;
+        public static ConfigEntry<bool> FarmingMultiPlantRandomRotation;
+        public static ConfigEntry<bool> FarmingMultiPlantCenterRows;
+        public static ConfigEntry<bool> FarmingMultiPlantCenterColumns;
 
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
@@ -317,15 +320,26 @@ namespace ImpactfulSkills
             FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 12, "The total number of plants that can be planted at once at maximum gathering.");
             FarmingMultiplantColumnCount = BindServerConfig("Farming", "FarmingMultiplantColumnCount", 4, "Maximum number of columns in the planting grid. The grid will form the closest square shape possible without exceeding this limit.", true, 1, 12);
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
-            FarmingMultiPlantDistanceBufferModifier = BindServerConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
-            FarmingMultiPlantBufferSpace = BindServerConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
+            // Client sided config
+            FarmingMultiPlantDistanceBufferModifier = BindClientConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
+            // Client sided config
+            FarmingMultiPlantBufferSpace = BindClientConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
-            PlantingSnapDistance = BindServerConfig("Farming", "PlantingSnapDistance", 1f, "The distance that is checked for other plants to attempt to snap to.", true, 0, 10f);
+            // Client sided config
+            PlantingSnapDistance = BindClientConfig("Farming", "PlantingSnapDistance", 1f, "Extra margin (in meters) added beyond the planting grid's own extent when looking for nearby plants to snap to. The base search area already scales with the grid size and the plant's grow radius.", true, 0, 10f);
             PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");
-            FarmingSnapStyle = BindServerConfig("Farming", "FarmingSnapStyle", "Grid", "'Grid' detects the existing grid pattern and aligns to it; 'Legacy' snaps to the nearest plant position only.", new AcceptableValueList<string>("Grid", "Legacy"), true);
+            // Client sided config
+            FarmingSnapStyle = BindClientConfig("Farming", "FarmingSnapStyle", "Grid", "'Grid' detects the existing grid pattern and aligns to it; 'Legacy' snaps to the nearest plant position only.", new AcceptableValueList<string>("Grid", "Legacy"), true);
             FarmingSnapPreferCardinal = BindServerConfig("Farming", "FarmingSnapPreferCardinal", true, "Legacy snap style only: prefer axis-aligned (N/S/E/W) snap candidates over diagonal ones. Grid style is always lattice-aligned and ignores this.", advanced: true);
-            EnableSnappingToOtherPlants = BindServerConfig("Farming", "EnableSnappingToOtherPlants", true, "When enabled, allows plant grid snapping to plants which are not the same kind as the currently planting one");
+            // Client sided config
+            EnableSnappingToOtherPlants = BindClientConfig("Farming", "EnableSnappingToOtherPlants", true, "When enabled, allows plant grid snapping to plants which are not the same kind as the currently planting one");
             FarmingMultiPlantPersistOrientation = BindServerConfig("Farming", "FarmingMultiPlantPersistOrientation", true, "After planting, keep the same grid orientation for the next planting instead of resetting to the direction you're facing. Rotate (scroll) to change it.");
+            // Client sided config
+            FarmingMultiPlantRandomRotation = BindClientConfig("Farming", "FarmingMultiPlantRandomRotation", true, "Give each multiplanted crop its own random facing, the way vanilla planting does. Disable to have every crop in the grid face the same direction.");
+            // Client sided config
+            FarmingMultiPlantCenterRows = BindClientConfig("Farming", "FarmingMultiPlantCenterRows", true, "Center the planting grid on your cursor along the row (forward) axis. Disable to grow the grid forward from your cursor instead.");
+            // Client sided config
+            FarmingMultiPlantCenterColumns = BindClientConfig("Farming", "FarmingMultiPlantCenterColumns", true, "Center the planting grid on your cursor along the column (sideways) axis. Disable to grow the grid sideways from your cursor instead.");
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
@@ -483,6 +497,64 @@ namespace ImpactfulSkills
         }
 
         /// <summary>
+        ///  Helper to bind configs for bool types
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="catagory"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="acceptableValues"></param>>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<bool> BindClientConfig(string catagory, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false) {
+            return cfg.Bind(catagory, key, value,
+                new ConfigDescription(description,
+                    acceptableValues,
+                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
+                );
+        }
+
+        /// <summary>
+        /// Helper to bind configs for float types
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="catagory"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="advanced"></param>
+        /// <param name="valmin"></param>
+        /// <param name="valmax"></param>
+        /// <returns></returns>
+        public static ConfigEntry<float> BindClientConfig(string catagory, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
+            return cfg.Bind(catagory, key, value,
+                new ConfigDescription(description,
+                new AcceptableValueRange<float>(valmin, valmax),
+                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
+                );
+        }
+
+        /// <summary>
+        /// Helper to bind configs for strings
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="catagory"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<string> BindClientConfig(string catagory, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
+            return cfg.Bind(catagory, key, value,
+                new ConfigDescription(
+                    description,
+                    acceptableValues,
+                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
+                );
+        }
+
+        /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
@@ -502,6 +574,8 @@ namespace ImpactfulSkills
                 new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
                 );
         }
+
+
 
         /// <summary>
         ///  Helper to bind configs for bool types

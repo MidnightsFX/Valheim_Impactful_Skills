@@ -1,3 +1,20 @@
+**0.11.0**
+---
+```
+- Makes the following configurations all client sided, allowing user adjustment on a server without having admin permissions (they are not synced to others on change either)
+	- FarmingMultiPlantDistanceBufferModifier
+	- FarmingMultiPlantBufferSpace
+	- PlantingSnapDistance
+	- FarmingSnapStyle
+	- EnableSnappingToOtherPlants
+- Overhauls plant grid snapping to fix several causes of unexpected snapping
+- The grid no longer repositions itself away from your cursor
+- With area planting toggled off, a single plant is now spaced and positioned as a single plant rather than as part of a full grid, and snaps to the nearest free spot
+- Adds FarmingMultiPlantCenterRows and FarmingMultiPlantCenterColumns to choose whether the grid is centered on your cursor or grows out from it, per axis
+- Multiplanted crops are now planted at the rotation shown in the preview, and each gets its own facing like vanilla planting (FarmingMultiPlantRandomRotation, disable for a uniform grid)
+- The PreferOtherPlantGrid setting is now re-checked at runtime instead of only at startup
+```
+
 **0.10.0**
 ---
 ```

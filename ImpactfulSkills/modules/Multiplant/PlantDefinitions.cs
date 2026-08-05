@@ -18,8 +18,17 @@ namespace ImpactfulSkills.modules.Multiplant {
 
     internal static class PlantDefinitions {
         internal static Dictionary<string, Plantable> PlantableDefinitions = new Dictionary<string, Plantable>();
-        internal static int plantSpaceMask = 0;
-        internal static int GhostLayer = 0;
+
+        /// <summary>
+        /// The layers a plant needs clear around it, matching Valheim's own check in
+        /// Plant.HaveGrowSpace. We declare this rather than reading Plant.m_spaceMask because that
+        /// is a private static which stays 0 until some plant instance happens to run its grow-space
+        /// check — and an OverlapSphere against layer mask 0 matches nothing, which reports every
+        /// cell as free and lets overlapping plants be placed.
+        /// Initialized at declaration so it can never be read before it is assigned.
+        /// </summary>
+        internal static readonly int plantSpaceMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "piece_nonsolid");
+        internal static readonly int GhostLayer = LayerMask.NameToLayer("ghost");
 
         internal static void BuildPlantRequirements() {
             PlantableDefinitions.Clear();
@@ -48,8 +57,6 @@ namespace ImpactfulSkills.modules.Multiplant {
                 }
                 Logger.LogDebug($"Added plant cache entry: {obj.name}");
             }
-            plantSpaceMask = LayerMask.GetMask("static_solid", "Default_small", "piece", "piece_nonsolid");
-            GhostLayer = LayerMask.NameToLayer("ghost");
             Logger.LogInfo($"Loaded {PlantableDefinitions.Count} plantable definitions");
         }
 
