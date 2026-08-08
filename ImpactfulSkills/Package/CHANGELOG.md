@@ -1,3 +1,10 @@
+**0.11.2**
+---
+```
+- Adds configuration to allow scaling skill gain rate for all skills (default 1.0, 2.0 = double skill gain)
+- Fixes a bug where crafting bonuses for specific crafting stations would use the wrong skill and hit a silent fallback for no bonuses, based on player skill levels
+```
+
 **0.11.1**
 ---
 ```

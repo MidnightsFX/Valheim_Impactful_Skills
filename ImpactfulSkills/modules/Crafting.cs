@@ -46,7 +46,7 @@ namespace ImpactfulSkills.patches
             
             // Skip bonus rolls for upgrades, or if the crafting station is not set
             if (currentCraftingStation != null && instance.m_craftRecipe.m_craftingStation != null && instance.m_craftUpgradeItem == null) {
-                Logger.LogDebug("Determining crafting recipe bonus amount");
+                Logger.LogDebug($"Determining crafting recipe bonus amount with {instance.m_craftRecipe.m_craftingStation.m_craftingSkill} {skillLevel}");
                 craftedTotal += Crafting.GetCraftingItemBonusAmount(instance, base_amount_crafted, skillFactor, skillLevel, instance.m_craftRecipe.m_craftingStation.m_craftingSkill);
             }
                 
@@ -97,8 +97,10 @@ namespace ImpactfulSkills.patches
             int craftingItemBonusAmount = 0;
             
             if (craftingSkill == Skills.SkillType.Cooking && (ValConfig.EnableCookingBonusItems.Value == false || ValConfig.RequiredLevelForBonusCookingItems.Value > player_skill_level)) {
+                Logger.LogDebug($"Cooking bonus not enabled ({ValConfig.EnableCookingBonusItems.Value}) or skill level too low ({player_skill_level} < {ValConfig.RequiredLevelForBonusCookingItems.Value})");
                 return craftingItemBonusAmount;
-            } else if (ValConfig.EnableBonusItemCrafting.Value == false || player_skill_level < ValConfig.CraftingBonusCraftsLevel.Value) {
+            } else if (craftingSkill == Skills.SkillType.Crafting && (ValConfig.EnableBonusItemCrafting.Value == false || ValConfig.CraftingBonusCraftsLevel.Value > player_skill_level)) {
+                Logger.LogDebug($"Crafting bonus not enabled ({ValConfig.EnableBonusItemCrafting.Value}) or skill level too low ({player_skill_level} < {ValConfig.CraftingBonusCraftsLevel.Value})");
                 return craftingItemBonusAmount;
             }
             float success_chance;

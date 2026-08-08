@@ -2,6 +2,7 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using ImpactfulSkills.compatibility;
+using ImpactfulSkills.modules;
 using ImpactfulSkills.patches;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -27,7 +28,7 @@ namespace ImpactfulSkills
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.11.1";
+        public const string PluginVersion = "0.11.2";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
@@ -48,6 +49,7 @@ namespace ImpactfulSkills
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
             HaulingXPTracker.Create();
+            SkillRates.SetupSkillRateConfigs();
 
             Modcheck.CheckModCompat();
 

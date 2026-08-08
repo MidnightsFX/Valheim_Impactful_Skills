@@ -76,7 +76,6 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Player), nameof(Player.RaiseSkill))]
         public static class PatchSkillIncreaseHigherGainsForLowerSkills
         {
-
             private static void Prefix(Skills.SkillType skill, ref float value)
             {
                 time_since_start += Time.deltaTime;
