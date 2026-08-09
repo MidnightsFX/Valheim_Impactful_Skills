@@ -13,6 +13,31 @@ namespace ImpactfulSkills.patches {
         private static bool rockbreaker_running = false;
         private static readonly List<string> skipIncreaseDrops = new List<string> { "LeatherScraps", "WitheredBone" };
         private static float rockbreakerActivatedAt = 0;
+        // The leviathan whose dive reaction the in-flight sweep is gating, and whether that sweep
+        // has already spent its single allowed roll. See LeviathanDiveRollGate.
+        private static Leviathan sweep_leviathan = null;
+        private static bool leviathan_reaction_rolled = false;
+
+        // Mirrors vanilla MineRock.AllDestroyed. We cannot call that method itself, because
+        // LeviathanNeverRemovedByMining prefixes it to always answer false for leviathans.
+        private static bool AllAreasDestroyed(MineRock rock) {
+            for (int i = 0; i < rock.m_hitAreas.Length; ++i) {
+                if ((double)rock.m_nview.GetZDO().GetFloat("Health" + i.ToString(), rock.GetHealth()) > 0.0) { return false; }
+            }
+            return true;
+        }
+
+        private static void ArmLeviathanGate(Leviathan leviathan) {
+            Mining.sweep_leviathan = leviathan;
+            Mining.leviathan_reaction_rolled = false;
+        }
+
+        private static void ClearSweepState() {
+            Mining.rockbreaker_running = false;
+            Mining.current_aoe_strike = null;
+            Mining.sweep_leviathan = null;
+            Mining.leviathan_reaction_rolled = false;
+        }
 
         private static void UnallowedMinablesChanged(object s, EventArgs e) {
             try {
@@ -56,10 +81,28 @@ namespace ImpactfulSkills.patches {
             // No damage will be done, skip.
             if ((double)hit.m_damage.m_pickaxe <= 0.0) { return; }
 
+            // Leviathans hold the player over open water/lava, and MineRock.RPC_Hit fires m_onHit
+            // (-> Leviathan.OnHit -> dive roll) for every damaging hit. Our sweeps hit every node
+            // at once, which turns a 1-10% dive chance into a near certainty and dumps the player.
+            Leviathan leviathan = null;
+            if (ValConfig.ProtectLeviathansWhenMined.Value) {
+                leviathan = instance != null ? instance.GetComponentInParent<Leviathan>()
+                          : instance5 != null ? instance5.GetComponentInParent<Leviathan>() : null;
+                if (leviathan != null) {
+                    ZNetView lnview = leviathan.GetComponent<ZNetView>();
+                    // RPC_Hit early-returns for non-owners, so Leviathan.OnHit only ever runs on the
+                    // peer that owns the ZDO. If that isn't us our gate would never be consulted and
+                    // the sweep would machine-gun the dive reaction there. Leave the swing vanilla.
+                    if (lnview == null || !lnview.IsValid() || !lnview.IsOwner()) {
+                        Logger.LogDebug("Leviathan is owned by another peer, skipping mining sweeps.");
+                        return;
+                    }
+                }
+            }
+
             //safety reset
             if (rockbreaker_running == true && Mining.rockbreakerActivatedAt + ValConfig.RockbreakerSafetyResetTimeout.Value < Time.realtimeSinceStartup) {
-                Mining.rockbreaker_running = false;
-                Mining.current_aoe_strike = null;
+                Mining.ClearSweepState();
             }
             // Check for whole rock breaker
             if (!Mining.rockbreaker_running && Mining.current_aoe_strike == null) {
@@ -75,10 +118,10 @@ namespace ImpactfulSkills.patches {
                     if (instance != null && Player.m_localPlayer != null) {
                         Logger.LogDebug("Rock breaker activated on minerock");
                         Mining.current_aoe_strike = instance.m_hitAreas;
+                        Mining.ArmLeviathanGate(leviathan);
                         Player.m_localPlayer.StartCoroutine(Mining.MineAoeDamage(instance.m_hitAreas, aoedmg));
                     } else {
-                        Mining.rockbreaker_running = false;
-                        Mining.current_aoe_strike = null;
+                        Mining.ClearSweepState();
                     }
 
                     // Needs to be gated to ensure we do not flip the rockbreaker flags again if we are already hitting a minerock
@@ -90,10 +133,10 @@ namespace ImpactfulSkills.patches {
                                 colliderList.Add(hitArea.m_collider);
                             }
                             Mining.current_aoe_strike = colliderList.ToArray();
+                            Mining.ArmLeviathanGate(leviathan);
                             Player.m_localPlayer.StartCoroutine(Mining.MineAoeDamage(colliderList.ToArray(), aoedmg));
                         } else {
-                            Mining.rockbreaker_running = false;
-                            Mining.current_aoe_strike = null;
+                            Mining.ClearSweepState();
                         }
                     }
                     return;
@@ -116,11 +159,11 @@ namespace ImpactfulSkills.patches {
                 int rockmask = Mining.rockmask;
                 Collider[] mine_targets = Physics.OverlapSphere(point, (float)radius, rockmask);
                 Mining.current_aoe_strike = mine_targets;
+                Mining.ArmLeviathanGate(leviathan);
                 if (Player.m_localPlayer != null) {
                     Player.m_localPlayer.StartCoroutine(Mining.MineAoeDamage(mine_targets, aoedmg));
                 } else {
-                    Mining.current_aoe_strike = null;
-                    Mining.rockbreaker_running = false;
+                    Mining.ClearSweepState();
                 }
             }
         }
@@ -154,8 +197,7 @@ namespace ImpactfulSkills.patches {
                 }
             } catch (Exception ex) {
                 Logger.LogWarning("Exception trying to get minerock parent object, AOE mining skipped: " + ex.Message);
-                Mining.rockbreaker_running = false;
-                Mining.current_aoe_strike = null;
+                Mining.ClearSweepState();
                 yield break;
             }
             if (minerock != null || minerock5 != null) {
@@ -207,8 +249,7 @@ namespace ImpactfulSkills.patches {
                     }
                 }
             }
-            Mining.rockbreaker_running = false;
-            Mining.current_aoe_strike = null;
+            Mining.ClearSweepState();
         }
 
         public static void IncreaseDestructibleMineDrops(Destructible dmine) {
@@ -349,28 +390,81 @@ namespace ImpactfulSkills.patches {
             }
         }
 
-        [HarmonyTranspiler]
+        // PatchAll builds a patch processor per type and skips containers that carry no class level
+        // [HarmonyPatch], so this transpiler needs its own annotated class like every other patch
+        // here; as a loose annotated method on Mining itself it was not reliably applied.
         [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/) {
-            var codeMatcher = new CodeMatcher(instructions);
-            const string failure = "Unable to patch Minerock Drop increase.";
-            if (codeMatcher.TryMatchEndForward(failure,
-                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MineRock), nameof(MineRock.m_destroyedEffect)))
-                ) && codeMatcher.TryMatchEndForward(failure,
-                    new CodeMatch(OpCodes.Pop)
-                )) {
-                codeMatcher.InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_0), // load __instance
-                    Transpilers.EmitDelegate(ApplyIncreasedMiningDrops)
-                );
+        public static class MinerockDropsPatch {
+            [HarmonyTranspiler]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/) {
+                var codeMatcher = new CodeMatcher(instructions);
+                const string failure = "Unable to patch Minerock Drop increase.";
+                if (codeMatcher.TryMatchEndForward(failure,
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(MineRock), nameof(MineRock.m_destroyedEffect)))
+                    ) && codeMatcher.TryMatchEndForward(failure,
+                        new CodeMatch(OpCodes.Pop)
+                    )) {
+                    codeMatcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0), // load __instance
+                        Transpilers.EmitDelegate(ApplyIncreasedMiningDrops)
+                    );
+                }
+
+                return codeMatcher.Instructions();
             }
 
-            return codeMatcher.Instructions();
+            private static void ApplyIncreasedMiningDrops(MineRock __instance) {
+                if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null)) { return; }
+                Mining.IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
+            }
         }
 
-        private static void ApplyIncreasedMiningDrops(MineRock __instance) {
-            if (!ValConfig.EnableMining.Value || !(Player.m_localPlayer != null)) { return; }
-            Mining.IncreaseMiningDrops(__instance.m_dropItems, __instance.gameObject.transform.position);
+        // MineRock.RPC_Hit ends with `if (m_removeWhenDestroyed && AllDestroyed()) m_nview.Destroy();`,
+        // which permanently deletes the whole leviathan the moment its last ore node breaks, taking
+        // the body the player is standing on with it. Report "not all destroyed" so RPC_Hit leaves the
+        // object alone; LeviathanSinksWhenMinedOut starts the dive instead.
+        [HarmonyPatch(typeof(MineRock), nameof(MineRock.AllDestroyed))]
+        public static class LeviathanNeverRemovedByMining {
+            public static bool Prefix(MineRock __instance, ref bool __result) {
+                if (!ValConfig.ProtectLeviathansWhenMined.Value) { return true; }
+                if (__instance.GetComponent<Leviathan>() == null) { return true; }
+                Logger.LogDebug("Blocked MineRock from removing a leviathan; sink will be scheduled instead.");
+                __result = false;
+                return false;
+            }
+        }
+
+        // Detection lives here rather than in the prefix above so it still fires when
+        // m_removeWhenDestroyed is false and AllDestroyed is short circuited away entirely.
+        [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
+        public static class LeviathanSinksWhenMinedOut {
+            public static void Postfix(MineRock __instance) {
+                if (!ValConfig.ProtectLeviathansWhenMined.Value) { return; }
+                Leviathan leviathan = __instance.GetComponent<Leviathan>();
+                if (leviathan == null || __instance.m_nview == null || !__instance.m_nview.IsValid() || !__instance.m_nview.IsOwner()) { return; }
+                if (leviathan.m_left || leviathan.IsInvoking("Leave") || !Mining.AllAreasDestroyed(__instance)) { return; }
+                // The same call vanilla's hit reaction uses, so the leviathan plays its leave effects
+                // and dive animation, then removes itself once FixedUpdate sees the "submerged" tag.
+                Logger.LogDebug($"Leviathan mined out, sinking in {leviathan.m_leaveDelay}s.");
+                leviathan.Invoke("Leave", (float)leviathan.m_leaveDelay);
+            }
+        }
+
+        // Leviathan.OnHit is wired to MineRock.m_onHit in Leviathan.Awake and rolls the dive reaction
+        // on every damaging hit. Our sweeps deliver one hit per node inside a couple of frames, so
+        // without this the leviathan almost always submerges and the player drowns (or burns, in the
+        // Ashlands). Let the swing's first roll through, drop the rest.
+        [HarmonyPatch(typeof(Leviathan), nameof(Leviathan.OnHit))]
+        public static class LeviathanDiveRollGate {
+            public static bool Prefix(Leviathan __instance) {
+                if (Mining.sweep_leviathan == null || Mining.sweep_leviathan != __instance) { return true; }
+                if (!Mining.leviathan_reaction_rolled) {
+                    Mining.leviathan_reaction_rolled = true;
+                    return true;
+                }
+                Logger.LogDebug("Suppressed a duplicate leviathan dive roll from a mining sweep.");
+                return false;
+            }
         }
 
         [HarmonyPatch(typeof(MineRock5), nameof(MineRock5.Damage))]

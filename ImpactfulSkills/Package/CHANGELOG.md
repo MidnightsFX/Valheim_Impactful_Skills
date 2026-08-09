@@ -1,3 +1,11 @@
+**0.11.3**
+---
+```
+- Fixes Leviathans and Lava Leviathans being deleted instantly when their last ore node was mined out, which removed the body from under the player and drowned or incinerated them. They now start their dive and sink away instead, leaving time to collect drops and get clear (ProtectLeviathansWhenMined)
+- Fixes AOE gathering and weapon equip speed bonuses activating one level later than their configured required level (GatheringRangeRequiredLevel, WeaponSkillEquipRequiredLevel)
+- BetterBeesLevel now actually gates the beehive honey production bonus; previously the setting was shown but had no effect
+```
+
 **0.11.2**
 ---
 ```

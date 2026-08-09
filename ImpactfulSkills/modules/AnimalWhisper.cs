@@ -112,7 +112,8 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(Beehive), nameof(Beehive.GetHoneyLevel))]
         public static class BeeHivesMoreProductionBySkill {
             public static void Postfix(ref int __result) {
-                if (Player.m_localPlayer != null && __result > 0 && ValConfig.EnableBeeBonuses.Value) {
+                if (Player.m_localPlayer != null && __result > 0 && ValConfig.EnableBeeBonuses.Value
+                    && Player.m_localPlayer.GetSkillLevel(AnimalHandling) >= ValConfig.BetterBeesLevel.Value) {
                     float increase = ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetSkillFactor(AnimalHandling);
                     __result = Mathf.RoundToInt(__result + (increase * __result));
                 }

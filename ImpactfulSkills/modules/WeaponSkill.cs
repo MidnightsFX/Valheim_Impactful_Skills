@@ -155,7 +155,7 @@ namespace ImpactfulSkills.patches
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType) * 100f;
                 float speedMultiplier = 1f + (skillFactor / 100 * ValConfig.WeaponSkillEquipSpeedFactor.Value);
 
-                if (skillFactor > ValConfig.WeaponSkillEquipRequiredLevel.Value)
+                if (skillFactor >= ValConfig.WeaponSkillEquipRequiredLevel.Value)
                 {
                     return duration / speedMultiplier;
                 }
