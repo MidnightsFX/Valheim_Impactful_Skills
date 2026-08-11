@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Votre capacité à porter, stocker et transporter des marchandises.",
   "craft_refund": "Matériaux économisés !",
-  "aoe_enabled": "Plantation/récolte de zone activée",
-  "aoe_disabled": "Plantation/récolte de zone désactivée",
-  "aoe_toggle_hint": "Basculer plantation/récolte de zone"
+  "aoe_features_enabled": "Récolte/minage de zone activés",
+  "aoe_features_disabled": "Récolte/minage de zone désactivés",
+  "aoe_features_hint": "Basculer récolte/minage de zone"
 }

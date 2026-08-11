@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using ImpactfulSkills.common;
+using ImpactfulSkills.modules;
 using ImpactfulSkills.patches;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -21,7 +22,7 @@ namespace ImpactfulSkills
         // Folder under BepInEx/config that holds this mods on-disk data (currently just the Localizations folder).
         public const string cfgFolder = "ImpactfulSkills";
 
-        // Runtime-only (non-persisted) shared toggle for the AOE harvesting + AOE planting features.
+        // Runtime-only (non-persisted) shared toggle for the AOE harvesting, AOE mining and AOE planting features.
         public static bool AOEFeaturesEnabled = true;
         // Local (per-player, NOT server-synced) hotkey that toggles AOEFeaturesEnabled.
         public static ConfigEntry<KeyboardShortcut> AOEToggleHotkey;
@@ -167,6 +168,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> SharedKnowledgeSkillBonusRate;
         public static ConfigEntry<float> SharedKnowledgeCap;
         public static ConfigEntry<string> SharedKnowledgeIgnoreList;
+        public static ConfigEntry<string> AdditionalSkillNames;
 
         public static ConfigEntry<bool> EnableCrafting;
         public static ConfigEntry<bool> EnableDurabilitySaves;
@@ -225,7 +227,7 @@ namespace ImpactfulSkills
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
                 new KeyboardShortcut(UnityEngine.KeyCode.N),
-                "Hotkey to toggle AOE harvesting and AOE planting on/off.");
+                "Hotkey to toggle AOE harvesting, AOE mining and AOE planting on/off.");
             EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
             WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
@@ -397,12 +399,14 @@ namespace ImpactfulSkills
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
-            AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 1f, 50f);
-            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 4f, "How fast the skill is gained.", false, 1f, 50f);
+            AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 0f, 50f);
+            VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 4f, "How fast the skill is gained.", false, 0f, 50f);
             SharedKnowledgeSkillBonusRate = BindServerConfig("SkillRates", "SharedKnowledgeSkillBonusRate", 1.5f, "How strong at maximum the xp bonus from shared knowledge will be when catching up skills lower than your highest.", false, 0f, 10f);
             SharedKnowledgeCap = BindServerConfig("SkillRates", "SharedKnowledgeCap", 5f, "The number of levels below your maximum skill that shared knowledge stops providing a bonus at. Eg: max skill 90, at 5 any skills 85+ will not recieve an xp bonus.", true, 0f, 50f);
             SharedKnowledgeIgnoreList = BindServerConfig("SkillRates", "SharedKnowledgeIgnoreList", "", "Comma separated list of skills to ignore when calculating shared knowledge. This is useful for skills that have vastly different XP curves or that you simply do not want an accelerated growth rate in. Invalid skill names will be ignored.");
             SharedKnowledgeIgnoreList.SettingChanged += SharedKnowledge.UnallowedSharedXPSkillTypesChanged;
+            AdditionalSkillNames = BindServerConfig("SkillRates", "AdditionalSkillNames", "", "Comma separated list of extra skill names to create gain rate entries for. Skills added by other mods are detected automatically, so this is only needed when one is missed. Use the skill name (SkillManager) or the skill identifier (Jotunn) exactly as the other mod defines it. New entries appear after the next game start.");
+            AdditionalSkillNames.SettingChanged += SkillRates.AdditionalSkillNamesChanged;
 
             EnableSwimming = BindServerConfig("Swimming", "EnableSwimming", true, "Enable swimming skill changes.");
             EnableSwimStaminaCostReduction = BindServerConfig("Swimming", "EnableSwimStaminaCostReduction", true, "Enables swim stamina cost reduction, at the level specified by SwimStaminaReductionLevel.");
@@ -426,9 +430,23 @@ namespace ImpactfulSkills
             watcher.EnableRaisingEvents = true;
         }
 
+        /// <summary>
+        /// Binding entries one at a time writes (and re-reads) the whole config file per entry, which the file watcher
+        /// then picks up. Wrap a batch of Bind calls in Begin/EndBatchBind so the file is written once at the end.
+        /// </summary>
+        internal static void BeginBatchBind() {
+            cfg.SaveOnConfigSet = false;
+        }
+
+        internal static void EndBatchBind(bool save) {
+            cfg.SaveOnConfigSet = true;
+            if (save) { cfg.Save(); }
+        }
+
         private static void OnConfigFileChanged(object sender, FileSystemEventArgs e) {
             // We only want the config changes being allowed if this is a server (ie in game in a hosted world or dedicated ideally)
-            if (ZNet.instance.IsServer() == false) {
+            // ZNet doesn't exist until a world is loaded, and binds during startup will trigger this watcher.
+            if (ZNet.instance == null || ZNet.instance.IsServer() == false) {
                 return;
             }
             // Handle the config file change event

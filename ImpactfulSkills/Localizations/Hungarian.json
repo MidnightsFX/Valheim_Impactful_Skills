@@ -6,7 +6,7 @@
   "skill_Hauling": "Teherhordás",
   "skill_Hauling_description": "Képességed áruk cipelésére, tárolására és szállítására.",
   "craft_refund": "Anyagot spóroltál!",
-  "aoe_enabled": "Területi ültetés/aratás bekapcsolva",
-  "aoe_disabled": "Területi ültetés/aratás kikapcsolva",
-  "aoe_toggle_hint": "Területi ültetés/aratás váltása"
+  "aoe_features_enabled": "Területi aratás/bányászat bekapcsolva",
+  "aoe_features_disabled": "Területi aratás/bányászat kikapcsolva",
+  "aoe_features_hint": "Területi aratás/bányászat váltása"
 }

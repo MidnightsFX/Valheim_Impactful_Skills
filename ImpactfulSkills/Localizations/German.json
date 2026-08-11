@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Deine Fähigkeit, Waren zu tragen, zu lagern und zu transportieren.",
   "craft_refund": "Material gespart!",
-  "aoe_enabled": "Flächen-Pflanzen/Ernten aktiviert",
-  "aoe_disabled": "Flächen-Pflanzen/Ernten deaktiviert",
-  "aoe_toggle_hint": "Flächen-Pflanzen/Ernten umschalten"
+  "aoe_features_enabled": "Flächen-Ernten/Abbauen aktiviert",
+  "aoe_features_disabled": "Flächen-Ernten/Abbauen deaktiviert",
+  "aoe_features_hint": "Flächen-Ernten/Abbauen umschalten"
 }

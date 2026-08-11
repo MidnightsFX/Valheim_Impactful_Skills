@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Din evne til at bære, opbevare og transportere gods.",
   "craft_refund": "Materialer sparet!",
-  "aoe_enabled": "Områdeplantning/-høst slået til",
-  "aoe_disabled": "Områdeplantning/-høst slået fra",
-  "aoe_toggle_hint": "Skift områdeplantning/-høst"
+  "aoe_features_enabled": "Områdehøst/-brydning slået til",
+  "aoe_features_disabled": "Områdehøst/-brydning slået fra",
+  "aoe_features_hint": "Skift områdehøst/-brydning"
 }

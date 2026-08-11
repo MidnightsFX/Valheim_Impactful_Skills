@@ -1,3 +1,13 @@
+**0.12.0**
+---
+```
+- Skill gain rate settings are now created for skills added by other mods, not just the vanilla ones. Skills added through Jotunn or SkillManager are detected automatically, and AdditionalSkillNames can be used to add any that are missed
+- Skill gain rates can now be set below 1 to slow a skill down, or to 0 to stop it being gained at all
+- Skill gain rates now apply to xp granted by mods that raise skills directly instead of through the player, which previously ignored the configured rate
+- SharedKnowledgeIgnoreList now accepts skills added by other mods, and no longer requires that your character has already raised the skill for the name to be recognised
+- The AOE toggle hotkey now also switches AOE mining and vein breaking on and off, not just area planting and harvesting, so a single node can be taken off a vein without shattering its neighbours. Mining damage, critical hits and bonus drops are unaffected while it is off (AOEToggleHotkey)
+```
+
 **0.11.3**
 ---
 ```

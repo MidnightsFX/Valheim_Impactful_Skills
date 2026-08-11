@@ -6,7 +6,7 @@
   "skill_Hauling": "ढुलाई",
   "skill_Hauling_description": "सामान ढोने, संग्रहीत करने और परिवहन करने की आपकी क्षमता।",
   "craft_refund": "कुछ सामग्री बच गई!",
-  "aoe_enabled": "क्षेत्र रोपण/कटाई चालू",
-  "aoe_disabled": "क्षेत्र रोपण/कटाई बंद",
-  "aoe_toggle_hint": "क्षेत्र रोपण/कटाई बदलें"
+  "aoe_features_enabled": "क्षेत्र कटाई/खनन चालू",
+  "aoe_features_disabled": "क्षेत्र कटाई/खनन बंद",
+  "aoe_features_hint": "क्षेत्र कटाई/खनन बदलें"
 }

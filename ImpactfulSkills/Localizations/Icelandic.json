@@ -6,7 +6,7 @@
   "skill_Hauling": "Flutningur",
   "skill_Hauling_description": "Geta þín til að bera, geyma og flytja varning.",
   "craft_refund": "Efni sparaðist!",
-  "aoe_enabled": "Svæðisgróðursetning/-uppskera virk",
-  "aoe_disabled": "Svæðisgróðursetning/-uppskera óvirk",
-  "aoe_toggle_hint": "Víxla svæðisgróðursetningu/-uppskeru"
+  "aoe_features_enabled": "Svæðisuppskera/-náma virk",
+  "aoe_features_disabled": "Svæðisuppskera/-náma óvirk",
+  "aoe_features_hint": "Víxla svæðisuppskeru/-námu"
 }

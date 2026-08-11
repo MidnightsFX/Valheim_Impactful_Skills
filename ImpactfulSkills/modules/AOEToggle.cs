@@ -8,8 +8,9 @@ namespace ImpactfulSkills.patches {
 
     /// <summary>
     /// Per-frame detection of the configurable AOE toggle hotkey. Flipping the shared
-    /// <see cref="ValConfig.AOEFeaturesEnabled"/> flag enables/disables BOTH AOE harvesting
-    /// (see Gathering.cs) and AOE planting at once, and shows a top-right feedback message.
+    /// <see cref="ValConfig.AOEFeaturesEnabled"/> flag enables/disables AOE harvesting
+    /// (see Gathering.cs), AOE mining and vein breaking (see Mining.cs) and AOE planting all at
+    /// once, and shows a top-left feedback message.
     /// </summary>
     [HarmonyPatch(typeof(Player), nameof(Player.Update))]
     public static class AOEToggleHotkeyPatch {
@@ -25,8 +26,8 @@ namespace ImpactfulSkills.patches {
                 PlantGrid.MultiplantDisabled = !ValConfig.AOEFeaturesEnabled;
 
                 string msg = ValConfig.AOEFeaturesEnabled
-                    ? Localization.instance.Localize("$aoe_enabled")
-                    : Localization.instance.Localize("$aoe_disabled");
+                    ? Localization.instance.Localize("$aoe_features_enabled")
+                    : Localization.instance.Localize("$aoe_features_disabled");
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, msg);
             }
         }
@@ -84,7 +85,7 @@ namespace ImpactfulSkills.patches {
             Transform hintRoot = _hintObj.transform;
             Transform labelTf = hintRoot.GetChild(0);
             TextMeshProUGUI label = labelTf.GetComponent<TextMeshProUGUI>();
-            if (label != null) { label.text = Localization.instance.Localize("$aoe_toggle_hint"); }
+            if (label != null) { label.text = Localization.instance.Localize("$aoe_features_hint"); }
             // Widen the label so "Toggle AOE" is not truncated to the narrow "Copy" width.
             LayoutElement labelLayout = labelTf.GetComponent<LayoutElement>();
             if (labelLayout != null) { labelLayout.preferredWidth = 75; }

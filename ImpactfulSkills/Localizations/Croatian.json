@@ -6,7 +6,7 @@
   "skill_Hauling": "Prijevoz",
   "skill_Hauling_description": "Tvoja sposobnost nošenja, skladištenja i prijevoza robe.",
   "craft_refund": "Ušteđen materijal!",
-  "aoe_enabled": "Sadnja/žetva po području uključena",
-  "aoe_disabled": "Sadnja/žetva po području isključena",
-  "aoe_toggle_hint": "Uključi/isključi sadnju i žetvu po području"
+  "aoe_features_enabled": "Žetva/kopanje po području uključeni",
+  "aoe_features_disabled": "Žetva/kopanje po području isključeni",
+  "aoe_features_hint": "Uključi/isključi žetvu i kopanje po području"
 }

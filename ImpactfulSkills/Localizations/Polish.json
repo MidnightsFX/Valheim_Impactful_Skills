@@ -6,7 +6,7 @@
   "skill_Hauling": "Przewoźnik",
   "skill_Hauling_description": "Zwiększony udźwig, łatwiejsze pchanie wózka.",
   "craft_refund": "Zaoszczędzono materiały!",
-  "aoe_enabled": "Sadzenie/zbieranie obszarowe włączone",
-  "aoe_disabled": "Sadzenie/zbieranie obszarowe wyłączone",
-  "aoe_toggle_hint": "Przełącz sadzenie/zbieranie obszarowe"
+  "aoe_features_enabled": "Zbieranie/wydobycie obszarowe włączone",
+  "aoe_features_disabled": "Zbieranie/wydobycie obszarowe wyłączone",
+  "aoe_features_hint": "Przełącz zbieranie/wydobycie obszarowe"
 }

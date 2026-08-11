@@ -6,7 +6,7 @@
   "skill_Hauling": "Taşıma",
   "skill_Hauling_description": "Mal taşıma, depolama ve nakletme yeteneğiniz.",
   "craft_refund": "Malzeme tasarrufu!",
-  "aoe_enabled": "Alan ekimi/hasadı açık",
-  "aoe_disabled": "Alan ekimi/hasadı kapalı",
-  "aoe_toggle_hint": "Alan ekimi/hasadını değiştir"
+  "aoe_features_enabled": "Alan hasadı/madenciliği açık",
+  "aoe_features_disabled": "Alan hasadı/madenciliği kapalı",
+  "aoe_features_hint": "Alan hasadı/madenciliğini değiştir"
 }

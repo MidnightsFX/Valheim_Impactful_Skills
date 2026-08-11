@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Capacitatea ta de a căra, depozita și transporta mărfuri.",
   "craft_refund": "Materiale economisite!",
-  "aoe_enabled": "Plantare/recoltare pe zonă activată",
-  "aoe_disabled": "Plantare/recoltare pe zonă dezactivată",
-  "aoe_toggle_hint": "Comută plantarea/recoltarea pe zonă"
+  "aoe_features_enabled": "Recoltare/minerit pe zonă activate",
+  "aoe_features_disabled": "Recoltare/minerit pe zonă dezactivate",
+  "aoe_features_hint": "Comută recoltarea/mineritul pe zonă"
 }

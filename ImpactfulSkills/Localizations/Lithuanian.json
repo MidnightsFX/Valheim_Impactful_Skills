@@ -6,7 +6,7 @@
   "skill_Hauling": "Krovimas",
   "skill_Hauling_description": "Tavo gebėjimas nešti, laikyti ir gabenti prekes.",
   "craft_refund": "Sutaupyta medžiagų!",
-  "aoe_enabled": "Ploto sodinimas/derliaus nuėmimas įjungtas",
-  "aoe_disabled": "Ploto sodinimas/derliaus nuėmimas išjungtas",
-  "aoe_toggle_hint": "Perjungti ploto sodinimą/derliaus nuėmimą"
+  "aoe_features_enabled": "Ploto derliaus nuėmimas/kasyba įjungti",
+  "aoe_features_disabled": "Ploto derliaus nuėmimas/kasyba išjungti",
+  "aoe_features_hint": "Perjungti ploto derliaus nuėmimą/kasybą"
 }

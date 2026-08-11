@@ -6,7 +6,7 @@
   "skill_Hauling": "Transporte",
   "skill_Hauling_description": "A tua capacidade de carregar, armazenar e transportar mercadorias.",
   "craft_refund": "Materiais poupados!",
-  "aoe_enabled": "Plantar/colher em área ativado",
-  "aoe_disabled": "Plantar/colher em área desativado",
-  "aoe_toggle_hint": "Alternar plantar/colher em área"
+  "aoe_features_enabled": "Colheita/mineração em área ativado",
+  "aoe_features_disabled": "Colheita/mineração em área desativado",
+  "aoe_features_hint": "Alternar colheita/mineração em área"
 }

@@ -1,8 +1,7 @@
 ﻿using HarmonyLib;
-using Jotunn.Managers;
+using ImpactfulSkills.modules;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using static Skills;
 
@@ -24,62 +23,48 @@ namespace ImpactfulSkills.patches
 
         public static void SetupUnallowedSharedXPSkills()
         {
-            if (Player.m_localPlayer == null) { return; }
             List<Skills.SkillType> tunallowed = new List<Skills.SkillType>() { };
-            List<Skills.SkillType> player_skills = Player.m_localPlayer.GetSkills().m_skillData.Keys.ToList();
             bool add_info_about_invalid_enum = false;
             if (ValConfig.SharedKnowledgeIgnoreList.Value != "")
             {
                 foreach (var item in ValConfig.SharedKnowledgeIgnoreList.Value.Split(','))
                 {
+                    if (item.Trim().Length == 0) { continue; }
                     Logger.LogDebug($"Checking {item} as skill enum");
 
-                    // Check Jotun for a registered skill, this covers all custom Jotunn skills
-                    Skills.SkillDef sd_item = SkillManager.Instance.GetSkill(item);
-                    if (sd_item != null) { tunallowed.Add(sd_item.m_skill); continue; }
-
-                    // Mods which add skills using skill manager do not have a central location to check
-                    // We are checking skills that the player already has, which means that we won't always get all skills here
-                    // But without a central registry of skills, or skills adding their enums to the master list- it doesn't matter
-                    try {
-                        foreach(var pskill in player_skills)
-                        {
-                            if (pskill.ToString().Equals(item, StringComparison.OrdinalIgnoreCase))
-                            {
-                                if (!tunallowed.Contains(pskill))
-                                {
-                                    tunallowed.Add(pskill);
-                                }
-                                break;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        Logger.LogError($"Error parsing {item} as skill enum: {ex}");
+                    // Covers vanilla skills as well as skills added by other mods, whether or not this character has
+                    // ever raised them, which is why this no longer looks at the players own skill list.
+                    if (SkillRates.TryResolveSkill(item, out Skills.SkillType skill))
+                    {
+                        if (!tunallowed.Contains(skill)) { tunallowed.Add(skill); }
+                        continue;
                     }
+                    add_info_about_invalid_enum = true;
                 }
             }
 
-            if (tunallowed.Count > 0)
-            {
-                skill_types_to_avoid_shared_xp.Clear();
-                skill_types_to_avoid_shared_xp.AddRange(tunallowed);
-            }
+            skill_types_to_avoid_shared_xp.Clear();
+            skill_types_to_avoid_shared_xp.AddRange(tunallowed);
             if (add_info_about_invalid_enum == true)
             {
                 Logger.LogWarning($"Some of the skills you provided in the config are not valid skill types. Invalid skill types will be ignored. A comma seperated of valid skill names is recommended.");
-                Logger.LogWarning($"Valid skill types are: {string.Join(", ", Skills.s_allSkills)}");
+                Logger.LogWarning($"Valid skill types are: {string.Join(", ", Skills.s_allSkills)}, plus the name or identifier of any skill added by another mod.");
             }
             Logger.LogDebug($"Unallowed shared xp skills: {string.Join(", ", skill_types_to_avoid_shared_xp)}");
         }
 
 
-        [HarmonyPatch(typeof(Player), nameof(Player.RaiseSkill))]
+        // Runs after the skill gain rate multiplier, so the catch up bonus is an absolute amount rather than something
+        // the configured rate scales up as well.
+        [HarmonyPatch(typeof(Skills), nameof(Skills.RaiseSkill))]
         public static class PatchSkillIncreaseHigherGainsForLowerSkills
         {
-            private static void Prefix(Skills.SkillType skill, ref float value)
+            [HarmonyPriority(Priority.LowerThanNormal)]
+            private static void Prefix(Skills __instance, Skills.SkillType skillType, ref float factor)
             {
                 time_since_start += Time.deltaTime;
-                if (ValConfig.EnableKnowledgeSharing.Value == true && Player.m_localPlayer != null && !skill_types_to_avoid_shared_xp.Contains(skill))
+                if (ValConfig.EnableKnowledgeSharing.Value == true && Player.m_localPlayer != null
+                    && __instance.m_player == Player.m_localPlayer && !skill_types_to_avoid_shared_xp.Contains(skillType))
                 {
                     // Set the current highest skill
                     if (time_since_start > last_skill_level_check || highest_skill_level == 0)
@@ -93,19 +78,19 @@ namespace ImpactfulSkills.patches
                         last_skill_level_check = time_since_start + (Time.deltaTime * 100);
                         Logger.LogDebug($"Setting highest skill level {highest_skill_level} factor {highest_skill_factor}");
                     }
-                    float skill_level = Player.m_localPlayer.GetSkillLevel(skill);
-                    //Logger.LogDebug($"Comparing skill levels {skill_level} < {highest_skill_level} {skill.ToString()}");
+                    float skill_level = Player.m_localPlayer.GetSkillLevel(skillType);
+                    //Logger.LogDebug($"Comparing skill levels {skill_level} < {highest_skill_level} {skillType.ToString()}");
                     if (skill_level < highest_skill_level)
                     {
                         float bonus_xp_curved = Mathf.Lerp(0, highest_skill_level, highest_skill_factor) / 100f;
                         float skill_bonus = ValConfig.SharedKnowledgeSkillBonusRate.Value * bonus_xp_curved;
                         //Logger.LogDebug($"Skill factors {highest_skill_level} <= {skill_level} + {ValConfig.SharedKnowledgeCap.Value} for bonus ({bonus_xp_curved}) {skill_bonus}");
                         if (highest_skill_level <= (skill_level + ValConfig.SharedKnowledgeCap.Value)) { skill_bonus = 0f; }
-                        Logger.LogDebug($"Bonus skill gain from Knowledge {skill_bonus} for {skill.ToString()}");
-                        value += skill_bonus;
+                        Logger.LogDebug($"Bonus skill gain from Knowledge {skill_bonus} for {skillType.ToString()}");
+                        factor += skill_bonus;
                     }
                 }
-                // Logger.LogDebug($"{skill.ToString()} increase value {value}");
+                // Logger.LogDebug($"{skillType.ToString()} increase value {factor}");
             }
         }
 

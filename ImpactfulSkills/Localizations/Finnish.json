@@ -6,7 +6,7 @@
   "skill_Hauling": "Kuljetus",
   "skill_Hauling_description": "Kykysi kantaa, varastoida ja kuljettaa tavaroita.",
   "craft_refund": "Materiaaleja säästyi!",
-  "aoe_enabled": "Alueistutus/-sadonkorjuu käytössä",
-  "aoe_disabled": "Alueistutus/-sadonkorjuu pois käytöstä",
-  "aoe_toggle_hint": "Vaihda alueistutus/-sadonkorjuu"
+  "aoe_features_enabled": "Aluesadonkorjuu/-louhinta käytössä",
+  "aoe_features_disabled": "Aluesadonkorjuu/-louhinta pois käytöstä",
+  "aoe_features_hint": "Vaihda aluesadonkorjuu/-louhinta"
 }

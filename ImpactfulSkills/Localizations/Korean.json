@@ -6,7 +6,7 @@
   "skill_Hauling": "운반",
   "skill_Hauling_description": "물품을 나르고, 보관하고, 운송하는 능력.",
   "craft_refund": "재료를 절약했습니다!",
-  "aoe_enabled": "범위 심기/수확 활성화",
-  "aoe_disabled": "범위 심기/수확 비활성화",
-  "aoe_toggle_hint": "범위 심기/수확 전환"
+  "aoe_features_enabled": "범위 수확/채굴 활성화",
+  "aoe_features_disabled": "범위 수확/채굴 비활성화",
+  "aoe_features_hint": "범위 수확/채굴 전환"
 }

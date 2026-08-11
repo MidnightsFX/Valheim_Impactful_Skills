@@ -6,7 +6,7 @@
   "skill_Hauling": "運搬",
   "skill_Hauling_description": "物資を持ち運び、保管し、輸送する能力。",
   "craft_refund": "素材を節約した！",
-  "aoe_enabled": "範囲植え付け/収穫が有効",
-  "aoe_disabled": "範囲植え付け/収穫が無効",
-  "aoe_toggle_hint": "範囲植え付け/収穫を切り替え"
+  "aoe_features_enabled": "範囲収穫/採掘が有効",
+  "aoe_features_disabled": "範囲収穫/採掘が無効",
+  "aoe_features_hint": "範囲収穫/採掘を切り替え"
 }

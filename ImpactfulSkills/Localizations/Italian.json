@@ -6,7 +6,7 @@
   "skill_Hauling": "Trasporto",
   "skill_Hauling_description": "La tua capacità di portare, immagazzinare e trasportare merci.",
   "craft_refund": "Materiali risparmiati!",
-  "aoe_enabled": "Semina/raccolta ad area attivata",
-  "aoe_disabled": "Semina/raccolta ad area disattivata",
-  "aoe_toggle_hint": "Attiva/disattiva semina e raccolta ad area"
+  "aoe_features_enabled": "Raccolta/scavo ad area attivati",
+  "aoe_features_disabled": "Raccolta/scavo ad area disattivati",
+  "aoe_features_hint": "Attiva/disattiva raccolta e scavo ad area"
 }

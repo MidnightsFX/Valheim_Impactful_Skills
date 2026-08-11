@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Din förmåga att bära, förvara och transportera gods.",
   "craft_refund": "Material sparades!",
-  "aoe_enabled": "Områdesplantering/skörd på",
-  "aoe_disabled": "Områdesplantering/skörd av",
-  "aoe_toggle_hint": "Växla områdesplantering/skörd"
+  "aoe_features_enabled": "Områdesskörd/brytning på",
+  "aoe_features_disabled": "Områdesskörd/brytning av",
+  "aoe_features_hint": "Växla områdesskörd/brytning"
 }

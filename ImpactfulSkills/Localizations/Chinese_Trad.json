@@ -6,7 +6,7 @@
   "skill_Hauling": "負重",
   "skill_Hauling_description": "你搬運、存放與運輸貨物的能力。",
   "craft_refund": "節省了一些材料！",
-  "aoe_enabled": "範圍種植/收穫已啟用",
-  "aoe_disabled": "範圍種植/收穫已停用",
-  "aoe_toggle_hint": "切換範圍種植/收穫"
+  "aoe_features_enabled": "範圍收穫/挖掘已啟用",
+  "aoe_features_disabled": "範圍收穫/挖掘已停用",
+  "aoe_features_hint": "切換範圍收穫/挖掘"
 }

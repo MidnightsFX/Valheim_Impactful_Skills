@@ -6,7 +6,7 @@
   "skill_Hauling": "Pārvadāšana",
   "skill_Hauling_description": "Tava spēja nest, uzglabāt un pārvadāt preces.",
   "craft_refund": "Ietaupīti materiāli!",
-  "aoe_enabled": "Laukuma stādīšana/ražas novākšana ieslēgta",
-  "aoe_disabled": "Laukuma stādīšana/ražas novākšana izslēgta",
-  "aoe_toggle_hint": "Pārslēgt laukuma stādīšanu/ražas novākšanu"
+  "aoe_features_enabled": "Laukuma ražas novākšana/ieguve ieslēgta",
+  "aoe_features_disabled": "Laukuma ražas novākšana/ieguve izslēgta",
+  "aoe_features_hint": "Pārslēgt laukuma ražas novākšanu/ieguvi"
 }

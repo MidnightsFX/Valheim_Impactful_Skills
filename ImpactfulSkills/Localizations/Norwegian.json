@@ -6,7 +6,7 @@
   "skill_Hauling": "Transport",
   "skill_Hauling_description": "Din evne til å bære, lagre og transportere varer.",
   "craft_refund": "Materialer spart!",
-  "aoe_enabled": "Områdeplanting/-høsting på",
-  "aoe_disabled": "Områdeplanting/-høsting av",
-  "aoe_toggle_hint": "Veksle områdeplanting/-høsting"
+  "aoe_features_enabled": "Områdehøsting/-utvinning på",
+  "aoe_features_disabled": "Områdehøsting/-utvinning av",
+  "aoe_features_hint": "Veksle områdehøsting/-utvinning"
 }

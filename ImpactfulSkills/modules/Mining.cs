@@ -81,6 +81,10 @@ namespace ImpactfulSkills.patches {
             // No damage will be done, skip.
             if ((double)hit.m_damage.m_pickaxe <= 0.0) { return; }
 
+            // The AOE hotkey (ValConfig.AOEToggleHotkey) suppresses both mining sweeps. Only sweep code
+            // follows; the damage and crit bonuses above still apply, so mining stays buffed while off.
+            if (!ValConfig.AOEFeaturesEnabled) { return; }
+
             // Leviathans hold the player over open water/lava, and MineRock.RPC_Hit fires m_onHit
             // (-> Leviathan.OnHit -> dive roll) for every damaging hit. Our sweeps hit every node
             // at once, which turns a 1-10% dive chance into a near certainty and dumps the player.

@@ -6,7 +6,7 @@
   "skill_Hauling": "Přeprava",
   "skill_Hauling_description": "Tvoje schopnost nosit, skladovat a přepravovat zboží.",
   "craft_refund": "Ušetřen materiál!",
-  "aoe_enabled": "Plošná sadba/sklizeň zapnuta",
-  "aoe_disabled": "Plošná sadba/sklizeň vypnuta",
-  "aoe_toggle_hint": "Přepnout plošnou sadbu/sklizeň"
+  "aoe_features_enabled": "Plošná sklizeň/těžba zapnuta",
+  "aoe_features_disabled": "Plošná sklizeň/těžba vypnuta",
+  "aoe_features_hint": "Přepnout plošnou sklizeň/těžbu"
 }

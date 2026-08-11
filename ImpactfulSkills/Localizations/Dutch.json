@@ -6,7 +6,7 @@
   "skill_Hauling": "Sjouwen",
   "skill_Hauling_description": "Je vermogen om goederen te dragen, op te slaan en te vervoeren.",
   "craft_refund": "Materialen bespaard!",
-  "aoe_enabled": "Gebiedsplanten/-oogsten aan",
-  "aoe_disabled": "Gebiedsplanten/-oogsten uit",
-  "aoe_toggle_hint": "Gebiedsplanten/-oogsten schakelen"
+  "aoe_features_enabled": "Gebiedsoogsten/-delven aan",
+  "aoe_features_disabled": "Gebiedsoogsten/-delven uit",
+  "aoe_features_hint": "Gebiedsoogsten/-delven schakelen"
 }
