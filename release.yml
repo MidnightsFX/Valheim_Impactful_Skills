@@ -12,3 +12,33 @@ assembly: ImpactfulSkills
 # because they differ per machine.
 deploy:
   enabled: true
+
+publish:
+  github:
+    enabled: true
+
+  discord:
+    enabled: true
+
+  thunderstore:
+    enabled: true
+    author_name: MidnightMods          # the Thunderstore TEAM, not your username
+    communities: [valheim]
+    categories: []                    # optional
+    has_nsfw_content: false           # optional, default false
+
+  hexium:
+    enabled: false
+    base_url: https://valheim.hexium.gg   # required: the community subdomain
+    author_name: MidnightsFX
+    communities: [valheim]
+
+  nexus:
+    enabled: true
+    file_id: 7313330                  # required: an EXISTING file on the mod page
+    mod_id: 3017                      # required only when send_changelog is true
+    send_changelog: true              # posts the CHANGELOG entry for this version
+    file_category: main               # optional, default "main"
+    update_mod_version: true          # optional, sets the mod version to this one
+    archive_existing_version: true    # optional
+    display_name: "ImpactfulSkills"  # optional, defaults to the zip filename
