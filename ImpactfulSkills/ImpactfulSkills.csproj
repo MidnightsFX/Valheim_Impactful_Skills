@@ -104,10 +104,6 @@
     <CallTarget Targets="CopyToUnity" Condition="Exists('$(UNITY_FOLDER)')" />
   </Target>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetDir)$(TargetFileName)&quot; &quot;C:\Users\carls\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Modtest\BepInEx\plugins&quot; /y /i /q&#xD;&#xA;&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetFileName)&quot; &quot;C:\Users\carls\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Modtest\BepInEx\plugins&quot; /y /i /q" />
-  </Target>
-
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Message Text="Copy asset bundle from $(UNITY_BUNDLES) to AssetsEmbedded" Importance="high" />
     <Copy Condition="Exists('$(UNITY_BUNDLES)/impactfulskills')" SourceFiles="$(UNITY_BUNDLES)/impactfulskills" DestinationFolder="$(ProjectDir)AssetsEmbedded" SkipUnchangedFiles="true" />
