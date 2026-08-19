@@ -93,6 +93,73 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        // Quality transfer state. The DoCrafting prefix works out what quality the craft has earned, the
+        // Inventory.AddItem prefix a few lines later applies it to the one item being created, and the DoCrafting
+        // postfix disarms whatever is left over so an early return inside DoCrafting cannot leave it primed.
+        private static int PendingCraftQuality = 0;
+        private static string PendingCraftPrefab = null;
+        private static int AppliedCraftQuality = 0;
+
+        /// <summary>
+        /// The average quality of the ingredients a craft is about to spend, rounded down, weighted by how many of
+        /// each are consumed. Ingredients without a quality level do not vote, and neither does one the recipe does
+        /// not actually ask for at this level - the Ashlands infusion recipes set m_amountPerLevel 0 on the base
+        /// weapon, so upgrading an infused weapon does not consume another one.
+        ///
+        /// Tiers come from IngredientQuality.SelectTier, the same call ConsumeResources makes moments later, so the
+        /// quality handed out is always the quality that was actually spent.
+        /// </summary>
+        internal static int AverageIngredientTier(Recipe recipe, Inventory inventory, int baseQuality, int multiplier) {
+            Piece.Requirement[] resources = recipe.m_resources;
+            if (resources == null || inventory == null) { return 0; }
+
+            int weightedTiers = 0;
+            int itemsSpent = 0;
+            foreach (Piece.Requirement requirement in resources) {
+                if (IngredientQuality.HasQuality(requirement) == false) { continue; }
+
+                int required = requirement.GetAmount(baseQuality) * multiplier;
+                if (required <= 0) { continue; }
+
+                // A tier of 0 means no single tier covers the cost, which HaveRequirementItems would already have
+                // blocked - outside of the no cost cheats, where counting it as 1 keeps the craft at vanilla quality.
+                int tier = IngredientQuality.SelectTier(inventory, requirement.m_resItem.m_itemData, required);
+                weightedTiers += Mathf.Max(1, tier) * required;
+                itemsSpent += required;
+            }
+            if (itemsSpent <= 0) { return 0; }
+
+            // Integer division is the round down the average is supposed to get.
+            return weightedTiers / itemsSpent;
+        }
+
+        /// <summary>
+        /// The quality an equipment craft has earned from its ingredients, or 0 when it has earned nothing above
+        /// what vanilla would have given. Never lowers a result: baseQuality is vanilla's own answer, so upgrading
+        /// with junk ingredients behaves exactly as it always did.
+        /// </summary>
+        internal static int CraftedItemQuality(Recipe recipe, ItemDrop.ItemData upgradeItem, int multiplier) {
+            if (ValConfig.ScaleCraftedEquipmentQuality.Value == false || Player.m_localPlayer == null) { return 0; }
+
+            if (IngredientQuality.Classify(recipe, out int _) != IngredientQuality.CraftMode.ItemQuality) { return 0; }
+
+            int baseQuality = upgradeItem != null ? upgradeItem.m_quality + 1 : 1;
+            int earned = AverageIngredientTier(recipe, Player.m_localPlayer.GetInventory(), baseQuality, multiplier);
+            if (earned <= baseQuality) { return 0; }
+
+            earned = Mathf.Min(earned, recipe.m_item.m_itemData.m_shared.m_maxQuality);
+            // Vanilla gates every quality level behind a station level (Recipe.GetRequiredStationLevel is
+            // max(1, m_minStationLevel) + quality - 1). Handing out a quality the station could not have crafted
+            // would skip that progression entirely, so invert the same expression and cap by what it allows.
+            if (recipe.m_craftingStation != null || recipe.m_repairStation != null) {
+                CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
+                int stationAllows = (station != null ? station.GetLevel() : 0) - Mathf.Max(1, recipe.m_minStationLevel) + 1;
+                earned = Mathf.Min(earned, stationAllows);
+            }
+
+            return earned > baseQuality ? earned : 0;
+        }
+
         private static int GetCraftingItemBonusAmount(InventoryGui instance, int base_amount_crafted, float skill_factor, float player_skill_level, Skills.SkillType craftingSkill) {
             int craftingItemBonusAmount = 0;
             
@@ -260,6 +327,99 @@ namespace ImpactfulSkills.patches
                     });
                 }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
+            }
+        }
+
+        /// <summary>
+        /// Recipes that eat something with a quality level and produce equipment craft it better rather than
+        /// crafting more of it. The Fishing Hat wants one of every fish; the Ashlands infusion recipes eat a base
+        /// weapon that may itself be four stars, and vanilla throws all of that away and hands back a quality 1
+        /// result.
+        ///
+        /// DoCrafting passes one local to both Inventory.AddItem and Player.ConsumeResources, and only the first
+        /// may change - the player pays quality 1 material costs and receives a better item, which is the reward.
+        /// That argument sits four pushes deep in the AddItem call, so rather than guess a local slot index this
+        /// arms a value here and applies it in an AddItem prefix. No IL assumptions, nothing to re-verify against
+        /// the next game build.
+        /// </summary>
+        [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.DoCrafting))]
+        public static class CraftedItemQualityPatch {
+            [HarmonyPrefix]
+            private static void Prefix(InventoryGui __instance) {
+                PendingCraftQuality = 0;
+                PendingCraftPrefab = null;
+                AppliedCraftQuality = 0;
+                if (__instance.m_craftRecipe == null) { return; }
+
+                // The same two values DoCrafting itself is about to use, so the tier we price is the tier it spends.
+                int multiplier = __instance.m_multiCrafting ? __instance.m_multiCraftAmount : 1;
+                int quality = CraftedItemQuality(__instance.m_craftRecipe, __instance.m_craftUpgradeItem, multiplier);
+                if (quality <= 0) { return; }
+
+                PendingCraftQuality = quality;
+                PendingCraftPrefab = __instance.m_craftRecipe.m_item.gameObject.name;
+                Logger.LogDebug($"Ingredient quality earns {PendingCraftPrefab} a quality of {quality}.");
+            }
+
+            [HarmonyPostfix]
+            private static void Postfix(InventoryGui __instance) {
+                if (AppliedCraftQuality > 0 && Player.m_localPlayer != null && DamageText.instance != null) {
+                    Vector3 playerUpPos = Player.m_localPlayer.transform.position + Vector3.up;
+                    string label = LocalizationManager.Instance.TryTranslate("$craft_quality_bonus");
+                    DamageText.instance.ShowText(DamageText.TextType.Bonus, playerUpPos, label.Replace("{0}", AppliedCraftQuality.ToString()), true);
+                    __instance.m_craftBonusEffect.Create(playerUpPos, Quaternion.identity, null, 1f, -1);
+                }
+                // Still armed means DoCrafting returned before the item was added. Either way nothing may survive
+                // the call.
+                PendingCraftQuality = 0;
+                PendingCraftPrefab = null;
+                AppliedCraftQuality = 0;
+            }
+        }
+
+        /// <summary>
+        /// Applies the armed quality to the single item the craft creates. Matching on the prefab name keeps this
+        /// off anything else added during DoCrafting - the material refund above runs inside the same call, though
+        /// that goes through the AddItem(GameObject, int) overload and could not be caught here anyway.
+        /// </summary>
+        [HarmonyPatch(typeof(Inventory), nameof(Inventory.AddItem), new Type[] { typeof(string), typeof(int), typeof(int), typeof(int), typeof(long), typeof(string), typeof(Vector2i), typeof(bool) })]
+        public static class CraftedItemQualityAddPatch {
+            [HarmonyPrefix]
+            private static void Prefix(string name, ref int quality) {
+                if (PendingCraftQuality <= 0 || name != PendingCraftPrefab) { return; }
+
+                // One shot: whatever else this craft adds, it adds at its own quality.
+                if (quality < PendingCraftQuality) {
+                    AppliedCraftQuality = PendingCraftQuality;
+                    quality = PendingCraftQuality;
+                }
+                PendingCraftQuality = 0;
+                PendingCraftPrefab = null;
+            }
+        }
+
+        /// <summary>
+        /// Shows the quality the selected recipe would produce before it is crafted, the same way the amount
+        /// preview does.
+        ///
+        /// This appends to the finished label rather than touching UpdateRecipe's own quality local, which feeds
+        /// SetupRequirementList, GetRequiredStationLevel, HaveRequirements and the craft button caption - raising
+        /// that would price the recipe at upgrade material costs and relabel the button "Upgrade".
+        /// </summary>
+        [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateRecipe))]
+        public static class CraftedItemQualityPreviewPatch {
+            [HarmonyPostfix]
+            private static void Postfix(InventoryGui __instance) {
+                if (ValConfig.ScaleCraftedEquipmentQuality.Value == false || Player.m_localPlayer == null) { return; }
+
+                Recipe recipe = __instance.m_selectedRecipe.Recipe;
+                if (recipe == null) { return; }
+
+                int quality = CraftedItemQuality(recipe, __instance.m_selectedRecipe.ItemData, IngredientQuality.PanelCraftMultiplier());
+                if (quality <= 0) { return; }
+
+                string label = LocalizationManager.Instance.TryTranslate("$craft_quality_bonus");
+                __instance.m_recipeName.text = $"{__instance.m_recipeName.text} <color=orange>{label.Replace("{0}", quality.ToString())}</color>";
             }
         }
     }

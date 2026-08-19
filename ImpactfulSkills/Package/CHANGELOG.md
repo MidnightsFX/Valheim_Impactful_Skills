@@ -1,3 +1,25 @@
+**0.14.0**
+---
+```
+- Recipes that consume something with a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it (ScaleCraftedEquipmentQuality, under Crafting)
+	- The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build - twelve good fish make an upgraded fishing hat, twelve poor ones do not
+	- Infusing an Ashlands weapon now carries its star level over. Vanilla always handed back a quality 1 weapon, so infusing a fully upgraded one silently threw away three upgrade levels
+	- The crafting panel shows the quality you will get before you commit to the craft
+- Crafting now always spends the lowest quality ingredient that covers a recipe, for every item that carries a quality level rather than only for fish. Vanilla checks whether you can afford a recipe one quality tier at a time but then removes from any tier, so it could pick your best item purely by where it sat in your inventory
+- Fixed the crafting panel showing the wrong amount for quality scaled recipes while multicrafting
+```
+
+**0.13.0**
+---
+```
+- Recipes that take a whole fish now produce more the better the fish is. A quality 5 anglerfish makes 5 fish wraps instead of 1, and the same applies to the fish based mead bases (EnableQualityIngredientScaling, QualityIngredientOutputMultiplier)
+	- Vanilla only ever paid out for fish quality when turning a fish into raw fish; every other fish recipe ignored it
+- Fixes crafting spending a high quality fish when a lower quality one would have done. Vanilla checks whether you can afford a recipe one quality tier at a time, but then removes the items from any tier, so your best catch could be consumed for a quality 1 result. Crafting now always spends the lowest tier that covers the whole recipe, which also fixes the fishing hat quietly eating your rarest fish
+- The crafting panel and recipe list now show the amount you will actually get before you craft it
+- ScaleNonStackingCraftOutputs turns the bonus off for recipes whose result does not stack, such as the mead bases
+- RestrictQualityScalingToFish keeps the bonus to fish only, which matters alongside mods that give quality levels to other materials
+```
+
 **0.12.0**
 ---
 ```

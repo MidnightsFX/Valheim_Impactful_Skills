@@ -116,6 +116,24 @@ Hauling is trained by moving goods around: pulling a loaded cart, or covering gr
 
 Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
 
+### Fishing
+
+Catching a big fish is finally worth something. Every fish you land has a quality of 1 to 5, but in the base game that quality only counts when you turn the fish into raw fish - cook it into anything else and a prize catch gives exactly what a scrap of a fish would.
+
+Now the quality of the fish carries through to the recipe. A quality 5 anglerfish makes 5 fish wraps instead of 1, and the fish based mead bases scale the same way.
+
+Crafting also no longer raids your best catch: recipes now always spend the lowest quality fish that can cover the cost, so a rare fish is only used when it is the only one you are carrying. The crafting panel shows what you will actually get before you commit to the craft.
+
+Recipes that turn fish into gear reward you differently - see Crafting below.
+
+### Crafting
+
+A handful of items carry a quality level that has nothing to do with upgrades: every fish has one, and so does every base Ashlands weapon you have poured resources into. Spend one of those on a recipe that produces equipment and the quality now carries through to what you make, instead of being thrown away.
+
+The quality you get is the average quality of the ingredients you spent, rounded down, and it still respects your crafting station - a level 1 workbench cannot turn out level 4 gear no matter how good your fish were. Twelve prize fish make an upgraded fishing hat; twelve scraps make the same hat the base game gives you. Infusing an Ashlands weapon carries its stars over rather than resetting it to one, which in the base game quietly destroys every upgrade you had put into it.
+
+The crafting panel shows the quality you are about to get before you press craft, and crafting always spends the lowest quality ingredient that covers the recipe, so your best one is only ever used when it is the only one you have.
+
 ### Blood Magic
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.

@@ -6,6 +6,7 @@
   "skill_Hauling": "Hauling",
   "skill_Hauling_description": "Your ability to carry, store and transport goods.",
   "craft_refund": "Some materials saved!",
+  "craft_quality_bonus": "Quality {0}",
   "aoe_features_enabled": "Area Harvesting/Mining enabled",
   "aoe_features_disabled": "Area Harvesting/Mining disabled",
   "aoe_features_hint": "Toggle Area Harvesting/Mining"

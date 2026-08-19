@@ -186,6 +186,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> CraftingMaterialReturnsLevel;
         public static ConfigEntry<float> MaxCraftingMaterialReturnPercent;
         public static ConfigEntry<float> ChanceForMaterialReturn;
+        public static ConfigEntry<bool> ScaleCraftedEquipmentQuality;
 
         public static ConfigEntry<bool> EnableSwimming;
         public static ConfigEntry<int> SwimSpeedRequiredLevel;
@@ -200,6 +201,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> BlockStaminaGainRequiredLevel;
         public static ConfigEntry<float> BlockStaminaGainFactor;
         public static ConfigEntry<bool> EnableParryStaminaGain;
+
+        public static ConfigEntry<bool> EnableQualityIngredientScaling;
+        public static ConfigEntry<float> QualityIngredientOutputMultiplier;
+        public static ConfigEntry<bool> RestrictQualityScalingToFish;
+        public static ConfigEntry<bool> ScaleNonStackingCraftOutputs;
 
         // Custom ZRPCs for network state
         internal static CustomRPC SkillIncreaseXP;
@@ -390,6 +396,7 @@ namespace ImpactfulSkills
             CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
             MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
+            ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
             
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");
@@ -414,6 +421,11 @@ namespace ImpactfulSkills
             SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
             SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
             SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
+
+            EnableQualityIngredientScaling = BindServerConfig("Fishing", "EnableQualityIngredientScaling", true, "Recipes that take a whole fish now produce more when a higher quality fish is used, and always spend the lowest quality fish that can cover the recipe. Vanilla only pays out for fish quality when turning a fish into raw fish, and will otherwise happily consume your best catch for the same result a quality 1 fish gives.");
+            QualityIngredientOutputMultiplier = BindServerConfig("Fishing", "QualityIngredientOutputMultiplier", 1f, "How strongly fish quality increases the crafted amount. 1 is one extra result per quality level above 1, so a quality 5 anglerfish makes 5 fish wraps instead of 1. Multiplies the recipes own quality result multiplier, so recipes tuned by other mods keep their own scaling.", false, 0f, 10f);
+            RestrictQualityScalingToFish = BindServerConfig("Fishing", "RestrictQualityScalingToFish", true, "Only let fish earn extra output. This gates the bonus amount only - always spending the lowest quality ingredient that covers a recipe, and carrying ingredient quality into crafted equipment (ScaleCraftedEquipmentQuality), apply to everything regardless. Turning this off matters for the Ashlands weapons, which also carry a quality level, and for mods that give quality levels to other materials - in which case those recipes would start producing more as well.");
+            ScaleNonStackingCraftOutputs = BindServerConfig("Fishing", "ScaleNonStackingCraftOutputs", true, "Also scale recipes whose result does not stack, such as the fish based mead bases. Vanilla skips its own bonus craft rolls for these. Crafting more than will fit is safe - the craft is refused with an inventory full message rather than losing items.");
 
             PreferOtherPlantGrid = BindServerConfig("Mod Compatibility", "PreferOtherPlantGrid", true, "When enabled, and an other planting grid mod is enabled (), Impactful skills planting grid will be disabled.");
         }
