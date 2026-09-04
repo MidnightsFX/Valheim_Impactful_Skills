@@ -59,11 +59,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="JotunnLib" Version="2.23.2" />
+    <PackageReference Include="JotunnLib" Version="2.29.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- JotunnLib's reference list still carries assemblies that Valheim's Unity version
+         dropped. Nothing here uses them, and leaving them in warns MSB3245 every build. -->
+    <Reference Remove="UnityEngine.ProfilerModule" Condition="!Exists('$(VALHEIM_MANAGED)/UnityEngine.ProfilerModule.dll')" />
   </ItemGroup>
 
   <PropertyGroup>
-    <VALHEIM_MANAGED>$(VALHEIM_INSTALL)/valheim_Data/Managed</VALHEIM_MANAGED>
+    <!-- VALHEIM_MANAGED and BEPINEX_PATH are resolved in ..\Directory.Build.props, which
+         runs early enough for JotunnLib's reference HintPaths to see them. Only fill in
+         what is still missing here. -->
+    <VALHEIM_MANAGED Condition=" '$(VALHEIM_MANAGED)' == '' ">$(VALHEIM_INSTALL)/valheim_Data/Managed</VALHEIM_MANAGED>
+    <BEPINEX_PATH Condition=" '$(BEPINEX_PATH)' == '' ">$(VALHEIM_INSTALL)/BepInEx</BEPINEX_PATH>
     <UNITY_FOLDER>$(SolutionDir)JotunnModUnity</UNITY_FOLDER>
     <!-- Fall back to the sibling folder when SolutionDir isn't this repo's root (e.g. building the project alone) -->
     <UNITY_FOLDER Condition="!Exists('$(UNITY_FOLDER)')">$(ProjectDir)..\JotunnModUnity</UNITY_FOLDER>

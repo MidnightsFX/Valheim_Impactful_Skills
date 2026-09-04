@@ -116,9 +116,13 @@ Hauling is trained by moving goods around: pulling a loaded cart, or covering gr
 
 Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
 
+Cooking several foods in a row builds a streak. Every food you cook adds 10% more cooking XP to the next one, up to double XP, so settling in for a real cooking session is worth far more than making one thing whenever you happen to walk past the cauldron. Crafting at the cauldron counts each item of a multicraft, and taking cooked food off a cooking station or oven counts too. The streak only ends after two minutes without cooking - gathering more ingredients or crafting something else in between does not break it.
+
+Eating trains cooking as well. Every meal grants a little cooking XP based on the health, stamina and eitr it provides, so a hearty meal teaches more than a handful of berries.
+
 ### Fishing
 
-Catching a big fish is finally worth something. Every fish you land has a quality of 1 to 5, but in the base game that quality only counts when you turn the fish into raw fish - cook it into anything else and a prize catch gives exactly what a scrap of a fish would.
+Catching a big fish is finally worth something
 
 Now the quality of the fish carries through to the recipe. A quality 5 anglerfish makes 5 fish wraps instead of 1, and the fish based mead bases scale the same way.
 
@@ -141,7 +145,8 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 
 ### Animal Whisper (new skill)
 
-Taming reduces the amount of time it takes to tame creatures. It also increases the amount of drops you get from killing tamed creatures. Removing the need for massive creature farms.
+Taming reduces the amount of time it takes to tame creatures. It also multiplies the loot you get from slaughtering tamed creatures, removing the need for massive creature farms. 
+The bonus scales off what the animal would actually have dropped, so it accounts for its star level, the world resource rate, and any loot changes from other mods.
 Breeding gives XP
 
 

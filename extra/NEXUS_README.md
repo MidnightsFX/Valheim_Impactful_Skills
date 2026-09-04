@@ -148,6 +148,10 @@ Hauling provides a way to gain innate carry weight, and move large amounts of go
 
 Cooking now causes eaten food to decay slower, allowing it to provide its full bonus for longer.
 
+Cooking several foods in a row builds a streak. Every food you cook adds 10% more cooking XP to the next one, up to double XP, so settling in for a real cooking session is worth far more than making one thing whenever you happen to walk past the cauldron. Crafting at the cauldron counts each item of a multicraft, and taking cooked food off a cooking station or oven counts too. The streak only ends after two minutes without cooking - gathering more ingredients or crafting something else in between does not break it.
+
+Eating trains cooking as well. Every meal grants a little cooking XP based on the health, stamina and eitr it provides, so a hearty meal teaches more than a handful of berries.
+
 
 [size=4][b]Blood Magic[/b][/size]
 
@@ -156,7 +160,7 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 
 [size=4][b]Animal Whisper (new skill)[/b][/size]
 
-Taming reduces the amount of time it takes to tame creatures. It also increases the amount of drops you get from killing tamed creatures. Removing the need for massive creature farms.
+Taming reduces the amount of time it takes to tame creatures. It also multiplies the loot you get from slaughtering tamed creatures, removing the need for massive creature farms. The bonus scales off what the animal would actually have dropped, so it accounts for its star level, the world resource rate, and any loot changes from other mods.
 
 
 [size=4][b]Knowledge Sharing[/b][/size]

@@ -81,6 +81,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableAnimalWhisper;
         public static ConfigEntry<float> AnimalTamingSpeedFactor;
         public static ConfigEntry<float> TamedAnimalLootIncreaseFactor;
+        public static ConfigEntry<float> AnimalHandlingLootRange;
+        public static ConfigEntry<bool> AnimalHandlingFractionalDropsAsChance;
         public static ConfigEntry<int> BetterBeesLevel;
         public static ConfigEntry<bool> EnableBeeBonuses;
         public static ConfigEntry<int> BeeBiomeUnrestrictedLevel;
@@ -144,6 +146,13 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> RequiredLevelForBonusCookingItems;
         public static ConfigEntry<int> CookingBonusItemMaxAmount;
         public static ConfigEntry<float> CookingBurnReduction;
+        public static ConfigEntry<bool> EnableCookingStreak;
+        public static ConfigEntry<float> CookingStreakBonusPerFood;
+        public static ConfigEntry<float> CookingStreakMaxBonus;
+        public static ConfigEntry<float> CookingStreakTimeout;
+        public static ConfigEntry<bool> CookingStreakShowText;
+        public static ConfigEntry<bool> EnableCookingEatXP;
+        public static ConfigEntry<float> CookingEatXPPerFoodStat;
 
         public static ConfigEntry<bool> EnableHauling;
         public static ConfigEntry<bool> EnableCarryWeightBonus;
@@ -308,7 +317,9 @@ namespace ImpactfulSkills
 
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
-            TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
+            TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. This multiplies the loot the creature would actually have dropped, so it includes its star level, the world resource rate and anything other loot mods change. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
+            AnimalHandlingLootRange = BindServerConfig("AnimalHandling", "AnimalHandlingLootRange", 20f, "How close you must be to a tamed creature when it dies to gain the slaughter XP and the bonus loot.", false, 1f, 100f);
+            AnimalHandlingFractionalDropsAsChance = BindServerConfig("AnimalHandling", "AnimalHandlingFractionalDropsAsChance", true, "When enabled, a bonus that works out to less than one item becomes a chance at one item. When disabled it is rounded to the nearest whole item, so small drops give nothing at low skill.");
             EnableBeeBonuses = BindServerConfig("AnimalHandling", "EnableBeeBonuses", true, "Enables Animal Handling bonuses related to Bees.");
             BetterBeesLevel = BindServerConfig("AnimalHandling", "BetterBeesLevel", 15, "The level at which Bee productivity traits kick in", false, 0, 100);
             BeeHoneyOutputIncreaseBySkill = BindServerConfig("AnimalHandling", "BeeHoneyOutputIncreaseBySkill", 1f, "At level 100 skill, and 1.0 this results in a 100% increase in honey gathered.");
@@ -404,6 +415,13 @@ namespace ImpactfulSkills
             ChanceForCookingBonusItems = BindServerConfig("Cooking", "ChanceForCookingBonusItems", 0.4f, "The chance to craft bonus food items at level 100. 0.4 is a 40% chance.", valmax: 1f);
             CookingBonusItemMaxAmount = BindServerConfig("Cooking", "CookingBonusItemMaxAmount", 3, "The maximum number of cooked items you can recieve as a bonus, each item is an additional chance roll", true, 0, 10);
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
+            EnableCookingStreak = BindServerConfig("Cooking", "EnableCookingStreak", true, "Enables the cooking streak. Cooking several foods in a row grants bonus cooking XP that ramps up with each food cooked. Crafting at the cauldron and taking cooked food off a cooking station or oven both count.");
+            CookingStreakBonusPerFood = BindServerConfig("Cooking", "CookingStreakBonusPerFood", 0.1f, "How much bonus cooking XP each consecutive food adds to the next one cooked. 0.1 is 10% more XP per food in the streak.", false, 0f, 1f);
+            CookingStreakMaxBonus = BindServerConfig("Cooking", "CookingStreakMaxBonus", 1f, "The largest bonus a cooking streak can reach. 1 is double XP.", false, 0f, 10f);
+            CookingStreakTimeout = BindServerConfig("Cooking", "CookingStreakTimeout", 120f, "How many seconds you can go without cooking before the streak ends. Crafting other things or placing raw food on a station does not end it. 0 means the streak never ends.", false, 0f, 600f);
+            CookingStreakShowText = BindClientConfig("Cooking", "CookingStreakShowText", true, "Shows a popup with the current cooking streak bonus as it climbs. This is a per player setting.");
+            EnableCookingEatXP = BindServerConfig("Cooking", "EnableCookingEatXP", true, "Grants cooking XP when you eat food, scaled by the total health, stamina and eitr the food provides.");
+            CookingEatXPPerFoodStat = BindServerConfig("Cooking", "CookingEatXPPerFoodStat", 0.01f, "Cooking XP gained per point of food stats (health + stamina + eitr) when eating. At 0.01 a 40 health 30 stamina food gives 0.7 XP, about the same as taking one item off a cooking station.", valmax: 1f);
 
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 0f, 50f);

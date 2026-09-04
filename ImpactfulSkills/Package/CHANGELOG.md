@@ -1,3 +1,18 @@
+**0.15.0**
+---
+```
+- Animal handling bonus loot is now a multiplier on the loot the creature actually drops
+	- The bonus now includes the animal's star level, the world resource rate, and any drops added or rescaled by other loot mods
+- A bonus that works out to less than one item is now a chance at one item instead of being rounded away (AnimalHandlingFractionalDropsAsChance)
+- How close you have to be to a tamed animal when it dies to earn the slaughter XP and the bonus loot is now configurable instead of a fixed 20 meters (AnimalHandlingLootRange)
+- Cooking several foods in a row now builds a streak that grants bonus cooking XP. Each food cooked adds 10% to the XP of the next one, up to double XP (EnableCookingStreak, CookingStreakBonusPerFood, CookingStreakMaxBonus)
+	- Crafting at the cauldron counts each item of a multicraft, and taking cooked food off a cooking station or oven counts too. Placing raw food on a station neither builds nor breaks the streak, and neither does collecting something you let burn
+	- The streak only ends after two minutes without cooking (CookingStreakTimeout, 0 means it never ends)
+	- A notification shows the streak bonus while it climbs, which each player can turn off for themselves (CookingStreakShowText)
+- Eating food now grants a small amount of cooking XP, scaled by the total health, stamina and eitr the food provides, so a hearty meal teaches more than a handful of berries (EnableCookingEatXP, CookingEatXPPerFoodStat)
+- Updated skill icons to be more vanilla style
+```
+
 **0.14.0**
 ---
 ```

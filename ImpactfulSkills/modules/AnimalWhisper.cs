@@ -3,8 +3,7 @@ using ImpactfulSkills.common;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using System;
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -139,46 +138,89 @@ namespace ImpactfulSkills.patches
         }
 
 
+        /// <summary>
+        /// Rolls a fractional bonus amount into a whole number of items. With
+        /// AnimalHandlingFractionalDropsAsChance enabled the fraction becomes the chance of one more
+        /// item, so a bonus of 0.4 pays out a single item 40% of the time rather than rounding away to
+        /// nothing and leaving low skill levels with no bonus at all on small drops.
+        /// </summary>
+        private static int RollBonusAmount(float bonus)
+        {
+            if (bonus <= 0f) { return 0; }
+            if (ValConfig.AnimalHandlingFractionalDropsAsChance.Value == false) {
+                return Mathf.RoundToInt(bonus);
+            }
+
+            int whole = Mathf.FloorToInt(bonus);
+            float remainder = bonus - whole;
+            if (remainder > 0f && UnityEngine.Random.value < remainder) { whole += 1; }
+            return whole;
+        }
+
+        /// <summary>
+        /// Scales the loot of a tamed creature by the animal handling skill.
+        ///
+        /// This runs against the drop list vanilla has already finished calculating, so the bonus
+        /// inherits the creature's star level, the world resource rate and anything other loot mods
+        /// have added or rescaled, instead of re-deriving it from the raw CharacterDrop.m_drops
+        /// amounts. GenerateDropList is the single point both drop paths go through: the ragdoll one
+        /// (Character.OnDeath -> Ragdoll.Setup -> SaveLootList), which is what nearly every creature
+        /// actually uses, and the CharacterDrop.OnDeath fallback for creatures without a ragdoll.
+        /// Priority.Last so we are the final postfix to see the list.
+        /// </summary>
+        [HarmonyPatch(typeof(CharacterDrop), nameof(CharacterDrop.GenerateDropList))]
+        public static class ScaleTamedAnimalLoot
+        {
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(CharacterDrop __instance, List<KeyValuePair<GameObject, int>> __result)
+            {
+                if (ValConfig.EnableAnimalWhisper.Value == false) { return; }
+                if (__instance == null || __result == null || __result.Count == 0) { return; }
+                if (Player.m_localPlayer == null) { return; }
+
+                // Only increase drops if the character is also tamed
+                Character character = __instance.GetComponent<Character>();
+                if (character == null || character.IsTamed() == false) { return; }
+
+                float distance = Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position);
+                if (distance > ValConfig.AnimalHandlingLootRange.Value) {
+                    Logger.LogDebug($"Player too far away from the tamed creature for increased loot: {distance}");
+                    return;
+                }
+
+                // (F - 1) so the factor is a true total multiplier: the amount vanilla calculated stays
+                // in the list and we add (F - 1) x it on top, scaled by skill. F = 1 -> vanilla,
+                // F = 3 -> 3x at level 100.
+                float bonus_factor = (ValConfig.TamedAnimalLootIncreaseFactor.Value - 1f) * Player.m_localPlayer.GetSkillFactor(AnimalHandling);
+                if (bonus_factor <= 0f) { return; }
+
+                for (int i = 0; i < __result.Count; i++) {
+                    KeyValuePair<GameObject, int> entry = __result[i];
+                    if (entry.Key == null || entry.Value <= 0) { continue; }
+
+                    int bonus = RollBonusAmount(entry.Value * bonus_factor);
+                    if (bonus <= 0) { continue; }
+
+                    // Vanilla caps each entry at 100 items, stay within that, but never reduce an
+                    // amount another mod deliberately set above it.
+                    int total = Mathf.Min(entry.Value + bonus, Mathf.Max(100, entry.Value));
+                    Logger.LogDebug($"AnimalWhisper loot scaling {entry.Key.name}: {entry.Value} -> {total}");
+                    __result[i] = new KeyValuePair<GameObject, int>(entry.Key, total);
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(Tameable), nameof(Tameable.OnDeath))]
-        public static class IncreaseTamedAnimalYield
+        public static class TamedAnimalSlaughterXP
         {
             private static void Postfix(Tameable __instance)
             {
-                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && __instance != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 20f) {
-                    // Only increase drops of the character is also tamed
-                    if (__instance.gameObject.GetComponent<Character>()?.m_tamed != true) { return; }
+                if (ValConfig.EnableAnimalWhisper.Value == false || Player.m_localPlayer == null || __instance == null) { return; }
+                // Slaughtering your own livestock teaches animal handling, killing a wild boar does not
+                if (__instance.gameObject.GetComponent<Character>()?.IsTamed() != true) { return; }
+                if (Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) > ValConfig.AnimalHandlingLootRange.Value) { return; }
 
-                    Player.m_localPlayer.RaiseSkill(AnimalHandling, 1 * ValConfig.AnimalTamingSkillGainRate.Value);
-                    CharacterDrop tamechardrop = __instance.gameObject.GetComponent<CharacterDrop>();
-                    if (tamechardrop != null) {
-                        float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
-                        foreach (var drop in tamechardrop.m_drops){
-                            int drop_amount = 0;
-                            // (F - 1) so the factor is a true total multiplier: the vanilla CharacterDrop still
-                            // spawns, and we add (F - 1) x base on top, scaled by skill. F = 1 -> vanilla,
-                            // F = 3 -> 3x at level 100.
-                            float tamed_bonus_factor = (ValConfig.TamedAnimalLootIncreaseFactor.Value - 1f) * player_skill_factor;
-                            float min_drop = drop.m_amountMin * tamed_bonus_factor;
-                            float max_drop = drop.m_amountMax * tamed_bonus_factor;
-                            if (min_drop > 0 && max_drop > 0 && min_drop != max_drop) {
-                                drop_amount = UnityEngine.Random.Range((int)min_drop, (int)max_drop);
-                            } else if (min_drop == max_drop) {
-                                drop_amount = (int)Math.Round(min_drop, 0);
-                            }
-                            if (drop.m_chance != 1 && UnityEngine.Random.value > drop.m_chance) {
-                                // This drop failed its chance to spawn
-                                continue;
-                            }
-
-                            Logger.LogDebug($"AnimalWhisper extra drops {drop_amount} {drop.m_prefab.name}");
-                            Quaternion rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0, 360), 0f);
-                            for (int i = 0; i < drop_amount; i++) {
-                                UnityEngine.Object.Instantiate(drop.m_prefab, __instance.transform.position, rotation);
-                            }
-                        }
-                    }
-                }
+                Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
             }
         }
     }
