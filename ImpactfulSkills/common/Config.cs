@@ -330,11 +330,10 @@ namespace ImpactfulSkills
             AnimalBreedingXPRange = BindServerConfig("AnimalHandling", "AnimalBreedingXPRange", 30f, "How close a player must be to a breeding animal to gain the breeding XP.", false, 1f, 100f);
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
-            GatheringLuckFactor = BindServerConfig("Farming", "GatheringLuckFactor", 0.5f, "How much luck impacts gathering. Each level gives you a small chance to get better loot.", false, 0.1f, 5f);
             EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
-            GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "30,50,70,90,100", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop.");
+            GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "50,70,90", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
             EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
             FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 25, "The level that Multiplant is enabled.", false, 0, 100);

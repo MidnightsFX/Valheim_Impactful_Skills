@@ -134,11 +134,11 @@ namespace ImpactfulSkills.patches
                     return 0;
                 }
                 // Increase item drops based on luck, and the gathering skill
-                float player_luck = ValConfig.GatheringLuckFactor.Value * (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Farming));
+                float skill_influence = 0.5f * (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Farming));
                 float luck_roll = UnityEngine.Random.Range(0f, 50f);
-                float full_roll = luck_roll + player_luck;
+                float full_roll = luck_roll + skill_influence;
                 int extra_drops = 0;
-                Logger.LogDebug($"Gathering roll: luck: {luck_roll} skill: {player_luck}");
+                Logger.LogDebug($"Gathering roll: luck: {luck_roll} skill: {skill_influence}");
                 foreach (var level in luck_levels) {
                     if (full_roll > level) {
                         extra_drops += 1;

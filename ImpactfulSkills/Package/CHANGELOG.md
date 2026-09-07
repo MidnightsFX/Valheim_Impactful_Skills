@@ -11,6 +11,7 @@
 	- A notification shows the streak bonus while it climbs, which each player can turn off for themselves (CookingStreakShowText)
 - Eating food now grants a small amount of cooking XP, scaled by the total health, stamina and eitr the food provides, so a hearty meal teaches more than a handful of berries (EnableCookingEatXP, CookingEatXPPerFoodStat)
 - Updated skill icons to be more vanilla style
+- Reduced default gathering extra drops (does not overwrite existing configs)
 ```
 
 **0.14.0**
