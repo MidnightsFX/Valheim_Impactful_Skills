@@ -58,7 +58,7 @@ namespace ImpactfulSkills.patches
             return craftedTotal;
         }
 
-        private static void DetermineCraftingRefund(InventoryGui instance, int num_recipe_crafted)
+        private static void DetermineCraftingRefund(InventoryGui instance)
         {
             float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
             float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
@@ -285,24 +285,56 @@ namespace ImpactfulSkills.patches
             [HarmonyPatch(nameof(InventoryGui.DoCrafting))]
             static IEnumerable<CodeInstruction> ConstructorTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator) {
                 CodeMatcher codeMatcher = new CodeMatcher(instructions, generator);
-                if (codeMatcher.TryMatchStartForward("Unable to patch Crafting bonus.",
-                    // int num4 = 0;
+
+                // Vanilla rolls its own craft bonus:
+                //     int num4 = 0;
+                //     if (currentCraftingStation != null && ...) { for (...) { num4 += m_craftBonusAmount; num3 += num4; } }
+                // We replace that whole block with our own roll. 1.0 broke the previous version of this patch
+                // twice over: currentCraftingStation moved to local 1 so it loads via the compact ldloc.1 rather
+                // than ldloc.s and the anchor stopped matching, and the crafted amount moved off local 2, which is
+                // now a bool. Match on opcode families and read the locals out of vanilla instead of naming them.
+                if (!codeMatcher.TryMatchStartForward("Unable to patch Crafting bonus.",
                     new CodeMatch(OpCodes.Ldc_I4_0),
-                    new CodeMatch(OpCodes.Stloc_S), // Convert.ToSByte(6)
-                    new CodeMatch(OpCodes.Ldloc_S), // Convert.ToSByte(5)
+                    new CodeMatch(instr => instr.IsStloc()),                        // int num4 = 0;
+                    new CodeMatch(instr => instr.IsLdloc()),                        // currentCraftingStation
                     new CodeMatch(OpCodes.Ldnull),
-                    new CodeMatch(OpCodes.Call))) {
-                    codeMatcher
-                    .Advance(2)
-                    .InsertAndAdvance(
-                      new CodeInstruction(OpCodes.Ldarg_0),
-                      new CodeInstruction(OpCodes.Ldloc_2),
-                      Transpilers.EmitDelegate(Crafting.CraftableBonus),
-                      new CodeInstruction(OpCodes.Stloc_2)
-                    )
-                    .CreateLabelOffset(out Label label, offset: 45)
-                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label));
+                    new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(UnityEngine.Object), "op_Inequality")),
+                    new CodeMatch(instr => instr.opcode == OpCodes.Brfalse || instr.opcode == OpCodes.Brfalse_S))) {
+                    return codeMatcher.Instructions();
                 }
+                int blockStart = codeMatcher.Pos;
+
+                // Where vanilla jumps when it skips the bonus block is exactly where we want to land, so borrow
+                // its own branch target instead of counting instructions to the end of the block.
+                if (!(codeMatcher.InstructionAt(5).operand is Label afterVanillaBonus)) {
+                    Logger.LogWarning("Unable to patch Crafting bonus. Vanilla's bonus block no longer branches to a label. Skipping this patch.");
+                    return codeMatcher.Instructions();
+                }
+
+                // Vanilla's own "num3 += num4" names the local holding the crafted amount, so read the load and
+                // store out of it rather than hardcoding an index the next update will shuffle again.
+                if (!codeMatcher.TryMatchStartForward("Unable to patch Crafting bonus.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(InventoryGui), nameof(InventoryGui.m_craftBonusAmount))),
+                    new CodeMatch(OpCodes.Add),
+                    new CodeMatch(instr => instr.IsStloc()),                        // num4 +=
+                    new CodeMatch(instr => instr.IsLdloc()),                        // num3
+                    new CodeMatch(instr => instr.IsLdloc()),                        // num4
+                    new CodeMatch(OpCodes.Add),
+                    new CodeMatch(instr => instr.IsStloc()))) {                     // num3 =
+                    return codeMatcher.Instructions();
+                }
+                CodeInstruction loadAmount = codeMatcher.InstructionAt(3).Clone();
+                CodeInstruction storeAmount = codeMatcher.InstructionAt(6).Clone();
+
+                // Insert after "num4 = 0" rather than before it: that leaves the local definitely assigned and
+                // leaves any labels pointing at the head of the block on an instruction that still runs.
+                codeMatcher.Start().Advance(blockStart + 2).Insert(
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    loadAmount,
+                    Transpilers.EmitDelegate(Crafting.CraftableBonus),
+                    storeAmount,
+                    new CodeInstruction(OpCodes.Br, afterVanillaBonus));
+
                 return codeMatcher.Instructions();
             }
         }
@@ -319,11 +351,13 @@ namespace ImpactfulSkills.patches
                 if (codeMatcher.TryMatchStartForward("Unable to patch Crafting Refunds.",
                     new CodeMatch(new OpCode?(OpCodes.Callvirt), (object) AccessTools.Method(typeof (Player), "ConsumeResources", (Type[]) null, (Type[]) null), (string) null)
                 )) {
-                    codeMatcher.Advance(1).InsertAndAdvance(new CodeInstruction[3]
+                    // No local is loaded here on purpose. This used to push local 14 as a "how many were
+                    // crafted" argument that DetermineCraftingRefund never read, and 1.0 renumbered that local
+                    // to a bool - so it was feeding a bool to an int parameter that was then ignored.
+                    codeMatcher.Advance(1).InsertAndAdvance(new CodeInstruction[2]
                     {
           new CodeInstruction(OpCodes.Ldarg_0, (object) null),
-          new CodeInstruction(OpCodes.Ldloc_S, (object) 14),
-          Transpilers.EmitDelegate<Action<InventoryGui, int>>(new Action<InventoryGui, int>(Crafting.DetermineCraftingRefund))
+          Transpilers.EmitDelegate<Action<InventoryGui>>(new Action<InventoryGui>(Crafting.DetermineCraftingRefund))
                     });
                 }
                 return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
@@ -382,7 +416,8 @@ namespace ImpactfulSkills.patches
         /// off anything else added during DoCrafting - the material refund above runs inside the same call, though
         /// that goes through the AddItem(GameObject, int) overload and could not be caught here anyway.
         /// </summary>
-        [HarmonyPatch(typeof(Inventory), nameof(Inventory.AddItem), new Type[] { typeof(string), typeof(int), typeof(int), typeof(int), typeof(long), typeof(string), typeof(Vector2i), typeof(bool) })]
+        // string name, int stack, int quality, int variant, long crafterID, string crafterName, Vector2i position, bool cheated, bool pickedUp = false, bool dropIfFullInv = true
+        [HarmonyPatch(typeof(Inventory), nameof(Inventory.AddItem), new Type[] { typeof(string), typeof(int), typeof(int), typeof(int), typeof(long), typeof(string), typeof(Vector2i), typeof(bool), typeof(bool), typeof(bool) })]
         public static class CraftedItemQualityAddPatch {
             [HarmonyPrefix]
             private static void Prefix(string name, ref int quality) {

@@ -94,7 +94,6 @@ namespace ImpactfulSkills
 
         public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<bool> EnableGatheringAOE;
-        public static ConfigEntry<float> GatheringLuckFactor;
         public static ConfigEntry<float> GatheringRangeFactor;
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;

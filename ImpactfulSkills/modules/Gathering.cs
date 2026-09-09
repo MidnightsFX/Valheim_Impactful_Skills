@@ -106,23 +106,38 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions , ILGenerator generator)
             {
                 var codeMatcher = new CodeMatcher(instructions, generator);
-                if (codeMatcher.TryMatchStartForward("Unable remove vanilla pickable luckydrop.",
+                if (!codeMatcher.TryMatchStartForward("Unable remove vanilla pickable luckydrop.",
                         new CodeMatch(OpCodes.Ldc_I4_0),
                         new CodeMatch(OpCodes.Stloc_0), // int bonus_num = 0;
                         new CodeMatch(OpCodes.Ldarg_0),
                         new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Pickable), nameof(Pickable.m_picked)))
                     )) {
-                    codeMatcher
-                    .Advance(2)
-                    .Insert(
-                        new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
-                        Transpilers.EmitDelegate(DetermineExtraDrops),
-                        new CodeInstruction(OpCodes.Stloc_0)
-                    )
-                    .Advance(3)
-                    .CreateLabelOffset(out Label label, offset: 59)
-                    .InsertAndAdvance(new CodeInstruction(OpCodes.Br, label));
+                    return codeMatcher.Instructions();
                 }
+                int blockStart = codeMatcher.Pos;
+
+                // DetermineExtraDrops stands in for vanilla's whole picked/skill/bonus block - the bonus text, the
+                // effect and the skill XP included - so we branch past all of it and land where vanilla lands when
+                // its own bonus roll fails. That used to be a fixed "59 instructions ahead", which 1.0 turned into
+                // a jump into the middle of the ShowText argument list.
+                if (!codeMatcher.TryMatchStartForward("Unable remove vanilla pickable luckydrop.",
+                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Pickable), nameof(Pickable.m_maxLevelBonusChance))),
+                        new CodeMatch(OpCodes.Mul),
+                        new CodeMatch(instr => instr.opcode == OpCodes.Bge_Un || instr.opcode == OpCodes.Bge_Un_S)
+                    )) {
+                    return codeMatcher.Instructions();
+                }
+                if (!(codeMatcher.InstructionAt(2).operand is Label afterVanillaBonus)) {
+                    Logger.LogWarning("Unable remove vanilla pickable luckydrop. Vanilla's bonus roll no longer branches to a label. Skipping this patch.");
+                    return codeMatcher.Instructions();
+                }
+
+                codeMatcher.Start().Advance(blockStart + 2).Insert(
+                    new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
+                    Transpilers.EmitDelegate(DetermineExtraDrops),
+                    new CodeInstruction(OpCodes.Stloc_0),
+                    new CodeInstruction(OpCodes.Br, afterVanillaBonus));
+
                 return codeMatcher.Instructions();
             }
 

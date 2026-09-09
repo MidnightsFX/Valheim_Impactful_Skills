@@ -14,8 +14,8 @@ namespace ImpactfulSkills.patches
 {
     internal class WeaponSkill
     {
-        // ItemData item, int qualityLevel, bool crafting, float worldLevel, int stackOverride = -1
-        [HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip), new Type[] { typeof(ItemData), typeof(int), typeof(bool), typeof(float), typeof(int) })]
+        // ItemData item, int qualityLevel, bool crafting, float worldLevel, int stackOverride = -1, bool appending = false
+        [HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.GetTooltip), new Type[] { typeof(ItemData), typeof(int), typeof(bool), typeof(float), typeof(int), typeof(bool) })]
         public static class ItemDisplay
         {
             public static void Postfix(ItemData item, ref String __result) {
@@ -25,6 +25,10 @@ namespace ImpactfulSkills.patches
                 List<String> result_lines = new List<string>(entry_lines);
                 for (int i = 0; i < entry_lines.Count; i++) {
                     // Logger.LogDebug($"Checking line: {entry_lines[i]}");
+                    // An item with m_appendToolTip builds its tooltip by concatenating a nested GetTooltip(appending: true)
+                    // for the appended item, so the outer call sees lines this postfix already annotated on the inner one.
+                    // Those belong to the appended item, not to `item` - leave them as the inner pass wrote them.
+                    if (entry_lines[i].Contains("<color=yellow>")) { continue; }
                     if (entry_lines[i].Contains("item_staminause")) {
                         float player_skill = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType);
                         result_lines[i] = "$item_staminause: <color=orange>" + item.m_shared.m_attack.m_attackStamina + "</color> <color=yellow>(" + Mathf.RoundToInt(ModifyWeaponStaminaCostBySkillLevelInheritFactor(item.m_shared.m_attack.m_attackStamina, 0.33f, player_skill)) + ")</color>";

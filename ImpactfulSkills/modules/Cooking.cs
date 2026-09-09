@@ -112,7 +112,7 @@ namespace ImpactfulSkills.patches
         private static bool CollectsCookedFood(CookingStation station) {
             if (station.m_slots == null) { return false; }
             for (int slot = 0; slot < station.m_slots.Length; slot++) {
-                station.GetSlot(slot, out string itemName, out float _, out CookingStation.Status _);
+                station.GetSlot(slot, out string itemName, out float _, out CookingStation.Status _, out bool _);
                 if (itemName == "" || !station.IsItemDone(itemName)) { continue; }
                 return station.m_overCookedItem == null || itemName != station.m_overCookedItem.name;
             }
