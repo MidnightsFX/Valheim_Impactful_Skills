@@ -70,12 +70,26 @@ namespace ImpactfulSkills {
         }
 
         /// <summary>
-        /// Which payout a recipe earns, and for <see cref="CraftMode.Amount"/> the index of the single quality
-        /// bearing requirement to scale by. Field reads only, so an ineligible recipe drops out within a handful
-        /// of dereferences - there is deliberately no cache, since a recipe lookup table would need invalidating
-        /// on every ObjectDB reload.
+        /// Whether a craft at <paramref name="station"/> charges a requirement at all. Valheim 1.0's upgrader
+        /// stations spend only the requirements flagged m_upgraderResource and every other station spends only the
+        /// rest, but Piece.Requirement.GetAmount still prices an upgrader resource at its full m_amount - so any loop
+        /// over m_resources that means to reflect what a craft actually spends has to repeat the filter from
+        /// Player.ConsumeResources.
         /// </summary>
-        internal static CraftMode Classify(Recipe recipe, out int amountIndex) {
+        internal static bool IsSpentAt(Piece.Requirement requirement, CraftingStation station) {
+            if (requirement == null || requirement.m_resItem == null) { return false; }
+
+            return station != null ? station.m_upgrader == requirement.m_upgraderResource : requirement.m_upgraderResource == false;
+        }
+
+        /// <summary>
+        /// Which payout a recipe earns at <paramref name="station"/>, and for <see cref="CraftMode.Amount"/> the
+        /// index of the single quality bearing requirement to scale by. Only requirements the station actually
+        /// charges are counted. Field reads only, so an ineligible recipe drops out within a handful of dereferences
+        /// - there is deliberately no cache, since a recipe lookup table would need invalidating on every ObjectDB
+        /// reload.
+        /// </summary>
+        internal static CraftMode Classify(Recipe recipe, CraftingStation station, out int amountIndex) {
             amountIndex = -1;
             if (recipe == null || recipe.m_item == null) { return CraftMode.None; }
             // Vanilla already scales the "any one of these" recipes (fish -> raw fish) through
@@ -89,7 +103,7 @@ namespace ImpactfulSkills {
             int scalableRequirements = 0;
             int scalableIndex = -1;
             for (int i = 0; i < resources.Length; i++) {
-                if (HasQuality(resources[i]) == false) { continue; }
+                if (IsSpentAt(resources[i], station) == false || HasQuality(resources[i]) == false) { continue; }
                 qualityRequirements++;
                 if (CarriesQuality(resources[i]) == false) { continue; }
                 scalableRequirements++;
@@ -161,7 +175,7 @@ namespace ImpactfulSkills {
         /// <summary>
         /// Vanilla takes a single itemQuality for the whole requirement array, so it cannot ask for a quality 5
         /// anglerfish and quality 1 bread dough in one call - passing 5 would match no bread and consume nothing.
-        /// This replaces the loop to pick a tier per requirement instead.
+        /// This replaces the loop to pick a tier per requirement instead, keeping vanilla's upgrader station filter.
         ///
         /// Everything that is not a quality bearing craft - building placement included - returns to untouched
         /// vanilla code through the early outs.
@@ -173,9 +187,10 @@ namespace ImpactfulSkills {
                 // itemQuality >= 0 means the caller already chose a tier for itself.
                 if (AnyFeatureEnabled == false || itemQuality >= 0 || requirements == null) { return true; }
 
+                CraftingStation station = __instance.GetCurrentCraftingStation();
                 bool anyQuality = false;
                 foreach (Piece.Requirement requirement in requirements) {
-                    if (HasQuality(requirement) == false) { continue; }
+                    if (IsSpentAt(requirement, station) == false || HasQuality(requirement) == false) { continue; }
                     anyQuality = true;
                     break;
                 }
@@ -183,7 +198,9 @@ namespace ImpactfulSkills {
 
                 Inventory inventory = __instance.GetInventory();
                 foreach (Piece.Requirement requirement in requirements) {
-                    if (requirement == null || requirement.m_resItem == null) { continue; }
+                    // GetAmount prices upgrader resources regardless of station, so without this an ordinary station
+                    // would take the upgrader only ingredients too.
+                    if (IsSpentAt(requirement, station) == false) { continue; }
 
                     int amount = requirement.GetAmount(qualityLevel) * multiplier;
                     if (amount <= 0) { continue; }

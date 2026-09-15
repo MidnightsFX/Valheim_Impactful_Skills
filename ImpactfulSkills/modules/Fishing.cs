@@ -35,7 +35,7 @@ namespace ImpactfulSkills.patches {
             if (Player.m_localPlayer == null) { return 0; }
 
             int index;
-            if (IngredientQuality.Classify(recipe, out index) != IngredientQuality.CraftMode.Amount) { return 0; }
+            if (IngredientQuality.Classify(recipe, Player.m_localPlayer.GetCurrentCraftingStation(), out index) != IngredientQuality.CraftMode.Amount) { return 0; }
 
             Piece.Requirement requirement = recipe.m_resources[index];
             // Quality level 1: the bonus never applies to upgrades, so the requirement always costs its base amount.

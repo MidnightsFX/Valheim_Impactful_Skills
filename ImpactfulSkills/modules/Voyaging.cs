@@ -5,6 +5,7 @@ using Jotunn.Managers;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ImpactfulSkills.patches
 {
@@ -150,23 +151,158 @@ namespace ImpactfulSkills.patches
         }
 
 
+        // Ship.GetWindAngleFactor gives the sail no wind once it blows within acos(0.8) (~37 degrees) of the bow, ramping back
+        // to full by acos(0.75) (~41 degrees). Voyager narrows that dead zone from VoyagerReduceCuttingStart up to level 100.
+        private const float VanillaFullWindHeadwind = 0.75f;
+        private const float VanillaNoWindHeadwind = 0.8f;
+        private static readonly float VanillaCuttingAngle = Mathf.Acos(VanillaFullWindHeadwind) * Mathf.Rad2Deg;
+
+        // 0 at VoyagerReduceCuttingStart, 1 at level 100.
+        private static float GetCuttingProgress(float skillLevel) {
+            return Mathf.InverseLerp(ValConfig.VoyagerReduceCuttingStart.Value, 100f, skillLevel);
+        }
+
+        // The closest the wind can get to the bow (in degrees) while the sail still catches all of it.
+        private static float GetCuttingAngle(float cuttingProgress) {
+            return Mathf.Lerp(VanillaCuttingAngle, ValConfig.VoyagerCuttingMinAngle.Value, cuttingProgress);
+        }
+
+        // Ship.GetWindAngleFactor with its dead zone narrowed to GetCuttingAngle, and the penalty for every other wind angle
+        // shrinking over the same levels. headwind is 1 with the wind dead ahead and -1 with it straight behind.
+        private static float SkilledWindAngleFactor(float headwind, float cuttingProgress) {
+            float angleFactor = Mathf.Min(1f, Mathf.Lerp(0.7f, 1f, 1f - Mathf.Abs(headwind)) + cuttingProgress);
+            float cuttingAngle = GetCuttingAngle(cuttingProgress);
+            if (cuttingAngle <= 0f) { return angleFactor; }
+
+            // Stretch the wind's angle off the bow so the vanilla dead-zone ramp ends at the narrowed cutting angle.
+            float windAngle = Mathf.Acos(Mathf.Clamp(headwind, -1f, 1f)) * Mathf.Rad2Deg;
+            float stretchedHeadwind = Mathf.Cos(Mathf.Min(windAngle * VanillaCuttingAngle / cuttingAngle, 180f) * Mathf.Deg2Rad);
+            return angleFactor * (1f - Mathf.InverseLerp(VanillaFullWindHeadwind, VanillaNoWindHeadwind, stretchedHeadwind));
+        }
+
         [HarmonyPatch(typeof(Ship), nameof(Ship.GetWindAngleFactor))]
         public static class VoyagerAnglePatch
         {
-            private static void Postfix(ref float __result)
+            private static void Postfix(Ship __instance, ref float __result)
             {
                 if (ValConfig.EnableVoyager.Value != true || Player.m_localPlayer == null) { return; }
 
-                    float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
-                    if (player_skill >= ValConfig.VoyagerReduceCuttingStart.Value) {
-                    // Reduce the penalty of not having the wind at your back
-                    if (__result < 1f) {
-                        float max_skill_increase = player_skill * 0.02f;
-                        float sailingAngleFactor = Mathf.Clamp((__result + max_skill_increase), __result, 1f);
-                        // Logger.LogDebug($"Improving sail angle due to skill: ({__result}) vs {sailingAngleFactor}");
-                        __result = sailingAngleFactor;
+                float cuttingProgress = GetCuttingProgress(Player.m_localPlayer.GetSkillLevel(VoyagingSkill));
+                if (cuttingProgress <= 0f) { return; }
+
+                float headwind = Vector3.Dot(EnvMan.instance.GetWindDir(), -__instance.transform.forward);
+                __result = SkilledWindAngleFactor(headwind, cuttingProgress);
+            }
+        }
+
+        // Shades in the part of the ship HUD's dark headwind arc that Voyager has made sailable, so the arc visibly
+        // shrinks toward the bow as the skill grows.
+        [HarmonyPatch(typeof(Hud), nameof(Hud.UpdateShipHud))]
+        public static class VoyagerCuttingHudPatch {
+            // The wind ring's sprite (ship_circle_bw) paints its dark arc out to ~44 degrees either side of the bow, a
+            // little past the vanilla cutting angle, so the shading runs out to meet the lit part of the ring.
+            const float RingDarkArcAngle = 44f;
+            // Inner and outer edge of the ring's band as a fraction of the sprite's half-width, measured from ship_circle_bw.
+            const float RingInnerRadius = 0.912f;
+            const float RingOuterRadius = 0.988f;
+            // The ring art is about this bright just outside the dark arc; applied to the ring's tint so the shading matches.
+            const float RingLitBrightness = 0.7f;
+
+            static Sprite ringSprite;
+            static Image starboardShade;
+            static Image portShade;
+            static Hud failedHud;
+
+            private static void Postfix(Hud __instance, Player player) {
+                float cuttingProgress = 0f;
+                if (ValConfig.EnableVoyager.Value && player != null && player.GetControlledShip() != null) {
+                    cuttingProgress = GetCuttingProgress(player.GetSkillLevel(VoyagingSkill));
+                }
+                if (cuttingProgress <= 0f) {
+                    // Unity-overloaded null check is false once the Hud is destroyed (e.g. logout).
+                    if (starboardShade != null) { starboardShade.enabled = false; }
+                    if (portShade != null) { portShade.enabled = false; }
+                    return;
+                }
+                if (starboardShade == null && (failedHud == __instance || !TryCreateShades(__instance))) { return; }
+
+                // Each radial fill starts at the bow and sweeps outward; rotating it by the cutting angle starts it at the
+                // edge of the remaining dead zone instead.
+                float cuttingAngle = GetCuttingAngle(cuttingProgress);
+                float fill = (RingDarkArcAngle - cuttingAngle) / 360f;
+                starboardShade.fillAmount = fill;
+                starboardShade.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -cuttingAngle);
+                starboardShade.enabled = true;
+                portShade.fillAmount = fill;
+                portShade.rectTransform.localRotation = Quaternion.Euler(0f, 0f, cuttingAngle);
+                portShade.enabled = true;
+            }
+
+            private static bool TryCreateShades(Hud hud) {
+                Transform circle = hud.m_shipWindIndicatorRoot.Find("Circle");
+                Image circleImage = circle != null ? circle.GetComponent<Image>() : null;
+                if (circleImage == null) {
+                    Logger.LogWarning("Voyager cutting HUD: could not find the 'Circle' image under the ship wind indicator.");
+                    failedHud = hud;
+                    return false;
+                }
+
+                Color tint = circleImage.color;
+                Color shadeColor = new Color(tint.r * RingLitBrightness, tint.g * RingLitBrightness, tint.b * RingLitBrightness, tint.a);
+                starboardShade = CreateShade("ImpactfulSkills_VoyagerCuttingStarboard", circle, shadeColor, true);
+                portShade = CreateShade("ImpactfulSkills_VoyagerCuttingPort", circle, shadeColor, false);
+                return true;
+            }
+
+            private static Image CreateShade(string name, Transform circle, Color color, bool clockwise) {
+                GameObject shade = new GameObject(name, typeof(RectTransform));
+                shade.layer = circle.gameObject.layer;
+                RectTransform rect = (RectTransform)shade.transform;
+                rect.SetParent(circle.parent, false);
+                // Just above the ring, below the wind icon.
+                rect.SetSiblingIndex(circle.GetSiblingIndex() + 1);
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.sizeDelta = Vector2.zero;
+                rect.anchoredPosition = Vector2.zero;
+
+                Image image = shade.AddComponent<Image>();
+                image.sprite = GetRingSprite();
+                image.color = color;
+                image.raycastTarget = false;
+                image.type = Image.Type.Filled;
+                image.fillMethod = Image.FillMethod.Radial360;
+                image.fillOrigin = (int)Image.Origin360.Top;
+                image.fillClockwise = clockwise;
+                image.enabled = false;
+                return image;
+            }
+
+            // A plain white copy of the ring's band. The ring's own sprite has the dark arc painted in, and tinting an
+            // image can only darken it.
+            private static Sprite GetRingSprite() {
+                if (ringSprite != null) { return ringSprite; }
+
+                const int size = 256;
+                float half = size / 2f;
+                Color32[] pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++) {
+                    for (int x = 0; x < size; x++) {
+                        float distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(half, half)) / half;
+                        // Roughly one texel of anti-aliasing on each edge of the band.
+                        float alpha = Mathf.Clamp01((distance - RingInnerRadius) * half + 0.5f) * Mathf.Clamp01((RingOuterRadius - distance) * half + 0.5f);
+                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
                     }
                 }
+                Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false) {
+                    name = "ImpactfulSkills_VoyagerRing",
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear
+                };
+                texture.SetPixels32(pixels);
+                texture.Apply(false, true);
+                ringSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+                return ringSprite;
             }
         }
 

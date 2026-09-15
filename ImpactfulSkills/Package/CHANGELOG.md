@@ -1,3 +1,9 @@
+**0.16.1**
+---
+```
+- Improves quality crafting, and crafting that does not consume ingrediants
+```
+
 **0.16.0**
 ---
 ```

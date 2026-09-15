@@ -120,6 +120,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableVoyager;
         public static ConfigEntry<int> VoyagerSkillXPCheckFrequency;
         public static ConfigEntry<float> VoyagerReduceCuttingStart;
+        public static ConfigEntry<float> VoyagerCuttingMinAngle;
         public static ConfigEntry<float> VoyagerSailingSpeedFactor;
         public static ConfigEntry<float> VoyagerIncreaseExplorationRadius;
         public static ConfigEntry<float> VoyagerPaddleSpeedBonus;
@@ -362,7 +363,8 @@ namespace ImpactfulSkills
 
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
-            VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level that the player starts to reduce the penalty of not having the wind at your back.", false, 0f, 100f);
+            VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level where your sails start catching wind closer to head-on, and the sailing penalty for other wind angles starts to shrink. Both improve gradually up to level 100.", false, 0f, 100f);
+            VoyagerCuttingMinAngle = BindServerConfig("Voyager", "VoyagerCuttingMinAngle", 15f, "How close to head-on (in degrees off the bow) the wind can be while your sails still catch all of it, at level 100 Voyager. Vanilla is about 41. The ship HUD's wind ring shades in the angles you have won back.", false, 0f, 41f);
             VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1.5f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 3f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
             VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);

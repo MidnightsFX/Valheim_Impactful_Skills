@@ -104,19 +104,20 @@ namespace ImpactfulSkills.patches
         /// The average quality of the ingredients a craft is about to spend, rounded down, weighted by how many of
         /// each are consumed. Ingredients without a quality level do not vote, and neither does one the recipe does
         /// not actually ask for at this level - the Ashlands infusion recipes set m_amountPerLevel 0 on the base
-        /// weapon, so upgrading an infused weapon does not consume another one.
+        /// weapon, so upgrading an infused weapon does not consume another one - nor one the station does not charge
+        /// (see IngredientQuality.IsSpentAt).
         ///
         /// Tiers come from IngredientQuality.SelectTier, the same call ConsumeResources makes moments later, so the
         /// quality handed out is always the quality that was actually spent.
         /// </summary>
-        internal static int AverageIngredientTier(Recipe recipe, Inventory inventory, int baseQuality, int multiplier) {
+        internal static int AverageIngredientTier(Recipe recipe, Inventory inventory, CraftingStation station, int baseQuality, int multiplier) {
             Piece.Requirement[] resources = recipe.m_resources;
             if (resources == null || inventory == null) { return 0; }
 
             int weightedTiers = 0;
             int itemsSpent = 0;
             foreach (Piece.Requirement requirement in resources) {
-                if (IngredientQuality.HasQuality(requirement) == false) { continue; }
+                if (IngredientQuality.IsSpentAt(requirement, station) == false || IngredientQuality.HasQuality(requirement) == false) { continue; }
 
                 int required = requirement.GetAmount(baseQuality) * multiplier;
                 if (required <= 0) { continue; }
@@ -141,10 +142,11 @@ namespace ImpactfulSkills.patches
         internal static int CraftedItemQuality(Recipe recipe, ItemDrop.ItemData upgradeItem, int multiplier) {
             if (ValConfig.ScaleCraftedEquipmentQuality.Value == false || Player.m_localPlayer == null) { return 0; }
 
-            if (IngredientQuality.Classify(recipe, out int _) != IngredientQuality.CraftMode.ItemQuality) { return 0; }
+            CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
+            if (IngredientQuality.Classify(recipe, station, out int _) != IngredientQuality.CraftMode.ItemQuality) { return 0; }
 
             int baseQuality = upgradeItem != null ? upgradeItem.m_quality + 1 : 1;
-            int earned = AverageIngredientTier(recipe, Player.m_localPlayer.GetInventory(), baseQuality, multiplier);
+            int earned = AverageIngredientTier(recipe, Player.m_localPlayer.GetInventory(), station, baseQuality, multiplier);
             if (earned <= baseQuality) { return 0; }
 
             earned = Mathf.Min(earned, recipe.m_item.m_itemData.m_shared.m_maxQuality);
@@ -152,7 +154,6 @@ namespace ImpactfulSkills.patches
             // max(1, m_minStationLevel) + quality - 1). Handing out a quality the station could not have crafted
             // would skip that progression entirely, so invert the same expression and cap by what it allows.
             if (recipe.m_craftingStation != null || recipe.m_repairStation != null) {
-                CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
                 int stationAllows = (station != null ? station.GetLevel() : 0) - Mathf.Max(1, recipe.m_minStationLevel) + 1;
                 earned = Mathf.Min(earned, stationAllows);
             }
