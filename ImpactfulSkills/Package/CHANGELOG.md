@@ -1,3 +1,9 @@
+**0.17.1**
+---
+```
+- Bump dependency versions again
+```
+
 **0.17.0**
 ---
 ```
