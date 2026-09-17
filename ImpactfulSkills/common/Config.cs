@@ -98,10 +98,13 @@ namespace ImpactfulSkills
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;
         public static ConfigEntry<string> GatheringDisallowedItems;
+        public static ConfigEntry<bool> EnableFarmingBiomeUnrestricted;
+        public static ConfigEntry<int> FarmingBiomeUnrestrictedLevel;
         public static ConfigEntry<bool> EnableFarmingMultiPlant;
         public static ConfigEntry<int> FarmingMultiplantRequiredLevel;
         public static ConfigEntry<int> FarmingMultiplantMaxPlantedAtOnce;
         public static ConfigEntry<int> FarmingMultiplantColumnCount;
+        public static ConfigEntry<int> FarmingMultiplantCountIncrement;
         public static ConfigEntry<bool> FarmingMultiPlantSnapToExisting;
         public static ConfigEntry<float> FarmingMultiPlantBufferSpace;
         public static ConfigEntry<float> PlantingCostStaminaReduction;
@@ -332,12 +335,15 @@ namespace ImpactfulSkills
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
-            FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 50, "The level that AOE gathering requires to activate.", false, 0, 100);
+            FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 25, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "50,70,90", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
+            EnableFarmingBiomeUnrestricted = BindServerConfig("Farming", "EnableFarmingBiomeUnrestricted", true, "At the specified level, plants you have tended can grow in any biome.");
+            FarmingBiomeUnrestrictedLevel = BindServerConfig("Farming", "FarmingBiomeUnrestrictedLevel", 50, "At this level, if enabled, plants you have tended ignore the biome they were planted in, along with the heat of the Ashlands and the cold of the Mountains and Deep North. They still need cultivated ground, sunlight and room to grow.", false, 0, 100);
             EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
             FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 25, "The level that Multiplant is enabled.", false, 0, 100);
             FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 12, "The total number of plants that can be planted at once at maximum gathering.");
+            FarmingMultiplantCountIncrement = BindServerConfig("Farming", "FarmingMultiplantCountIncrement", 2, "The step size the planting grid grows in as Farming rises. With the default of 2 the grid goes 1 -> 2 -> 4 -> 6 -> 8..., so the count stays even and lays out in tidy rows instead of leaving a ragged one. Set to 1 to grow one plant at a time.", false, 1, 12);
             FarmingMultiplantColumnCount = BindServerConfig("Farming", "FarmingMultiplantColumnCount", 4, "Maximum number of columns in the planting grid. The grid will form the closest square shape possible without exceeding this limit.", true, 1, 12);
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
             // Client sided config

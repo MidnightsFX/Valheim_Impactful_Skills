@@ -8,6 +8,13 @@
 	- An existing field that was already planted too tightly will now show red cells rather than letting you feed more doomed crops into it
 - Multiplanting no longer places crops where they would kill a neighbouring plant that has a larger grow radius, such as an ungrown tree sapling
 - Vineberries now respect their spacing from other vines and their need for a wall to climb, instead of being placed where they could never grow
+- Farming level 50 (FarmingBiomeUnrestrictedLevel) lets your plants grow in any biome, ignoring the biome they were planted in as well as the heat of the Ashlands and the cold of the Mountains and Deep North
+	- Cultivated ground, sunlight and grow space are still required, so a crop can still be unhealthy for those reasons
+	- Like beehives, the plant keeps the permission once a farmer of that level has tended it, so it survives even while only lower skilled players are around
+	- Can be turned off with EnableFarmingBiomeUnrestricted
+- AOE harvesting now unlocks at Farming 25 instead of 50, matching multi-planting (does not overwrite existing configs)
+- The planting grid now grows in steps instead of one plant at a time (FarmingMultiplantCountIncrement, default 2), so it goes 1 -> 2 -> 4 -> 6 -> 8 as Farming rises and the count stays even for tidier rows
+	- Set it to 1 for the old one-at-a-time progression
 - Increased required Jotunn version
 ```
 

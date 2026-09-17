@@ -36,8 +36,16 @@ namespace ImpactfulSkills.modules.Multiplant {
             return false;
         }
 
+        /// <summary>
+        /// How many plants the current Farming level allows in one placement, snapped down to the
+        /// configured increment so the count climbs 1 -> 2 -> 4 -> 6 -> 8 rather than one at a time.
+        /// Even, evenly-divisible counts lay out as full rows; an odd count leaves the last row short.
+        /// Anything below the first step is a single plant, i.e. plain vanilla planting.
+        /// </summary>
         internal static int MaxToPlantAtOnce() {
             int maxToPlant = Mathf.RoundToInt(ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming));
+            int increment = Mathf.Max(1, ValConfig.FarmingMultiplantCountIncrement.Value);
+            maxToPlant -= maxToPlant % increment;
             if (maxToPlant <= 1) {
                 return 1;
             }

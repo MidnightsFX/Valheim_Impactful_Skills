@@ -39,7 +39,9 @@ Pickaxes now improves the amount of ore and stone you get from mining things. Al
 ### Gathering (Farming)
 
 Gathering increases the bonus number of items you can harvest from any plant. This is partly influenced by luck, and partly influenced by your level.
-Additionally at a high level of gathering you gain AOE harvesting (default 50) which increases in range with your skill. Gathering skill also increase the range at which you can harvest with the scythe.
+Additionally at a moderate level of gathering you gain AOE harvesting (default 25) which increases in range with your skill. Gathering skill also increase the range at which you can harvest with the scythe.
+Multi-planting unlocks at the same level (default 25), and the size of the planting grid grows in steps as your skill rises.
+At a higher level (default 50) your plants stop caring about the biome they are in, so crops you tend can grow anywhere you can cultivate ground - including the cold of the Mountains and Deep North and the heat of the Ashlands.
 
 | Farming 0 | Farming 50 | Farming 100 |
 | ------------- | ------------- | ------------- |
