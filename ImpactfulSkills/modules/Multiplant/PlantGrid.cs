@@ -1,6 +1,7 @@
 using HarmonyLib;
 using ImpactfulSkills.common;
 using ImpactfulSkills.compatibility;
+using Splatform;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -56,6 +57,11 @@ namespace ImpactfulSkills.modules.Multiplant {
             int plantsPlaced = 0;
             string plantName = Utils.GetPrefabName(primaryPlantablePrefab);
             Plantable plantDef = PlantDefinitions.PlantableDefinitions[plantName];
+            Piece plantPiece = primaryPlantablePrefab.GetComponent<Piece>();
+
+            // Same check Player.TryPlacePiece makes. It inspects the seed stacks about to be spent, so it has to run
+            // before any seeds are removed below.
+            bool cheated = (player.m_inventory.ItemCheated(plantPiece.m_resources) || player.NoCostCheat()) && !PlayerProfile.s_bypassCheatChecks;
 
             int maxByResources = 100;
             if (plantDef.Seeds.Count > 0) {
@@ -90,7 +96,8 @@ namespace ImpactfulSkills.modules.Multiplant {
 
                 staminaCost += staminaPerPlant;
                 // Plant at the ghost's own rotation so the result matches the preview the player saw.
-                GameObject.Instantiate(primaryPlantablePrefab, ghost.transform.position, ghost.transform.rotation);
+                GameObject planted = GameObject.Instantiate(primaryPlantablePrefab, ghost.transform.position, ghost.transform.rotation);
+                RecordPlacement(player, plantPiece, planted, cheated);
                 plantsPlaced++;
             }
 
@@ -103,6 +110,19 @@ namespace ImpactfulSkills.modules.Multiplant {
             Logger.LogDebug("Applying stamina cost and XP.");
             player.UseStamina(staminaCost);
             player.RaiseSkill(Skills.SkillType.Farming, plantsPlaced);
+        }
+
+        // The extra plants are spawned directly rather than through Player.TryPlacePiece / PlacePiece, so repeat the
+        // per-placement bookkeeping those do. Without it only the primary plant reaches the build stats achievements read.
+        private static void RecordPlacement(Player player, Piece plantPiece, GameObject planted, bool cheated) {
+            Game.instance.IncrementPlayerStat(PlayerStatType.Builds, cheated: cheated);
+            Game.instance.GetPlayerProfile().IncrementStatBuildPiecePlaced(plantPiece.m_name, cheated: cheated);
+
+            // Creator feeds the clustered build-piece stats, and the cheated flag tags the plant the way PlacePiece would.
+            planted.GetComponent<Piece>().SetCreator(player.GetPlayerID(), PlatformManager.DistributionPlatform.LocalUser.PlatformUserID);
+            if (cheated) {
+                planted.GetComponent<ZNetView>().GetZDO().Set(ZDOVars.s_cheated, true);
+            }
         }
 
         [HarmonyPatch(typeof(Player), nameof(Player.SetupPlacementGhost))]

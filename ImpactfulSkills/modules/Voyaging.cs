@@ -99,14 +99,33 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        // Stops a ship damaging itself when it rams something, while the local player aboard has the skill. Decided per
+        // collision where ImpactEffect.OnCollisionEnter reads m_damageToSelf, since carts, battering rams, catapults and
+        // falling ice stalactites set that flag too. Collision damage is only applied by the ZDO owner, and Ship hands
+        // ownership to a player aboard, so the owner's own skill is what counts.
         [HarmonyPatch(typeof(ImpactEffect))]
         public static class ShipDamageImpactReduction {
-            [HarmonyPatch(typeof(ImpactEffect), nameof(ImpactEffect.Awake))]
-            private static void Postfix(ImpactEffect __instance) {
-                if (Player.m_localPlayer == null || Player.m_localPlayer.GetSkillLevel(VoyagingSkill) < ValConfig.VoyagerImpactResistanceLevel.Value) {
-                    return;
+            [HarmonyTranspiler]
+            [HarmonyPatch(nameof(ImpactEffect.OnCollisionEnter))]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                var codeMatcher = new CodeMatcher(instructions);
+                if (codeMatcher.TryMatchStartForward("Unable to patch Voyager impact resistance.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(ImpactEffect), nameof(ImpactEffect.m_damageToSelf)))
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(ImpactDamagesSelf)
+                    );
                 }
-                __instance.m_damageToSelf = false;
+                return codeMatcher.Instructions();
+            }
+
+            public static bool ImpactDamagesSelf(bool damageToSelf, ImpactEffect impact) {
+                if (!damageToSelf || ValConfig.VoyagerImpactResistance.Value == false || Player.m_localPlayer == null) { return damageToSelf; }
+                if (Player.m_localPlayer.GetSkillLevel(VoyagingSkill) < ValConfig.VoyagerImpactResistanceLevel.Value) { return damageToSelf; }
+                Ship ship = impact.GetComponent<Ship>();
+                if (ship == null || !ship.IsPlayerInBoat(Player.m_localPlayer)) { return damageToSelf; }
+                return false;
             }
         }
 

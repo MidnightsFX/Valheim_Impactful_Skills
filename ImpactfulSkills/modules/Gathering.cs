@@ -116,10 +116,10 @@ namespace ImpactfulSkills.patches
                 }
                 int blockStart = codeMatcher.Pos;
 
-                // DetermineExtraDrops stands in for vanilla's whole picked/skill/bonus block - the bonus text, the
-                // effect and the skill XP included - so we branch past all of it and land where vanilla lands when
-                // its own bonus roll fails. That used to be a fixed "59 instructions ahead", which 1.0 turned into
-                // a jump into the middle of the ShowText argument list.
+                // DetermineExtraDrops stands in for vanilla's whole picked/skill/bonus block - the harvest stats, the
+                // bonus text, the effect and the skill XP included - so we branch past all of it and land where vanilla
+                // lands when its own bonus roll fails. That used to be a fixed "59 instructions ahead", which 1.0 turned
+                // into a jump into the middle of the ShowText argument list.
                 if (!codeMatcher.TryMatchStartForward("Unable remove vanilla pickable luckydrop.",
                         new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Pickable), nameof(Pickable.m_maxLevelBonusChance))),
                         new CodeMatch(OpCodes.Mul),
@@ -134,6 +134,7 @@ namespace ImpactfulSkills.patches
 
                 codeMatcher.Start().Advance(blockStart + 2).Insert(
                     new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
+                    new CodeInstruction(OpCodes.Ldarg_1), // Load the character picking it
                     Transpilers.EmitDelegate(DetermineExtraDrops),
                     new CodeInstruction(OpCodes.Stloc_0),
                     new CodeInstruction(OpCodes.Br, afterVanillaBonus));
@@ -141,11 +142,12 @@ namespace ImpactfulSkills.patches
                 return codeMatcher.Instructions();
             }
 
-            static int DetermineExtraDrops(Pickable __instance)
+            static int DetermineExtraDrops(Pickable __instance, Humanoid character)
             {
                 if (Player.m_localPlayer == null || __instance.m_picked == true || __instance.m_itemPrefab == null) { return 0; }
                 if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)) {
                     Logger.LogDebug($"Pickable is not an allowed gathering item.");
+                    RecordHarvest(__instance, character, 0);
                     return 0;
                 }
                 // Increase item drops based on luck, and the gathering skill
@@ -177,9 +179,25 @@ namespace ImpactfulSkills.patches
                     //}
                 }
 
+                RecordHarvest(__instance, character, extra_drops);
+
                 // Gain a little XP for the skill
                 Player.m_localPlayer.RaiseSkill(Skills.SkillType.Farming, (1 + extra_drops));
                 return extra_drops;
+            }
+
+            // Vanilla's harvest stats sit inside the block the transpiler skips, so they are recorded here instead.
+            // Luck drops count as extra harvests, so they progress harvesting achievements along with the pick itself.
+            static void RecordHarvest(Pickable pickable, Humanoid character, int extraDrops)
+            {
+                // Vanilla's guard: only a player's first pick of this pickable counts, not repeat interacts.
+                if (!(character is Player) || pickable.m_pickedLocal) { return; }
+
+                int harvested = 1 + extraDrops;
+                if (pickable.m_harvestStat != PlayerStatType.None) {
+                    Game.instance.IncrementPlayerStat(pickable.m_harvestStat, harvested);
+                }
+                Game.instance.GetPlayerProfile().IncrementStatPickable(pickable.m_itemPrefab.name, harvested);
             }
         }
 

@@ -375,7 +375,7 @@ namespace ImpactfulSkills
             VoyagerDamageReductionAmount = BindServerConfig("Voyager", "VoyagerDamageReductionAmount", 0.9f, "The maximum percentage of damage reduction, at level 100 skill. Scaled to skill. 1 is 100% damage reduction at player skill level 100.", false, 0, 1f);
             BoatDamageReductionLevel = BindServerConfig("Voyager", "BoatDamageReductionLevel", 35, "The level at which you start to recieve a damage reduction from damage taken while on the boat");
             VoyagerImpactResistance = BindServerConfig("Voyager", "VoyagerImpactResistance", true, "Whether or not impact resistance is enabled.");
-            VoyagerImpactResistanceLevel = BindServerConfig("Voyager", "VoyagerImpactResistanceLevel", 75, "The level at which impact resistance is enabled. This prevents the ship from taking damage when it bumps into something.");
+            VoyagerImpactResistanceLevel = BindServerConfig("Voyager", "VoyagerImpactResistanceLevel", 75, "The level at which impact resistance is enabled. This prevents the ship you are aboard from taking damage when it bumps into something.");
 
             EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);

@@ -84,7 +84,7 @@ Provides a bonus to your rowing speed that scales with player skill also.
 - 25 - Paddle speed increased (scales with level)
 - 35 - Damage done to boat reduced (scales with level)
 - 50 - Reduces penalty from sailing almost against the wind (scales with level)
-- 75 - Boat does not recieve damage from impact
+- 75 - Boat you are aboard does not recieve damage from impact
 
 | Voyager 0 | Voyager 50 | Voyager 100 |
 | ------------- | ------------- | ------------- |

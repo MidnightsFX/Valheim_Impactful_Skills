@@ -1,3 +1,10 @@
+**0.16.2**
+---
+```
+- Makes harvesting, pickables, luck rolls and planting all count towards player statistics
+- Voyager impact resistance now only protects the ship you are aboard
+```
+
 **0.16.1**
 ---
 ```
