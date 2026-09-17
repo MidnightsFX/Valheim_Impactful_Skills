@@ -1,3 +1,16 @@
+**0.17.0**
+---
+```
+- Improves XP grants for raising animals, ensures they are properly provided in the local area
+- Fixed multiplanted barley and flax being planted too close together and dying before they matured
+	- Grid spacing now accounts for the plant's own collider, not just its grow radius, which is what the game actually measures against. Barley and flax grids are wider; every other crop and all tree saplings keep the spacing they had
+	- The minimum is enforced on top of FarmingMultiPlantBufferSpace, so existing configs get the fix without being edited
+	- An existing field that was already planted too tightly will now show red cells rather than letting you feed more doomed crops into it
+- Multiplanting no longer places crops where they would kill a neighbouring plant that has a larger grow radius, such as an ungrown tree sapling
+- Vineberries now respect their spacing from other vines and their need for a wall to climb, instead of being placed where they could never grow
+- Increased required Jotunn version
+```
+
 **0.16.2**
 ---
 ```

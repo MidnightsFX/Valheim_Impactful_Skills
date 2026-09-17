@@ -129,14 +129,30 @@ namespace ImpactfulSkills.modules.Multiplant {
             // ── Spacing ────────────────────────────────────────────────────────
             Transform anchor = _nearbyPlants[0];
             Vector3 anchorPos = anchor.position;
+            Plant anchorPlant = anchor.GetComponentInChildren<Plant>();
             float anchorSpacing = SpacingForAnchor(anchor, heldSpacing);
 
-            // Adopt the existing patch's spacing only when it is at least as generous as the held plant
-            // needs. A tighter patch would crowd our own cells against each other, and IsValidPosition
-            // cannot catch that: the ghosts sit on the ghost layer and do not see one another. Report
-            // no snap in that case and let the caller place freely — there is nothing left to align,
-            // since rotation is the player's and we never touch it.
-            if (anchorSpacing < heldSpacing - 0.001f) { return false; }
+            // The lattice puts every one of our cells a whole number of steps from the anchor's patch,
+            // so the step has to clear two different minimums: our own cells against each other
+            // (heldSpacing, which already carries the safety floor), and our cells against the
+            // anchor's SPECIES — which is asymmetric, because a neighbour with a bigger grow radius
+            // reaches further at us than we do at it. Comparing spacing to spacing missed that: a
+            // magecap patch (1.08) would happily accept a barley grid (0.95) even though the cross
+            // requirement is 1.20, and every barley latticed in would kill a magecap.
+            //
+            // A step that fails either would crowd plants that IsValidPosition cannot warn about: the
+            // ghosts sit on the ghost layer and do not see one another. Report no snap in that case
+            // and let the caller place freely — there is nothing left to align, since rotation is the
+            // player's and we never touch it.
+            float needed = heldSpacing;
+            if (anchorPlant != null && PlantGridState.Plant != null) {
+                needed = Mathf.Max(needed, PlantDefinitions.RequiredDistance(
+                                               PlantGridState.Plant.m_growRadius, PlantGrid.HeldExtent,
+                                               anchorPlant.m_growRadius,
+                                               PlantDefinitions.ExtentOf(Utils.GetPrefabName(anchorPlant.gameObject)))
+                                           + PlantDefinitions.SpacingSafetyMargin);
+            }
+            if (anchorSpacing < needed - 0.001f) { return false; }
 
             float step = anchorSpacing;
             PlantGridState.RowDirection = axisRow * step;
@@ -219,13 +235,13 @@ namespace ImpactfulSkills.modules.Multiplant {
             return spacing * (halfExtent + search) + Mathf.Max(0f, ValConfig.PlantingSnapDistance.Value);
         }
 
-        // Spacing an anchor's own patch was built with. Mirrors PlantGrid.Spacing so a same-species anchor
-        // yields heldSpacing, while a different species (EnableSnappingToOtherPlants) uses its own radius.
+        // Spacing an anchor's own patch should have been built with. Delegates to PlantDefinitions so
+        // this can no longer drift from PlantGrid.Spacing: a same-species anchor yields heldSpacing,
+        // while a different species (EnableSnappingToOtherPlants) uses its own radius and extent.
         private static float SpacingForAnchor(Transform anchorRoot, float fallback) {
             Plant p = anchorRoot.GetComponentInChildren<Plant>();
             if (p == null) return fallback;
-            float spacing = p.m_growRadius * ValConfig.FarmingMultiPlantDistanceBufferModifier.Value
-                            + ValConfig.FarmingMultiPlantBufferSpace.Value;
+            float spacing = PlantDefinitions.SpacingFor(p.m_growRadius, PlantDefinitions.ExtentOf(Utils.GetPrefabName(p.gameObject)));
             return spacing <= 0.001f ? fallback : spacing;
         }
 

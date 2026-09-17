@@ -32,6 +32,22 @@ namespace ImpactfulSkills.modules.Multiplant {
         private static string _lastPlantName = "";
         private static bool _preservePool;
 
+        // Reused so a check that runs for every cell, every frame, does not churn the GC. Sized for
+        // the vineberry pass rather than the grow-space one: that pass has to inspect every hit to
+        // find a Vine, so a truncated result would silently miss one, while the grow-space pass only
+        // asks whether the count is non-zero and cannot care.
+        private static readonly Collider[] _spaceBuffer = new Collider[128];
+
+        // ── Neighbour scan ─────────────────────────────────────────────────────
+        // Refreshed once per frame instead of once per cell. Physics can tell us whether an existing
+        // plant's collider reaches into OUR grow sphere, but it cannot tell us the reverse — that
+        // would mean testing a sphere we do not own — so we need the neighbours' own positions and
+        // radii in hand.
+        private struct Neighbour { internal Vector3 pos; internal float growRadius; }
+        private static readonly List<Neighbour> _neighbours = new List<Neighbour>();
+        private static readonly HashSet<Plant> _neighbourSeen = new HashSet<Plant>();
+        private static readonly Collider[] _neighbourBuffer = new Collider[256];
+
         // Pool sizing. Deliberately independent of the AOE toggle so switching it off and on again
         // does not destroy and rebuild every ghost.
         private static int MaxActiveGhosts => PlantGrid.MaxToPlantAtOnce() - 1;
@@ -145,6 +161,14 @@ namespace ImpactfulSkills.modules.Multiplant {
             GetCellOffsets(_offsets);
             EnsureYawCapacity(_offsets.Count);
 
+            // The ghosts are forced onto the "ghost" layer (GrowPoolIfNeeded, and vanilla's own
+            // SetupPlacementGhost), so the physics query inside IsValidPosition is structurally blind
+            // to the rest of this batch. With a correct Spacing the rigid pitch already guarantees
+            // they fit, so this is unreachable for every vanilla plant — it is insurance for a modded
+            // plant whose extent we could not measure, and it turns a crop that would be destroyed at
+            // maturity into a cell that shows red now.
+            float minSqr = PlantGrid.HeldRequiredDistance * PlantGrid.HeldRequiredDistance;
+
             for (int i = 0; i < _offsets.Count; i++) {
                 Vector3 pos = PlantGridState.BasePosition
                     + PlantGridState.RowDirection * _offsets[i].x
@@ -153,7 +177,25 @@ namespace ImpactfulSkills.modules.Multiplant {
                 Heightmap.GetHeight(pos, out float height);
                 pos.y = height;
 
-                _cells.Add(new PlantCell { pos = pos, yaw = _cellYaw[i], valid = IsValidPosition(pos) });
+                bool valid = IsValidPosition(pos);
+                if (valid) {
+                    // First-come-first-served, not mutual: if two cells conflict, marking both
+                    // invalid would plant neither. Compare only against cells already accepted so
+                    // exactly one of the pair survives.
+                    for (int j = 0; j < _cells.Count; j++) {
+                        if (!_cells[j].valid) { continue; }
+                        float sqr = FlatSqrDistance(_cells[j].pos, pos);
+                        if (sqr < minSqr - 1e-4f) {
+                            valid = false;
+                            if (ValConfig.EnableDebugMode.Value) {
+                                Logger.LogDebug($"[Multiplant/grid] cell {i} rejected: {Mathf.Sqrt(sqr):F2}m from cell {j}, " +
+                                                $"needs {PlantGrid.HeldRequiredDistance:F2}m (spacing={PlantGrid.Spacing:F2})");
+                            }
+                            break;
+                        }
+                    }
+                }
+                _cells.Add(new PlantCell { pos = pos, yaw = _cellYaw[i], valid = valid });
             }
 
             // Index 0 is Player.m_placementGhost and Valheim refuses to place when it is invalid, so a
@@ -274,12 +316,104 @@ namespace ImpactfulSkills.modules.Multiplant {
             return ei < ExtraGhosts.Count ? ExtraGhosts[ei] : null;
         }
 
+        /// <summary>
+        /// Collect every Plant whose own grow sphere could reach a cell of this frame's grid. Called
+        /// once per frame from PlantGridState.Update, before snapping, so SnapSystem's free-cell
+        /// probing sees a current list.
+        /// </summary>
+        internal static void RefreshNeighbours(Vector3 centre) {
+            _neighbours.Clear();
+            _neighbourSeen.Clear();
+            if (PlantGridState.Plant == null) { return; }
+
+            float spacing = Mathf.Max(PlantGrid.Spacing, 0.1f);
+            // Half the block's DIAGONAL, not half its longest side: the corner cells are what sit
+            // furthest from the cursor, and a 3x4 block reaches 2.5 cells out rather than 2.
+            float half = 0.5f * Mathf.Sqrt(Rows * Rows + Columns * Columns);
+            // Only a 1x1 layout slides to find a free cell, so only it needs SnapSystem's full probe
+            // margin; a whole block never moves and needs a single cell of slack for the snap offset.
+            float search = LayoutCells == 1 ? 3f : 1f;
+            // Plus the furthest a neighbour's own sphere can reach back at us. An ungrown Oak has the
+            // largest reach in the game at 3m, and it is what makes this worth bounding rather than
+            // picking a fixed radius.
+            float radius = spacing * (half + search) + PlantDefinitions.MaxGrowRadius + PlantGrid.HeldExtent;
+
+            int hits = Physics.OverlapSphereNonAlloc(centre, radius, _neighbourBuffer, PlantDefinitions.plantSpaceMask);
+            for (int i = 0; i < hits; i++) {
+                Collider c = _neighbourBuffer[i];
+                if (c == null || c.gameObject.layer == PlantDefinitions.GhostLayer) { continue; }
+                // GetComponentInParent, not GetComponent: we want to protect the plant even when the
+                // collider we hit sits on a child of it.
+                Plant p = c.GetComponentInParent<Plant>();
+                if (p == null || !_neighbourSeen.Add(p)) { continue; }
+                _neighbours.Add(new Neighbour { pos = p.transform.position, growRadius = p.m_growRadius });
+            }
+        }
+
+        /// <summary>True when planting at pos would put our collider inside an existing plant's grow sphere.</summary>
+        private static bool IntrudesOnNeighbour(Vector3 pos) {
+            float ownExtent = PlantGrid.HeldExtent;
+            for (int i = 0; i < _neighbours.Count; i++) {
+                float need = _neighbours[i].growRadius + ownExtent;
+                if (FlatSqrDistance(_neighbours[i].pos, pos) < need * need) { return true; }
+            }
+            return false;
+        }
+
+        private static float FlatSqrDistance(Vector3 a, Vector3 b) {
+            float dx = a.x - b.x, dz = a.z - b.z;
+            return dx * dx + dz * dz;
+        }
+
         internal static bool IsValidPosition(Vector3 pos) {
             Heightmap heightmap = Heightmap.FindHeightmap(pos);
             if (heightmap == null || PlantGridState.Plant == null) { return false; }
-            if (PlantGridState.Plant.m_needCultivatedGround && !heightmap.IsCultivated(pos)) { return false; }
+            Plant held = PlantGridState.Plant;
+            if (held.m_needCultivatedGround && !heightmap.IsCultivated(pos)) { return false; }
 
-            return Physics.OverlapSphere(pos, PlantGridState.Plant.m_growRadius, PlantDefinitions.plantSpaceMask).Length == 0;
+            // Forward direction — this IS Valheim's own Plant.HaveGrowSpace test, and it already
+            // accounts for the neighbour's collider size: OverlapSphere reports a collider whose
+            // SURFACE is inside the sphere, so it fires exactly when the centre distance drops below
+            // ourGrowRadius + theirExtent. Nothing analytic we could write here would be more
+            // accurate than letting PhysX do the geometry.
+            if (Physics.OverlapSphereNonAlloc(pos, held.m_growRadius, _spaceBuffer, PlantDefinitions.plantSpaceMask) > 0) {
+                return false;
+            }
+
+            // Reverse direction — the one physics cannot answer, because it would mean testing a
+            // sphere we do not own. A neighbour with a larger grow radius can clear our sphere while
+            // our collider sits inside theirs; with m_destroyIfCantGrow set on every crop it is then
+            // the NEIGHBOUR that dies, hours later, with nothing red in the preview to warn anyone.
+            if (IntrudesOnNeighbour(pos)) { return false; }
+
+            return HasVineSpace(pos, held) && HasAttachPiece(pos, held);
+        }
+
+        /// <summary>
+        /// Vineberries carry a second, much larger grow sphere that only rejects Vines. Mirrors the
+        /// m_growRadiusVines pass in Plant.HaveGrowSpace; gated on the field so no other crop pays
+        /// for the extra query.
+        /// </summary>
+        private static bool HasVineSpace(Vector3 pos, Plant held) {
+            if (held.m_growRadiusVines <= 0f) { return true; }
+
+            int hits = Physics.OverlapSphereNonAlloc(pos, held.m_growRadiusVines, _spaceBuffer, PlantDefinitions.plantSpaceMask);
+            for (int i = 0; i < hits; i++) {
+                Collider c = _spaceBuffer[i];
+                if (c == null || c.gameObject.layer == PlantDefinitions.GhostLayer) { continue; }
+                if (c.GetComponentInParent<Vine>() != null) { return false; }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Vineberries also need a piece to climb, or they sit NoAttachPiece forever. Valheim exposes
+        /// an overload taking an explicit position, so we can ask about a cell without moving the
+        /// ghost; its Terminal.Log calls are gated behind m_showTests and cost nothing in normal play.
+        /// </summary>
+        private static bool HasAttachPiece(Vector3 pos, Plant held) {
+            if (held.m_attachDistance <= 0f) { return true; }
+            return held.GetClosestAttachPosRot(pos, out _, out _, out _);
         }
 
         private static void DetectPlantChange(GameObject rootGhost) {

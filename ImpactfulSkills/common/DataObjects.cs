@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -10,14 +8,48 @@ using UnityEngine;
 namespace ImpactfulSkills.common {
     internal static class DataObjects {
 
-        public static BinaryFormatter binFormatter = new BinaryFormatter();
-
         [Serializable]
         internal class XPIncreaseRequest {
+            // The largest range a grant is allowed to cover. Requests arrive from clients, and the server
+            // turns the range into a peer lookup, so an unbounded value would let one packet fan out to
+            // everyone on the server. The widest range any config exposes is 100.
+            internal const float MaxRange = 100f;
+
             public SerializableVector3 Location { get; set;}
             public float Range { get; set;}
             public Skills.SkillType Skill { get; set; }
             public float Amount { get; set; }
+
+            /// <summary>
+            /// Writes the request field by field. BinaryFormatter is deliberately not used here: it stamps
+            /// the mods assembly version into the payload, so a server and client on different builds could
+            /// never read each others packages, and it reconstructs arbitrary types straight off the wire.
+            /// </summary>
+            internal ZPackage ToPackage() {
+                ZPackage pkg = new ZPackage();
+                pkg.Write(Location.x);
+                pkg.Write(Location.y);
+                pkg.Write(Location.z);
+                pkg.Write(Range);
+                pkg.Write((int)Skill);
+                pkg.Write(Amount);
+                return pkg;
+            }
+
+            /// <summary>
+            /// Reads a request written by <see cref="ToPackage"/>, clamping the values that a remote peer
+            /// controls. Reads from the start of the package, so the caller does not have to care whether
+            /// anything has already read from it.
+            /// </summary>
+            internal static XPIncreaseRequest FromPackage(ZPackage pkg) {
+                pkg.SetPos(0);
+                XPIncreaseRequest request = new XPIncreaseRequest();
+                request.Location = new SerializableVector3(pkg.ReadSingle(), pkg.ReadSingle(), pkg.ReadSingle());
+                request.Range = Mathf.Clamp(pkg.ReadSingle(), 0f, MaxRange);
+                request.Skill = (Skills.SkillType)pkg.ReadInt();
+                request.Amount = pkg.ReadSingle();
+                return request;
+            }
         }
 
         [Serializable]

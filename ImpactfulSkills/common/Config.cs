@@ -341,9 +341,9 @@ namespace ImpactfulSkills
             FarmingMultiplantColumnCount = BindServerConfig("Farming", "FarmingMultiplantColumnCount", 4, "Maximum number of columns in the planting grid. The grid will form the closest square shape possible without exceeding this limit.", true, 1, 12);
             FarmingMultiPlantSnapToExisting = BindServerConfig("Farming", "FarmingMultiPlantSnapToExisting", true, "Automatically align new grid to nearby existing plants");
             // Client sided config
-            FarmingMultiPlantDistanceBufferModifier = BindClientConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy.");
+            FarmingMultiPlantDistanceBufferModifier = BindClientConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy. A per-plant minimum derived from its grow radius and collider is always enforced on top, so lowering this cannot crowd a crop to death.");
             // Client sided config
-            FarmingMultiPlantBufferSpace = BindClientConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy.", true, 0, 5f);
+            FarmingMultiPlantBufferSpace = BindClientConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy. A per-plant minimum is always enforced on top, so some plants (barley, flax) stay further apart than this setting alone would suggest.", true, 0, 5f);
             PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
             // Client sided config
             PlantingSnapDistance = BindClientConfig("Farming", "PlantingSnapDistance", 1f, "Extra margin (in meters) added beyond the planting grid's own extent when looking for nearby plants to snap to. The base search area already scales with the grid size and the plant's grow radius.", true, 0, 10f);
@@ -486,28 +486,40 @@ namespace ImpactfulSkills
 
         // handle XP Znet increases even if this is on an integrated server
         internal static void SendXPForSkillInArea(XPIncreaseRequest xp_increase) {
+            if (ZNet.instance == null) { return; }
             Logger.LogDebug($"Requesting {xp_increase.Skill} xp increase {xp_increase.Amount}");
-            ZPackage zpack = new ZPackage();
-            var mStream = new MemoryStream();
-            binFormatter.Serialize(mStream, xp_increase);
-            zpack.Write(mStream.ToString());
+            ZPackage zpack = xp_increase.ToPackage();
 
-            if (ZNet.instance.IsServer() && ZNet.instance.IsCurrentServerDedicated()) {
-                SkillIncreaseXP.SendPackage(ZNet.instance.GetServerPeer().m_uid, zpack);
-            } else {
+            if (ZNet.instance.IsServer()) {
+                // Only the server can see where the other players are, so it does the fan out itself.
                 SendXPRequestToInRangePlayers(xp_increase, zpack);
-                // Integrated servers need to also impact the local player
-                if (Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, xp_increase.Location) <= xp_increase.Range) {
-                    Player.m_localPlayer.RaiseSkill(xp_increase.Skill, xp_increase.Amount);
+                // m_peers only holds remote connections, so an integrated hosts own player is never part
+                // of that fan out and has to be granted here.
+                GrantLocalPlayerXP(xp_increase);
+            } else {
+                // A client has no view of the other peers, so it asks the server to do the fan out. That
+                // fan out comes back to us as well, which is why we do not also grant locally here.
+                ZNetPeer server_peer = ZNet.instance.GetServerPeer();
+                if (server_peer != null) {
+                    SkillIncreaseXP.SendPackage(server_peer.m_uid, zpack);
                 }
             }
         }
 
-        internal static IEnumerator OnServerReceiveXPRequest(long sender, ZPackage pkg) {
-            var mStream = new MemoryStream(pkg.ReadByteArray());
-            XPIncreaseRequest xpdetails = (XPIncreaseRequest)binFormatter.Deserialize(mStream);
-            SendXPRequestToInRangePlayers(xpdetails, pkg);
+        private static void GrantLocalPlayerXP(XPIncreaseRequest xpdetails) {
+            if (Player.m_localPlayer == null) { return; }
+            if (Vector3.Distance(Player.m_localPlayer.transform.position, xpdetails.Location) <= xpdetails.Range) {
+                Player.m_localPlayer.RaiseSkill(xpdetails.Skill, xpdetails.Amount);
+            }
+        }
 
+        internal static IEnumerator OnServerReceiveXPRequest(long sender, ZPackage pkg) {
+            if (pkg != null) {
+                XPIncreaseRequest xpdetails = XPIncreaseRequest.FromPackage(pkg);
+                // Re-serialize rather than forwarding the received package, so what goes out to the other
+                // players is the servers own clamped copy of the request.
+                SendXPRequestToInRangePlayers(xpdetails, xpdetails.ToPackage());
+            }
             yield break;
         }
 
@@ -520,8 +532,7 @@ namespace ImpactfulSkills
 
         internal static IEnumerator OnClientReceiveXPGrant(long sender, ZPackage pkg) {
             if (pkg != null && Player.m_localPlayer != null) {
-                var mStream = new MemoryStream(pkg.ReadByteArray());
-                XPIncreaseRequest xpdetails = (XPIncreaseRequest)binFormatter.Deserialize(mStream);
+                XPIncreaseRequest xpdetails = XPIncreaseRequest.FromPackage(pkg);
                 Player.m_localPlayer.RaiseSkill(xpdetails.Skill, xpdetails.Amount);
             }
             yield break;

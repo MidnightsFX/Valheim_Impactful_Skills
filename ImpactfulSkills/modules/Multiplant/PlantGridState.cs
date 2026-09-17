@@ -62,6 +62,8 @@ namespace ImpactfulSkills.modules.Multiplant {
             Vector3 euler = BaseRotation.eulerAngles;
             euler.y = Mathf.Round(euler.y / 90f) * 90f;
             FixedRotation = Quaternion.Euler(euler);
+            // Before snapping, so SnapSystem's own free-cell probing validates against a current list.
+            PlantGhostController.RefreshNeighbours(BasePosition);
             UpdateDirectionsAndSnap();
             DebugTrace();
         }

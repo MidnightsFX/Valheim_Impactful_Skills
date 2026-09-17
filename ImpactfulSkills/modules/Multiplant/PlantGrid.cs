@@ -16,6 +16,13 @@ namespace ImpactfulSkills.modules.Multiplant {
         internal static bool GridPlantingActive = false;
         internal static bool MultiplantDisabled = false;
         internal static float Spacing = 0;
+        /// <summary>
+        /// Horizontal reach of the held plant's own collider. Physics can answer "does their collider
+        /// reach into my sphere"; only this can answer "does my collider reach into theirs".
+        /// </summary>
+        internal static float HeldExtent = 0;
+        /// <summary>Centre distance two of THIS species need from each other. Spacing is always >= this.</summary>
+        internal static float HeldRequiredDistance = 0;
 
         // Evaluated on demand: PreferOtherPlantGrid is server-synced, so caching this at type-init
         // meant a mid-session change never took effect.
@@ -74,7 +81,11 @@ namespace ImpactfulSkills.modules.Multiplant {
             }
             Logger.LogDebug($"Resources support planting up to {maxByResources}");
 
-            float staminaPerPlant = 10f * (ValConfig.PlantingCostStaminaReduction.Value * player.GetSkillFactor(Skills.SkillType.Farming) - 1f);
+            // Both terms are clamped to 0-1, so the reduction can only ever shave the cost down to
+            // PlantingCostStaminaReduction of the base 10 — it must never flip the sign. Writing the
+            // subtraction the other way round made every cost negative, which turned UseStamina into
+            // a refill and stopped the HaveStamina brake below from ever firing.
+            float staminaPerPlant = 10f * (1f - ValConfig.PlantingCostStaminaReduction.Value * player.GetSkillFactor(Skills.SkillType.Farming));
             float staminaCost = 0;
 
             // ExtraGhosts[0..N-1] correspond to GhostValid[1..N]
@@ -156,8 +167,20 @@ namespace ImpactfulSkills.modules.Multiplant {
 
                 Plant plant = __instance.m_placementGhost.GetComponent<Plant>();
                 if (plant != null) {
-                    Spacing = plant.m_growRadius * ValConfig.FarmingMultiPlantDistanceBufferModifier.Value
-                              + ValConfig.FarmingMultiPlantBufferSpace.Value;
+                    // Extent comes from the ZNetScene prefab, NOT the ghost: SetupPlacementGhost has
+                    // already put every ghost transform on the "ghost" layer, so walking the ghost's
+                    // colliders would be filtered out entirely by the grow-space layer mask and
+                    // report zero — which looks exactly like the fix doing nothing.
+                    string plantName = Utils.GetPrefabName(__instance.m_placementGhost);
+                    HeldExtent = PlantDefinitions.ExtentOf(plantName);
+                    HeldRequiredDistance = PlantDefinitions.RequiredDistance(plant.m_growRadius, HeldExtent);
+                    Spacing = PlantDefinitions.SpacingFor(plant.m_growRadius, HeldExtent);
+                    // Every vanilla plant has a blocking collider, so a zero here means the prefab
+                    // lookup missed and the spacing floor has quietly fallen back to the old, broken
+                    // behaviour. Worth saying out loud rather than shipping a fix that does nothing.
+                    if (HeldExtent <= 0f) {
+                        Logger.LogWarning($"No grow-space collider measured for '{plantName}' - falling back to grow radius alone for spacing.");
+                    }
                 }
 
                 PlantGridState.SetReferences(__instance.m_placementGhost);
