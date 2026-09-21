@@ -1,3 +1,13 @@
+**0.18.0**
+---
+```
+- Farming now properly reduces the stamina cost of planting (vanilla reduced stamina costs, and now Impactful matches that)
+	- Every plant in a multiplanted grid costs what placing that one plant by hand costs.
+	- PlantingCostStaminaReduction now applies to single plants and cultivating ground too, not just the extra plants in a grid, and defaults to 1: planting costs full price at Farming 0 and nothing at Farming 100
+- Improves compatibility with ZenBeehives
+- Improves consistency of XP gains for the user when harvesting beehives in multiplayer
+```
+
 **0.17.1**
 ---
 ```

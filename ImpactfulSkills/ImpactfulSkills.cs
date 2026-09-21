@@ -24,11 +24,12 @@ namespace ImpactfulSkills
     [BepInDependency("com.orianaventure.mod.VentureFarmGrid", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("xeio.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("EardwulfDoesMods.Comfy.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(compatibility.ZenBeehive.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.17.1";
+        public const string PluginVersion = "0.18.0";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game

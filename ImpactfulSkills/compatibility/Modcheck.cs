@@ -12,6 +12,7 @@ namespace ImpactfulSkills.compatibility {
         public static bool IsSNEAKerEnabled = false;
         public static bool IsMagicPluginEnabled = false;
         public static bool IsCrystalMagicalEnabled = false;
+        public static bool IsZenBeehiveEnabled = false;
 
         // Plant grid compatibility checks
         public static bool IsPlantEasilyEnabled = false;
@@ -33,6 +34,9 @@ namespace ImpactfulSkills.compatibility {
                 }
                 if (plugins.Keys.Contains("dev.crystal.magical")) {
                     IsCrystalMagicalEnabled = true;
+                }
+                if (plugins.Keys.Contains(ZenBeehive.PluginGUID)) {
+                    IsZenBeehiveEnabled = true;
                 }
                 if (plugins.Keys.Contains("advize.PlantEasily")) {
                     IsPlantEasilyEnabled = true;

@@ -42,7 +42,7 @@ namespace ImpactfulSkills.patches
             }
 
             public static float ClampFoodWithBonus(float food_time_remaining, float food_burn_time) {
-                if (ValConfig.EnableCooking.Value == true && Player.m_localPlayer != null) {
+                if (ValConfig.EnableCooking.Value == true && ValConfig.EnableCookingDegradeReduction.Value && Player.m_localPlayer != null) {
                     float cooking_bonus = ValConfig.CookingBurnReduction.Value * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Cooking);
                     return Mathf.Clamp01((food_time_remaining / food_burn_time) + cooking_bonus);
                 }

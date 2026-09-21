@@ -1,6 +1,7 @@
 using HarmonyLib;
 using ImpactfulSkills.common;
 using ImpactfulSkills.compatibility;
+using ImpactfulSkills.patches;
 using Splatform;
 using System.Collections.Generic;
 using UnityEngine;
@@ -89,12 +90,17 @@ namespace ImpactfulSkills.modules.Multiplant {
             }
             Logger.LogDebug($"Resources support planting up to {maxByResources}");
 
-            // Both terms are clamped to 0-1, so the reduction can only ever shave the cost down to
-            // PlantingCostStaminaReduction of the base 10 — it must never flip the sign. Writing the
-            // subtraction the other way round made every cost negative, which turned UseStamina into
-            // a refill and stopped the HaveStamina brake below from ever firing.
-            float staminaPerPlant = 10f * (1f - ValConfig.PlantingCostStaminaReduction.Value * player.GetSkillFactor(Skills.SkillType.Farming));
+            // Every plant in the grid costs what the game would charge for placing that one plant by
+            // hand, Farming's reduction included (PlantingStamina). It used to be priced off a hardcoded
+            // 10 - double the cultivator's real 5 - so multi-planting stayed dearer per crop than vanilla
+            // planting however high Farming got. The cost can now reach exactly 0 but never goes below it,
+            // which matters because a negative would turn UseStamina into a refill and stop the
+            // HaveStamina brake below from ever firing.
+            float staminaPerPlant = PlantingStamina.PerPlantCost(player);
             float staminaCost = 0;
+            // Vanilla charges for the plant that triggered this placement just after PlacePiece returns,
+            // so it is still unspent here. Hold it back from the budget the extra plants may draw on.
+            float pendingPrimaryCost = staminaPerPlant;
 
             // ExtraGhosts[0..N-1] correspond to GhostValid[1..N]
             for (int i = 0; i < PlantGhostController.ExtraGhosts.Count; i++) {
@@ -104,7 +110,7 @@ namespace ImpactfulSkills.modules.Multiplant {
                 int validIdx = i + 1;
                 if (validIdx >= PlantGhostController.GhostValid.Count || !PlantGhostController.GhostValid[validIdx]) continue;
 
-                if (!player.HaveStamina(staminaCost + staminaPerPlant)) {
+                if (!player.HaveStamina(pendingPrimaryCost + staminaCost + staminaPerPlant)) {
                     Logger.LogDebug($"Not enough stamina to plant more (cost so far: {staminaCost})");
                     break;
                 }
@@ -126,7 +132,7 @@ namespace ImpactfulSkills.modules.Multiplant {
                     player.m_inventory.RemoveItem(req.m_resItem.m_itemData.m_shared.m_name, req.m_amount * plantsPlaced);
             }
 
-            Logger.LogDebug("Applying stamina cost and XP.");
+            Logger.LogDebug($"Applying stamina cost and XP. {plantsPlaced} extra plants at {staminaPerPlant:F2} each = {staminaCost:F2}");
             player.UseStamina(staminaCost);
             player.RaiseSkill(Skills.SkillType.Farming, plantsPlaced);
         }

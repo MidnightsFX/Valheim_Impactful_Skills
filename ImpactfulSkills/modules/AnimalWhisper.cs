@@ -4,6 +4,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -96,26 +97,168 @@ namespace ImpactfulSkills.patches
         //    }
         //}
 
-        [HarmonyPatch(typeof(Beehive), nameof(Beehive.RPC_Extract))]
-        public static class BetterBeeProduction {
-            public static void Prefix(Beehive __instance) {
-                if (ValConfig.EnableBeeBonuses.Value && Player.m_localPlayer != null) {
-                    int honey = __instance.GetHoneyLevel();
-                    if (honey > 0) {
-                        Player.m_localPlayer.RaiseSkill(AnimalHandling, honey * ValConfig.BeeHarvestXP.Value);
-                    }
-                }
+        /// <summary>
+        /// XP for honey pulled out of a hive. Called from the vanilla extract and, when ZenBeehive has
+        /// turned hives into containers, from whatever leaves its container instead. This raises the local
+        /// player's skill, so it must only ever run on the harvester's own client. See HoneyHarvestedRPC.
+        /// </summary>
+        public static void GrantHoneyHarvestXP(int honey) {
+            if (ValConfig.EnableBeeBonuses.Value == false || Player.m_localPlayer == null || honey <= 0) { return; }
+
+            Player.m_localPlayer.RaiseSkill(AnimalHandling, honey * ValConfig.BeeHarvestXP.Value);
+        }
+
+        /// <summary>
+        /// The extra honey a harvest of this size is worth at the player's current skill. Always the local
+        /// player's skill: both harvest paths hand the bonus over on the client of whoever took the honey.
+        /// </summary>
+        public static int HoneyHarvestBonus(int honey) {
+            if (ValConfig.EnableBeeBonuses.Value == false || Player.m_localPlayer == null || honey <= 0) { return 0; }
+            if (Player.m_localPlayer.GetSkillLevel(AnimalHandling) < ValConfig.BetterBeesLevel.Value) { return 0; }
+
+            return RollBonusAmount(honey * ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetSkillFactor(AnimalHandling));
+        }
+
+        /// <summary>
+        /// Hives show and pay the honey bonus unless ZenBeehive is installed without the internals the
+        /// bonus needs, in which case harvesting only grants XP. See ImpactfulSkills.compatibility.ZenBeehive.
+        /// </summary>
+        private static bool HoneyBonusActive => compatibility.ZenBeehive.HandlesExtraction == false || compatibility.ZenBeehive.BonusSupported;
+
+        private class HiveBonus {
+            public int level;
+            public int bonus;
+        }
+
+        // Weak keys, so a hive that gets torn down takes its entry with it.
+        private static readonly ConditionalWeakTable<Beehive, HiveBonus> hive_bonuses = new ConditionalWeakTable<Beehive, HiveBonus>();
+
+        /// <summary>
+        /// The one hive whose next GetHoneyLevel is allowed to include the bonus. Arming is single use, so
+        /// a read that is not a display call cannot pick the bonus up even if something throws in between.
+        /// </summary>
+        internal static Beehive armed_hive;
+
+        /// <summary>
+        /// The bonus this hive is showing on top of its real honey, for the local player. Rolled once per
+        /// honey level and remembered, because HoneyHarvestBonus can round a fraction up or down at random
+        /// and the hover text asks for it every frame, and the harvest has to pay out what was shown.
+        /// </summary>
+        internal static int ShownHoneyBonus(Beehive hive, int level) {
+            if (hive_bonuses.TryGetValue(hive, out HiveBonus remembered) && remembered.level == level) {
+                return remembered.bonus;
+            }
+
+            int bonus = HoneyHarvestBonus(level);
+            if (compatibility.ZenBeehive.HandlesExtraction) {
+                bonus = Mathf.Clamp(bonus, 0, compatibility.ZenBeehive.StackRoom(hive, level));
+            }
+            RememberShownHoneyBonus(hive, level, bonus);
+            return bonus;
+        }
+
+        internal static void RememberShownHoneyBonus(Beehive hive, int level, int bonus) {
+            if (hive_bonuses.TryGetValue(hive, out HiveBonus remembered)) {
+                remembered.level = level;
+                remembered.bonus = bonus;
+                return;
+            }
+            hive_bonuses.Add(hive, new HiveBonus { level = level, bonus = bonus });
+        }
+
+        /// <summary>
+        /// Beehive.Extract sends RPC_Extract to whichever client owns the hive, and in multiplayer that is
+        /// often not the player who pressed use - it is whoever was in the area first. Anything done there
+        /// with Player.m_localPlayer lands on the owner: they got the harvest XP, and their skill decided
+        /// the bonus honey. So the owner only reports how much real honey came out, back to the caller
+        /// vanilla hands RPC_Extract, and the harvester's own client does the rest in HarvesterCollects.
+        /// </summary>
+        private const string HoneyHarvestedRPC = "ISKILL_HoneyHarvested";
+
+        [HarmonyPatch(typeof(Beehive), nameof(Beehive.Awake))]
+        public static class RegisterHoneyHarvestedRPC {
+            public static void Postfix(Beehive __instance) {
+                // Vanilla only registers its own RPC when the hive has a ZDO.
+                if (__instance.m_nview == null || __instance.m_nview.GetZDO() == null) { return; }
+                __instance.m_nview.Register<int>(HoneyHarvestedRPC, (sender, honey) => HarvesterCollects(__instance, honey));
             }
         }
 
+        /// <summary>
+        /// The vanilla extract, on the hive owner's client. ZenBeehive transpiles the Extract() call out of
+        /// Beehive.Interact, so with that mod installed this only runs on its fallback path, when the
+        /// container could not be opened.
+        /// </summary>
+        [HarmonyPatch(typeof(Beehive), nameof(Beehive.RPC_Extract))]
+        public static class BetterBeeProduction {
+            public static void Prefix(Beehive __instance, long caller) {
+                if (ValConfig.EnableBeeBonuses.Value == false) { return; }
+                // Nothing is armed here, so this is the real honey vanilla is about to spawn.
+                int honey = __instance.GetHoneyLevel();
+                if (honey <= 0) { return; }
+
+                // Handled immediately when the owner is the one harvesting, routed to them otherwise.
+                __instance.m_nview.InvokeRPC(caller, HoneyHarvestedRPC, honey);
+            }
+        }
+
+        /// <summary>
+        /// The harvester's half of the vanilla extract. The owner has already spawned the real honey, so
+        /// only the bonus is dropped here, stacked above it the same way vanilla stacks its own.
+        /// </summary>
+        private static void HarvesterCollects(Beehive hive, int honey) {
+            if (ValConfig.EnableBeeBonuses.Value == false || Player.m_localPlayer == null || hive == null) { return; }
+            // Whoever sent this, a hive never holds more than its max.
+            honey = Mathf.Clamp(honey, 0, hive.m_maxHoney);
+            if (honey <= 0) { return; }
+
+            int bonus = 0;
+            if (HoneyBonusActive) {
+                bonus = ShownHoneyBonus(hive, honey);
+                // Forget the roll, so the next time the hive fills up to this level it rolls again.
+                hive_bonuses.Remove(hive);
+            }
+
+            if (bonus > 0 && hive.m_honeyItem != null && hive.m_spawnPoint != null) {
+                for (int i = 0; i < bonus; i++) {
+                    Vector2 offset = UnityEngine.Random.insideUnitCircle * 0.5f;
+                    Vector3 position = hive.m_spawnPoint.position + new Vector3(offset.x, 0.25f * (honey + i), offset.y);
+                    ItemDrop drop = UnityEngine.Object.Instantiate(hive.m_honeyItem, position, Quaternion.identity);
+                    drop.SetStack(Game.instance.ScaleDrops(hive.m_honeyItem.m_itemData, 1));
+                }
+                // Beehive.Interact counted the real honey on this client already, only the bonus is missing.
+                Game.instance.IncrementPlayerStat(PlayerStatType.BeesHarvested, bonus);
+            }
+
+            GrantHoneyHarvestXP(honey + bonus);
+        }
+
+        /// <summary>
+        /// Puts the bonus in the hover text. Only the displayed read is inflated: the hive's own reads have
+        /// to see its real honey, IncreseLevel writes what it reads back into the ZDO, and on the owner's
+        /// client an inflated read would be the owner's skill rather than the harvester's.
+        /// </summary>
+        [HarmonyPatch(typeof(Beehive), nameof(Beehive.GetHoverText))]
+        public static class HiveHoverShowsBonus {
+            private static bool Prepare() { return HoneyBonusActive; }
+
+            private static void Prefix(Beehive __instance) { armed_hive = __instance; }
+
+            private static void Postfix() { armed_hive = null; }
+        }
+
+        /// <summary>
+        /// Adds the bonus to the one read that was armed for display, either the hover text above or
+        /// ZenBeehive's container load.
+        /// </summary>
         [HarmonyPatch(typeof(Beehive), nameof(Beehive.GetHoneyLevel))]
         public static class BeeHivesMoreProductionBySkill {
-            public static void Postfix(ref int __result) {
-                if (Player.m_localPlayer != null && __result > 0 && ValConfig.EnableBeeBonuses.Value
-                    && Player.m_localPlayer.GetSkillLevel(AnimalHandling) >= ValConfig.BetterBeesLevel.Value) {
-                    float increase = ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetSkillFactor(AnimalHandling);
-                    __result = Mathf.RoundToInt(__result + (increase * __result));
-                }
+            public static void Postfix(Beehive __instance, ref int __result) {
+                if (armed_hive == null || __instance != armed_hive) { return; }
+
+                armed_hive = null;
+                if (__result <= 0) { return; }
+                __result += ShownHoneyBonus(__instance, __result);
             }
         }
 

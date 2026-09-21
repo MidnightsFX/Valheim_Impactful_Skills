@@ -144,6 +144,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> WeaponSkillEquipRequiredLevel;
 
         public static ConfigEntry<bool> EnableCooking;
+        public static ConfigEntry<bool> EnableCookingDegradeReduction;
         public static ConfigEntry<bool> EnableCookingBonusItems;
         public static ConfigEntry<float> ChanceForCookingBonusItems;
         public static ConfigEntry<int> RequiredLevelForBonusCookingItems;
@@ -350,7 +351,7 @@ namespace ImpactfulSkills
             FarmingMultiPlantDistanceBufferModifier = BindClientConfig("Farming", "FarmingMultiPlantDistanceBufferModifier", 1.1f, "The increased distance that is applied to all plants requirements to ensure that they do not become unhealthy. A per-plant minimum derived from its grow radius and collider is always enforced on top, so lowering this cannot crowd a crop to death.");
             // Client sided config
             FarmingMultiPlantBufferSpace = BindClientConfig("Farming", "FarmingMultiPlantBufferSpace", 0.2f, "Additional space for all multiplanted plants to ensure they are healthy. A per-plant minimum is always enforced on top, so some plants (barley, flax) stay further apart than this setting alone would suggest.", true, 0, 5f);
-            PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 0.5f, "At max level, the percentage reduction in stamina cost when placing.", true, 0f, 1f);
+            PlantingCostStaminaReduction = BindServerConfig("Farming", "PlantingCostStaminaReduction", 1f, "At max level, the percentage reduction in stamina cost when planting or cultivating. Applies to every plant in a multiplanted grid as well as single plants. At 1 planting is free at Farming 100 and full price at Farming 0. 0.5 is what the game gives on its own, so that is the floor.", true, 0.5f, 1f);
             // Client sided config
             PlantingSnapDistance = BindClientConfig("Farming", "PlantingSnapDistance", 1f, "Extra margin (in meters) added beyond the planting grid's own extent when looking for nearby plants to snap to. The base search area already scales with the grid size and the plant's grow radius.", true, 0, 10f);
             PlantingAOEHarvestResetSafety = BindServerConfig("Farming", "PlantingAOEHarvestResetSafety", 10f, "The number of seconds after an AOE harvest that harvesting will be re-enabled, even if it failed to reset.");
@@ -416,6 +417,7 @@ namespace ImpactfulSkills
             ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
             
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
+            EnableCookingDegradeReduction = BindServerConfig("Cooking", "EnableCookingDegradeReduction", true, "When enabled, cooking contributes to preventing food from degrading over time.");
             EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");
             RequiredLevelForBonusCookingItems = BindServerConfig("Cooking", "RequiredLevelForBonusCookingItems", 10, "Minimum level to start crafting bonus food items.", false, 0, 100);
             ChanceForCookingBonusItems = BindServerConfig("Cooking", "ChanceForCookingBonusItems", 0.4f, "The chance to craft bonus food items at level 100. 0.4 is a 40% chance.", valmax: 1f);
