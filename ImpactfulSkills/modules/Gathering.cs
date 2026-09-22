@@ -250,10 +250,11 @@ namespace ImpactfulSkills.patches
                         if (targets.Length <= 5) {
                             foreach (Collider obj_collider in targets) {
                                 Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
-                                if (pickable_item != null) {
+                                // Skip the pickable that triggered this, and invalid ZDOs; see PickAOE.
+                                if (pickable_item != null && pickable_item != __instance) {
                                     Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
                                     if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
-                                        if (pickable_item.CanBePicked()) {
+                                        if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
                                             pickable_item.m_nview.ClaimOwnership();
                                             pickable_item.Interact(Player.m_localPlayer, false, false);
                                         }
@@ -262,15 +263,18 @@ namespace ImpactfulSkills.patches
                             }
                             enabled_aoe_gathering = true;
                         } else {
-                            Player.m_localPlayer.StartCoroutine(PickAOE(targets));
+                            Player.m_localPlayer.StartCoroutine(PickAOE(targets, __instance));
                         }
                     }
                     
                 }
             }
 
-            // Coroutine to handle the AOE gathering of large sets of pickables
-            static IEnumerator PickAOE(Collider[] targets) {
+            // Coroutine to handle the AOE gathering of large sets of pickables.
+            // `origin` is the pickable whose Interact triggered the sweep. Vanilla already sent its pick, so it is
+            // skipped here: when another peer owns it that pick is still in flight and m_picked is still false, and
+            // claiming ownership to pick it again would drop its items on both clients.
+            static IEnumerator PickAOE(Collider[] targets, Pickable origin) {
                 int iterations = 0;
                 foreach (Collider obj_collider in targets) {
                     iterations++;
@@ -279,10 +283,11 @@ namespace ImpactfulSkills.patches
                     }
                     if (obj_collider == null) { continue; }
                     Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
-                    if (pickable_item != null) {
+                    if (pickable_item != null && pickable_item != origin) {
                         //Logger.LogDebug($"Async Checking {pickable_item.gameObject.name} in harvest range.");
                         if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
-                            if (pickable_item.CanBePicked()) {
+                            // ClaimOwnership dereferences the ZDO without checking it; vanilla Interact checks IsValid first.
+                            if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
                                 pickable_item.m_nview.ClaimOwnership();
                                 pickable_item.Interact(Player.m_localPlayer, false, false);
                             }

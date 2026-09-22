@@ -141,6 +141,20 @@ The quality you get is the average quality of the ingredients you spent, rounded
 
 The crafting panel shows the quality you are about to get before you press craft, and crafting always spends the lowest quality ingredient that covers the recipe, so your best one is only ever used when it is the only one you have.
 
+### Forging (new skill)
+
+Forging is the smith's skill. It improves your crafting stations and your odds at the Forge of Potential, and at higher levels lets you craft equipment that is better than what anyone else can make.
+
+Forging is trained by crafting at the workbench, forge, black forge and galdr table, with extra XP for crafting and upgrading weapons, armor and shields, and for every refinement attempt at the Forge of Potential (more when it succeeds).
+
+- Innate - Better odds at the Forge of Potential (scales with level). At level 100 a refinement succeeds 85% of the time instead of 65%, a failed refinement lowers the item's level instead of destroying it, and an item that does break returns 70% of its materials instead of 35%. The odds are shown when you select an item at the forge.
+- 25 - Your workbench and forge count as one level higher
+- 50 - Your black forge and galdr table count as one level higher (a fully built black forge reaches level 7, enough for the highest quality black forge gear)
+- 75 - Masterwork: weapons you craft or upgrade deal 10% more damage, armor gives 10% more armor and shields 10% more block power
+- 90 - Lightweight: weapons, armor and shields you craft or upgrade weigh 90% less, and their movement speed penalty is halved. Equipment without a movement penalty gets another 5% damage, armor or block power instead
+
+Masterwork and lightweight are part of the item. They show in its tooltip, stay with it when it is stored, traded or upgraded by anyone, and still apply if your forging skill drops. Which stations get a level, and every bonus and level above, can be changed in the config.
+
 ### Blood Magic
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.

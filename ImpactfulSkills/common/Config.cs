@@ -201,6 +201,35 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> ChanceForMaterialReturn;
         public static ConfigEntry<bool> ScaleCraftedEquipmentQuality;
 
+        public static ConfigEntry<bool> EnableForging;
+        public static ConfigEntry<bool> EnableStationBonusTier1;
+        public static ConfigEntry<int> StationBonusTier1Level;
+        public static ConfigEntry<string> StationBonusTier1Stations;
+        public static ConfigEntry<int> StationBonusTier1Amount;
+        public static ConfigEntry<bool> EnableStationBonusTier2;
+        public static ConfigEntry<int> StationBonusTier2Level;
+        public static ConfigEntry<string> StationBonusTier2Stations;
+        public static ConfigEntry<int> StationBonusTier2Amount;
+        public static ConfigEntry<bool> EnableRefinementBonus;
+        public static ConfigEntry<int> RefinementBonusLevel;
+        public static ConfigEntry<float> RefineSuccessChanceBonus;
+        public static ConfigEntry<float> RefineBreakChanceReduction;
+        public static ConfigEntry<float> RefineBreakRefundBonus;
+        public static ConfigEntry<bool> EnableMasterwork;
+        public static ConfigEntry<int> MasterworkLevel;
+        public static ConfigEntry<float> MasterworkStatBonus;
+        public static ConfigEntry<bool> EnableLightweight;
+        public static ConfigEntry<int> LightweightLevel;
+        public static ConfigEntry<float> LightweightWeightReduction;
+        public static ConfigEntry<float> LightweightMovementPenaltyReduction;
+        public static ConfigEntry<float> LightweightNoPenaltyStatBonus;
+        public static ConfigEntry<string> ForgingStationXPWeights;
+        public static ConfigEntry<float> ForgingStationCraftXP;
+        public static ConfigEntry<float> ForgingEquipmentCraftXP;
+        public static ConfigEntry<float> ForgingUpgradeXP;
+        public static ConfigEntry<float> ForgingRefineAttemptXP;
+        public static ConfigEntry<float> ForgingRefineSuccessXPMultiplier;
+
         public static ConfigEntry<bool> EnableSwimming;
         public static ConfigEntry<int> SwimSpeedRequiredLevel;
         public static ConfigEntry<float> SwimmingSpeedFactor;
@@ -415,7 +444,36 @@ namespace ImpactfulSkills
             MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
             ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
-            
+
+            EnableForging = BindServerConfig("Forging", "EnableForging", true, "Enables the forging skill.");
+            EnableStationBonusTier1 = BindServerConfig("Forging", "EnableStationBonusTier1", true, "Enables the first crafting station level bonus.");
+            StationBonusTier1Level = BindServerConfig("Forging", "StationBonusTier1Level", 25, "The forging level at which the first station bonus applies.", false, 0, 100);
+            StationBonusTier1Stations = BindServerConfig("Forging", "StationBonusTier1Stations", "$piece_workbench,$piece_forge", "Comma separated list of crafting station names (eg: $piece_workbench) that get the first station bonus.");
+            StationBonusTier1Amount = BindServerConfig("Forging", "StationBonusTier1Amount", 1, "How many levels the first station bonus adds to its stations.", false, 0, 10);
+            EnableStationBonusTier2 = BindServerConfig("Forging", "EnableStationBonusTier2", true, "Enables the second crafting station level bonus.");
+            StationBonusTier2Level = BindServerConfig("Forging", "StationBonusTier2Level", 50, "The forging level at which the second station bonus applies.", false, 0, 100);
+            StationBonusTier2Stations = BindServerConfig("Forging", "StationBonusTier2Stations", "$piece_blackforge,$piece_magetable", "Comma separated list of crafting station names (eg: $piece_blackforge) that get the second station bonus. A station listed in both tiers gets both bonuses.");
+            StationBonusTier2Amount = BindServerConfig("Forging", "StationBonusTier2Amount", 1, "How many levels the second station bonus adds to its stations.", false, 0, 10);
+            EnableRefinementBonus = BindServerConfig("Forging", "EnableRefinementBonus", true, "Enables forging improving your odds at the Forge of Potential. The bonuses scale with your forging level, the full value applies at level 100.");
+            RefinementBonusLevel = BindServerConfig("Forging", "RefinementBonusLevel", 0, "The forging level at which Forge of Potential bonuses start applying.", false, 0, 100);
+            RefineSuccessChanceBonus = BindServerConfig("Forging", "RefineSuccessChanceBonus", 0.2f, "Added to the chance that a refinement succeeds, at forging level 100. Vanilla idols have a 0.65 chance, so 0.2 makes it 0.85.", false, 0f, 1f);
+            RefineBreakChanceReduction = BindServerConfig("Forging", "RefineBreakChanceReduction", 1f, "How much of the chance that a failed refinement destroys the item is removed, at forging level 100. 1 means failures never destroy the item at level 100, they lower its level instead.", false, 0f, 1f);
+            RefineBreakRefundBonus = BindServerConfig("Forging", "RefineBreakRefundBonus", 0.35f, "Added to the share of ingredients returned when a refinement destroys the item, at forging level 100. Vanilla idols return 0.35, so 0.35 makes it 0.7.", false, 0f, 1f);
+            EnableMasterwork = BindServerConfig("Forging", "EnableMasterwork", true, "Enables masterwork equipment. Weapons, armor and shields crafted or upgraded by a skilled smith are improved.");
+            MasterworkLevel = BindServerConfig("Forging", "MasterworkLevel", 75, "The forging level required to craft masterwork equipment.", false, 0, 100);
+            MasterworkStatBonus = BindServerConfig("Forging", "MasterworkStatBonus", 0.1f, "How much masterwork improves damage (weapons), armor (armor) and block power (shields). 0.1 is 10%.", false, 0f, 2f);
+            EnableLightweight = BindServerConfig("Forging", "EnableLightweight", true, "Enables lightweight equipment. Weapons, armor and shields crafted or upgraded by a skilled smith weigh less and slow you down less.");
+            LightweightLevel = BindServerConfig("Forging", "LightweightLevel", 90, "The forging level required to craft lightweight equipment.", false, 0, 100);
+            LightweightWeightReduction = BindServerConfig("Forging", "LightweightWeightReduction", 0.9f, "How much lightweight equipment reduces the item's weight. 0.9 makes it weigh 10% of normal.", false, 0f, 1f);
+            LightweightMovementPenaltyReduction = BindServerConfig("Forging", "LightweightMovementPenaltyReduction", 0.5f, "How much lightweight equipment reduces the item's movement speed penalty while equipped. 0.5 halves it.", false, 0f, 1f);
+            LightweightNoPenaltyStatBonus = BindServerConfig("Forging", "LightweightNoPenaltyStatBonus", 0.05f, "Lightweight equipment that has no movement speed penalty gets this much more damage, armor or block power instead. 0.05 is 5%.", false, 0f, 2f);
+            ForgingStationXPWeights = BindServerConfig("Forging", "ForgingStationXPWeights", "$piece_workbench:1,$piece_forge:1.5,$piece_blackforge:2,$piece_magetable:2", "Comma separated list of crafting station names and XP multipliers (name:multiplier). Anything crafted at these stations gives forging XP, and equipment crafted or upgraded at them gives XP scaled by the multiplier. Equipment from other stations uses a multiplier of 1.");
+            ForgingStationCraftXP = BindServerConfig("Forging", "ForgingStationCraftXP", 0.5f, "Forging XP for crafting anything at a station in ForgingStationXPWeights.", false, 0f, 20f);
+            ForgingEquipmentCraftXP = BindServerConfig("Forging", "ForgingEquipmentCraftXP", 1f, "Forging XP for crafting a weapon, armor piece or shield. Scaled by the station multiplier and the recipe's minimum station level.", false, 0f, 20f);
+            ForgingUpgradeXP = BindServerConfig("Forging", "ForgingUpgradeXP", 1f, "Forging XP for upgrading a weapon, armor piece or shield. Scaled by the station multiplier and the new quality level.", false, 0f, 20f);
+            ForgingRefineAttemptXP = BindServerConfig("Forging", "ForgingRefineAttemptXP", 2f, "Forging XP for each refinement attempt at the Forge of Potential. Scaled by the quality level being attempted.", false, 0f, 20f);
+            ForgingRefineSuccessXPMultiplier = BindServerConfig("Forging", "ForgingRefineSuccessXPMultiplier", 2f, "Multiplies the refinement XP when the attempt succeeds.", false, 1f, 10f);
+
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             EnableCookingDegradeReduction = BindServerConfig("Cooking", "EnableCookingDegradeReduction", true, "When enabled, cooking contributes to preventing food from degrading over time.");
             EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");

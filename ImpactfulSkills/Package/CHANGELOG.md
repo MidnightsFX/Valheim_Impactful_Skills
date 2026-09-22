@@ -1,3 +1,17 @@
+**0.18.1**
+---
+```
+- Fix for potential NPE when mining large areas
+- Forging (new skill)
+	- Trained by crafting at the workbench, forge, black forge and galdr table, crafting and upgrading equipment, and refining at the Forge of Potential
+	- Innate: better odds at the Forge of Potential (level 100: 85% success, failures lower the item's level instead of destroying it, 70% of materials back if it does break). The odds are now shown at the forge
+	- 25: workbench and forge count as one level higher
+	- 50: black forge and galdr table count as one level higher
+	- 75: masterwork equipment, +10% damage, armor or block power
+	- 90: lightweight equipment, 90% less weight and half the movement speed penalty (+5% damage, armor or block power when there is no penalty)
+	- Masterwork and lightweight stay with the item, including through upgrades
+```
+
 **0.18.0**
 ---
 ```

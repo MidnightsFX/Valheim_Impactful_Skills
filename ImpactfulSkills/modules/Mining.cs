@@ -204,56 +204,65 @@ namespace ImpactfulSkills.patches {
                 Mining.ClearSweepState();
                 yield break;
             }
-            if (minerock != null || minerock5 != null) {
-                Collider[] colliderArray;
-                int index;
-                Collider obj_collider;
-                if (mine_targets != null) {
-                    if (flag) {
-                        colliderArray = mine_targets;
-                        for (index = 0; index < colliderArray.Length; ++index) {
-                            if (colliderArray == null || minerock == null) { break; }
-                            obj_collider = colliderArray[index];
-                            if (!(obj_collider == null)) {
-                                ++iterations;
-                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0) { yield return new WaitForFixedUpdate(); }
-                                if (Mining.ArrayContains(minerock.m_hitAreas, obj_collider)) {
-                                    Logger.LogDebug("AOE Damage applying to minerock");
-                                    aoedmg.m_point = obj_collider.bounds.center;
-                                    aoedmg.m_hitCollider = obj_collider;
-                                    minerock.Damage(aoedmg);
+            // Clear in a finally so an exception mid-sweep can't leave current_aoe_strike set, which
+            // would block every later AOE and rock breaker roll until the game restarts.
+            try {
+                if (minerock != null || minerock5 != null) {
+                    Collider[] colliderArray;
+                    int index;
+                    Collider obj_collider;
+                    if (mine_targets != null) {
+                        if (flag) {
+                            colliderArray = mine_targets;
+                            for (index = 0; index < colliderArray.Length; ++index) {
+                                if (colliderArray == null || minerock == null) { break; }
+                                obj_collider = colliderArray[index];
+                                if (!(obj_collider == null)) {
+                                    ++iterations;
+                                    if (iterations % ValConfig.MinehitsPerInterval.Value == 0) { yield return new WaitForFixedUpdate(); }
+                                    // The rock can be removed while we wait (see the MineRock5 branch below);
+                                    // MineRock.Damage -> InvokeRPC would then dereference its null ZDO.
+                                    if (minerock == null || minerock.m_nview == null || !minerock.m_nview.IsValid()) { break; }
+                                    if (Mining.ArrayContains(minerock.m_hitAreas, obj_collider)) {
+                                        Logger.LogDebug("AOE Damage applying to minerock");
+                                        aoedmg.m_point = obj_collider.bounds.center;
+                                        aoedmg.m_hitCollider = obj_collider;
+                                        minerock.Damage(aoedmg);
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        colliderArray = mine_targets;
-                        for (index = 0; index < colliderArray.Length; ++index) {
-                            if (colliderArray == null || minerock5 == null) { break; }
-                            // We call the private DamageArea directly, bypassing MineRock5.Damage/RPC_Damage,
-                            // which normally guard on nview validity. When an earlier iteration destroys the
-                            // last hit area, DamageArea calls m_nview.Destroy() -> ResetZDO() (m_zdo = null).
-                            // The GameObject is only destroyed at end of frame, so minerock5 == null is still
-                            // false here; the next DamageArea -> LoadHealth dereferences a null ZDO and throws.
-                            // Stop hitting the deposit once its ZDO is gone.
-                            if (minerock5.m_nview == null || !minerock5.m_nview.IsValid() || minerock5.m_allDestroyed) { break; }
-                            obj_collider = colliderArray[index];
-                            if (!(obj_collider == null)) {
-                                ++iterations;
-                                if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
-                                    yield return new WaitForFixedUpdate();
-                                int areaIndex = minerock5.GetAreaIndex(obj_collider);
-                                if (areaIndex >= 0) {
-                                    Logger.LogDebug($"AOE Damage applying to minerock5 index: {areaIndex}");
-                                    aoedmg.m_point = obj_collider.bounds.center;
-                                    aoedmg.m_hitCollider = obj_collider;
-                                    minerock5.DamageArea(areaIndex, aoedmg);
+                        } else {
+                            colliderArray = mine_targets;
+                            for (index = 0; index < colliderArray.Length; ++index) {
+                                if (colliderArray == null || minerock5 == null) { break; }
+                                obj_collider = colliderArray[index];
+                                if (!(obj_collider == null)) {
+                                    ++iterations;
+                                    if (iterations % ValConfig.MinehitsPerInterval.Value == 0)
+                                        yield return new WaitForFixedUpdate();
+                                    // We call the private DamageArea directly, bypassing MineRock5.Damage/RPC_Damage,
+                                    // which normally guard on nview validity. Destroying the last hit area calls
+                                    // m_nview.Destroy() -> ResetZDO() (m_zdo = null) while the GameObject lives until
+                                    // end of frame, so the next DamageArea -> LoadHealth dereferences a null ZDO.
+                                    // This must be checked after the yield, not before it: the sweep starts inside the
+                                    // Damage prefix, so the player's own swing is applied while we wait and can break
+                                    // the final areas out from under us.
+                                    if (minerock5 == null || minerock5.m_nview == null || !minerock5.m_nview.IsValid() || minerock5.m_allDestroyed) { break; }
+                                    int areaIndex = minerock5.GetAreaIndex(obj_collider);
+                                    if (areaIndex >= 0) {
+                                        Logger.LogDebug($"AOE Damage applying to minerock5 index: {areaIndex}");
+                                        aoedmg.m_point = obj_collider.bounds.center;
+                                        aoedmg.m_hitCollider = obj_collider;
+                                        minerock5.DamageArea(areaIndex, aoedmg);
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            } finally {
+                Mining.ClearSweepState();
             }
-            Mining.ClearSweepState();
         }
 
         public static void IncreaseDestructibleMineDrops(Destructible dmine) {

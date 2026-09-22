@@ -49,6 +49,7 @@ namespace ImpactfulSkills
             AnimalWhisper.SetupAnimalSkill();
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
+            Forging.SetupForgingSkill();
             HaulingXPTracker.Create();
             SkillRates.SetupSkillRateConfigs();
             // Skills added by other mods can only be found once every plugin has registered its own, which is one

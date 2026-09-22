@@ -165,7 +165,8 @@ namespace ImpactfulSkills.modules {
 
             // None and All are not skills, and our own skills set their xp amount where they award it instead.
             if (skill == Skills.SkillType.None || skill == Skills.SkillType.All
-                || skill == Voyaging.VoyagingSkill || skill == Hauling.HaulingSkill || skill == AnimalWhisper.AnimalHandling) {
+                || skill == Voyaging.VoyagingSkill || skill == Hauling.HaulingSkill || skill == AnimalWhisper.AnimalHandling
+                || skill == Forging.ForgingSkill) {
                 SkipSkills.Add(skill);
                 return false;
             }
