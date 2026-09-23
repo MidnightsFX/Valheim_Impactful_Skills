@@ -1,8 +1,8 @@
 {
   "skill_AnimalHandling": "Animal Handling",
-  "skill_AnimalHandling_description": "Increased Taming speed, loot, slaughtering loot and no biome restrictions for bees. Higher level gives access to higher perks.",
+  "skill_AnimalHandling_description": "Increased taming speed, loot and slaughtering loot, and no biome restrictions for bees. Higher levels unlock better perks.",
   "skill_Voyager": "Voyager",
-  "skill_Voyager_description": "The speed and skill that you can maneuver your boat.",
+  "skill_Voyager_description": "The speed and skill with which you maneuver your boat.",
   "skill_Hauling": "Hauling",
   "skill_Hauling_description": "Your ability to carry, store and transport goods.",
   "skill_Forging": "Forging",

@@ -1,3 +1,9 @@
+**0.19.1**
+---
+```
+- Update localization for all langues
+```
+
 **0.19.0**
 ---
 ```
