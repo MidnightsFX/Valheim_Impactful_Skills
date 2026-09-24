@@ -71,24 +71,13 @@ namespace ImpactfulSkills.modules.Multiplant {
             Logger.LogDebug("Placing plants in grid");
 
             int plantsPlaced = 0;
-            string plantName = Utils.GetPrefabName(primaryPlantablePrefab);
-            Plantable plantDef = PlantDefinitions.PlantableDefinitions[plantName];
             Piece plantPiece = primaryPlantablePrefab.GetComponent<Piece>();
 
             // Same check Player.TryPlacePiece makes. It inspects the seed stacks about to be spent, so it has to run
             // before any seeds are removed below.
             bool cheated = (player.m_inventory.ItemCheated(plantPiece.m_resources) || player.NoCostCheat()) && !PlayerProfile.s_bypassCheatChecks;
-
-            int maxByResources = 100;
-            if (plantDef.Seeds.Count > 0) {
-                foreach (Piece.Requirement req in plantDef.Seeds) {
-                    int available = player.m_inventory.CountItems(req.m_resItem.m_itemData.m_shared.m_name);
-                    int canMake = available / req.m_amount;
-                    if (canMake < maxByResources)
-                        maxByResources = canMake;
-                }
-            }
-            Logger.LogDebug($"Resources support planting up to {maxByResources}");
+            // Vanilla skips ConsumeResources for the primary on a NoBuildCost world, so the extras are free there too.
+            bool freeBuild = ZoneSystem.instance.GetGlobalKey(plantPiece.FreeBuildKey());
 
             // Every plant in the grid costs what the game would charge for placing that one plant by
             // hand, Farming's reduction included (PlantingStamina). It used to be priced off a hardcoded
@@ -114,8 +103,10 @@ namespace ImpactfulSkills.modules.Multiplant {
                     Logger.LogDebug($"Not enough stamina to plant more (cost so far: {staminaCost})");
                     break;
                 }
-                if (!player.NoCostCheat() && maxByResources == plantsPlaced + 1) {
-                    Logger.LogDebug($"Not enough resources for plant {plantsPlaced + 1}");
+                // The primary is still unpaid (vanilla charges it after PlacePiece returns), so this plant is only
+                // affordable if the primary, every extra already placed, and this one can all be paid for together.
+                if (!player.NoCostCheat() && !CanAfford(player, plantPiece, plantsPlaced + 2)) {
+                    Logger.LogDebug($"Not enough resources for extra plant {plantsPlaced + 1}");
                     break;
                 }
 
@@ -126,15 +117,49 @@ namespace ImpactfulSkills.modules.Multiplant {
                 plantsPlaced++;
             }
 
-            if (plantDef.Seeds.Count > 0) {
-                Logger.LogDebug("Removing seed costs");
-                foreach (Piece.Requirement req in plantDef.Seeds)
-                    player.m_inventory.RemoveItem(req.m_resItem.m_itemData.m_shared.m_name, req.m_amount * plantsPlaced);
+            // Charged through the same call vanilla uses for the primary, so a craft-from-storage mod (DvergerAutomation's
+            // autosorter, for one) can take whatever the player is not carrying out of its chests. Removing from the
+            // player's inventory directly left those plants free whenever the seeds were in storage. One call for the whole
+            // batch: every call fires the inventory's change event, which rebuilds the placement ghost.
+            if (plantsPlaced > 0 && !freeBuild) {
+                Logger.LogDebug($"Consuming resources for {plantsPlaced} extra plants");
+                player.ConsumeResources(plantPiece.m_resources, 0, -1, plantsPlaced);
             }
 
             Logger.LogDebug($"Applying stamina cost and XP. {plantsPlaced} extra plants at {staminaPerPlant:F2} each = {staminaCost:F2}");
             player.UseStamina(staminaCost);
             player.RaiseSkill(Skills.SkillType.Farming, plantsPlaced);
+        }
+
+        /// <summary>
+        /// Whether the player can pay for <paramref name="count"/> of this plant at once. Asked through
+        /// Player.HaveRequirements, the same check vanilla gates the primary on, because that is what
+        /// craft-from-storage mods patch to count the chests around the player - a count of the player's own
+        /// inventory cannot see them. HaveRequirements only answers for one piece, so the piece's requirements
+        /// are swapped for scaled copies for the length of the call. The prefab's own Requirement objects are
+        /// never touched, and the finally puts the original array back before anything else can read it.
+        /// </summary>
+        private static bool CanAfford(Player player, Piece plantPiece, int count) {
+            Piece.Requirement[] single = plantPiece.m_resources;
+            Piece.Requirement[] scaled = new Piece.Requirement[single.Length];
+            for (int i = 0; i < single.Length; i++) {
+                Piece.Requirement req = single[i];
+                scaled[i] = new Piece.Requirement {
+                    m_resItem = req.m_resItem,
+                    m_amount = req.m_amount * count,
+                    m_extraAmountOnlyOneIngredient = req.m_extraAmountOnlyOneIngredient,
+                    m_amountPerLevel = req.m_amountPerLevel,
+                    m_upgraderResource = req.m_upgraderResource,
+                    m_recover = req.m_recover,
+                };
+            }
+
+            plantPiece.m_resources = scaled;
+            try {
+                return player.HaveRequirements(plantPiece, Player.RequirementMode.CanBuild);
+            } finally {
+                plantPiece.m_resources = single;
+            }
         }
 
         // The extra plants are spawned directly rather than through Player.TryPlacePiece / PlacePiece, so repeat the

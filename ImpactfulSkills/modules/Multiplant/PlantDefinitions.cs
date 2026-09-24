@@ -15,7 +15,6 @@ namespace ImpactfulSkills.modules.Multiplant {
         /// <summary>Worst-case horizontal reach of this prefab's own grow-space colliders from its pivot.</summary>
         public float Extent { get; set; }
         public GameObject Refgo { get; set; }
-        public List<Piece.Requirement> Seeds { get; set; }
     }
 
     internal static class PlantDefinitions {
@@ -57,15 +56,8 @@ namespace ImpactfulSkills.modules.Multiplant {
                 if (plant == null || PlantableDefinitions.ContainsKey(obj.name)) {
                     continue;
                 }
-                List<Piece.Requirement> seedItems = new List<Piece.Requirement>();
-                Piece piece = obj.GetComponent<Piece>();
-                if (piece != null) {
-                    foreach (Piece.Requirement req in piece.m_resources) {
-                        seedItems.Add(req);
-                    }
-                }
                 float extent = HorizontalExtent(obj);
-                PlantableDefinitions.Add(obj.name, new Plantable() { GrowRadius = plant.m_growRadius, Extent = extent, Refgo = obj, Seeds = seedItems });
+                PlantableDefinitions.Add(obj.name, new Plantable() { GrowRadius = plant.m_growRadius, Extent = extent, Refgo = obj });
                 if (plant.m_growRadius > MaxGrowRadius) { MaxGrowRadius = plant.m_growRadius; }
 
                 foreach (GameObject grownPlant in plant.m_grownPrefabs) {
@@ -186,7 +178,7 @@ namespace ImpactfulSkills.modules.Multiplant {
             if (prefab == null) { return 0f; }
             // A modded plant registered after our ZNetScene.Awake pass. Measure once and keep it.
             float extent = HorizontalExtent(prefab);
-            PlantableDefinitions[prefabName] = new Plantable() { Refgo = prefab, Extent = extent, Seeds = new List<Piece.Requirement>() };
+            PlantableDefinitions[prefabName] = new Plantable() { Refgo = prefab, Extent = extent };
             return extent;
         }
 

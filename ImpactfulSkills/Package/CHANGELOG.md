@@ -1,3 +1,9 @@
+**0.19.2**
+---
+```
+- Fixes resource consumption for multiplant not happening with craft from container mods
+```
+
 **0.19.1**
 ---
 ```
