@@ -307,9 +307,11 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        // Raises the radius vanilla lerps to at Farming 100, so the bonus scales in with the skill. It is a multiple of the
+        // by-hand AOE range so the scythe keeps its lead over picking by hand when that range is changed.
         private static float IncreaseHarvestWeaponRange(float max_harvest_range) {
             if (ValConfig.EnableGathering.Value == true) {
-                return ValConfig.GatheringRangeFactor.Value + max_harvest_range;
+                return ValConfig.GatheringRangeFactor.Value * ValConfig.ScytheHarvestRangeMultiplier.Value + max_harvest_range;
             }
             return max_harvest_range;
         }

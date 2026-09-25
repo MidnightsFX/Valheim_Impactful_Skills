@@ -178,7 +178,9 @@ namespace ImpactfulSkills.compatibility {
                 if (inventory == null || inventory.m_width != 1 || inventory.m_height != 1) { return; }
                 if (open_hive.m_piece == null || inventory.GetName() != open_hive.m_piece.m_name) { return; }
 
-                ItemDrop.ItemData honey = inventory.GetItem(0);
+                // GetItem indexes the item list without a bounds check, and the container stays open
+                // (and redraws every frame) after the player has emptied it.
+                ItemDrop.ItemData honey = inventory.GetItemAt(0, 0);
                 if (honey == null || honey.m_stack <= open_hive.m_maxHoney) { return; }
 
                 __instance.m_elements[0].m_amount.text = $"{honey.m_stack}/{honey.m_stack}";

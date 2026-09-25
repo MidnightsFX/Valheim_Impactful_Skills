@@ -95,6 +95,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<bool> EnableGatheringAOE;
         public static ConfigEntry<float> GatheringRangeFactor;
+        public static ConfigEntry<float> ScytheHarvestRangeMultiplier;
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;
         public static ConfigEntry<string> GatheringDisallowedItems;
@@ -322,7 +323,7 @@ namespace ImpactfulSkills
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", false, 0.1f, 1f);
 
-            EnableHauling = BindServerConfig("Hauling", "EnableHauling", true, "Enables the hauling skill.");
+            EnableHauling = BindServerConfig("Hauling", "EnableHauling", true, "Enables the hauling skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             EnableCarryWeightBonus = BindServerConfig("Hauling", "EnableCarryWeightBonus", true, "Enables the carry weight bonus from the hauling skill.");
             HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
             EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
@@ -348,7 +349,7 @@ namespace ImpactfulSkills
             SneakBackstabBonusLevel = BindServerConfig("Sneak", "SneakBackstabBonusLevel", 25, "The level at which backstab damage starts being applied based on your skill", false, 0, 100);
             SneakBackstabBonusFactor = BindServerConfig("Sneak", "SneakBackstabBonusFactor", 2f, "How much backstab damage is increased based on your sneak level. 1 is a 100% bonus backstab damage at skill level 100.", valmin: 0.1f, valmax: 10f);
 
-            EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes.");
+            EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. This multiplies the loot the creature would actually have dropped, so it includes its star level, the world resource rate and anything other loot mods change. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
             AnimalHandlingLootRange = BindServerConfig("AnimalHandling", "AnimalHandlingLootRange", 20f, "How close you must be to a tamed creature when it dies to gain the slaughter XP and the bonus loot.", false, 1f, 100f);
@@ -365,6 +366,7 @@ namespace ImpactfulSkills
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
+            ScytheHarvestRangeMultiplier = BindServerConfig("Farming", "ScytheHarvestRangeMultiplier", 3f, "How much farther the scythe reaches than AOE gathering by hand. The scythe's harvest radius at level 100 grows by GatheringRangeFactor times this, scaling up with your skill. 3 gives the scythe 17.5m of reach at level 100 with the default GatheringRangeFactor of 5, against 5m by hand. 0 leaves the scythe at its vanilla reach.", false, 0f, 10f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 25, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "50,70,90", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop. Leave empty for no extra drops.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
@@ -397,11 +399,11 @@ namespace ImpactfulSkills
             // Client sided config
             FarmingMultiPlantCenterColumns = BindClientConfig("Farming", "FarmingMultiPlantCenterColumns", true, "Center the planting grid on your cursor along the column (sideways) axis. Disable to grow the grid sideways from your cursor instead.");
 
-            EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes.");
+            EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level where your sails start catching wind closer to head-on, and the sailing penalty for other wind angles starts to shrink. Both improve gradually up to level 100.", false, 0f, 100f);
             VoyagerCuttingMinAngle = BindServerConfig("Voyager", "VoyagerCuttingMinAngle", 15f, "How close to head-on (in degrees off the bow) the wind can be while your sails still catch all of it, at level 100 Voyager. Vanilla is about 41. The ship HUD's wind ring shades in the angles you have won back.", false, 0f, 41f);
-            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1.5f, "How much the sailing speed is increased based on your voyager level. Amount applied per level, 2 will make level 100 voyager give 100% faster sailing.", false, 1f, 20f);
+            VoyagerSailingSpeedFactor = BindServerConfig("Voyager", "VoyagerSailingSpeedFactor", 1.5f, "How much faster you sail at voyager level 100, scaling up with your level. 1.5 is 150% faster at level 100, 1 is double speed, 0.05 is only 5% faster, and 0 removes the bonus.", false, 0f, 20f);
             VoyagerIncreaseExplorationRadius = BindServerConfig("Voyager", "VoyagerIncreaseExplorationRadius", 3f, "How much the exploration radius is increased based on your voyager level. Amount applied per level, 1 will make level 100 voyager give 100% more exploration radius.", false, 0f, 20f);
             VoyagerPaddleSpeedBonus = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonus", 2f, "How much the paddle speed is increased based on your voyager level. 1 is a 100% bonus at level 100", false, 0.01f, 5f);
             VoyagerPaddleSpeedBonusLevel = BindServerConfig("Voyager", "VoyagerPaddleSpeedBonusLevel", 25f, "The level that the player starts to get a bonus to paddle speed.", false, 0f, 100f);
@@ -445,7 +447,7 @@ namespace ImpactfulSkills
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
             ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
 
-            EnableForging = BindServerConfig("Forging", "EnableForging", true, "Enables the forging skill.");
+            EnableForging = BindServerConfig("Forging", "EnableForging", true, "Enables the forging skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             EnableStationBonusTier1 = BindServerConfig("Forging", "EnableStationBonusTier1", true, "Enables the first crafting station level bonus.");
             StationBonusTier1Level = BindServerConfig("Forging", "StationBonusTier1Level", 25, "The forging level at which the first station bonus applies.", false, 0, 100);
             StationBonusTier1Stations = BindServerConfig("Forging", "StationBonusTier1Stations", "$piece_workbench,$piece_forge", "Comma separated list of crafting station names (eg: $piece_workbench) that get the first station bonus.");

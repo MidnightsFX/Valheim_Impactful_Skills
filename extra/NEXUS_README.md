@@ -47,7 +47,7 @@ Pickaxes now improves the amount of ore and stone you get from mining things. Al
 [size=4][b]Gathering (Farming)[/b][/size]
 
 Gathering increases the bonus number of items you can harvest from any plant. This is partly influenced by luck, and partly influenced by your level.
-Additionally at a high level of gathering you gain AOE harvesting (default 50) which increases in range with your skill. Gathering skill also increase the range at which you can harvest with the scythe.
+Additionally at a high level of gathering you gain AOE harvesting (default 50) which increases in range with your skill. Gathering skill also increases the range at which you can harvest with the scythe, reaching over 3x as far as AOE harvesting by hand at level 100 (configurable with ScytheHarvestRangeMultiplier).
 
 [b]Farming 0[/b]
 [img]https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/farming_0.gif?raw=true[/img]
