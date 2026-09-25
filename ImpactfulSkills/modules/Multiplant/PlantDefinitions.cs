@@ -12,7 +12,10 @@ namespace ImpactfulSkills.modules.Multiplant {
 
     internal class Plantable {
         public float GrowRadius { get; set; }
-        /// <summary>Worst-case horizontal reach of this prefab's own grow-space colliders from its pivot.</summary>
+        /// <summary>
+        /// Worst-case horizontal reach of this prefab's own grow-space colliders from its pivot. For a
+        /// plant this covers its whole life — the seedling and whatever it grows into — see GrownExtent.
+        /// </summary>
         public float Extent { get; set; }
         public GameObject Refgo { get; set; }
     }
@@ -43,9 +46,13 @@ namespace ImpactfulSkills.modules.Multiplant {
         /// <summary>Largest m_growRadius of any known plant (vanilla: Oak, 3.0). Bounds the neighbour scan.</summary>
         internal static float MaxGrowRadius { get; private set; }
 
+        /// <summary>Largest lifecycle Extent of any known plant (vanilla: the big fir, grown). Bounds the neighbour scan.</summary>
+        internal static float MaxExtent { get; private set; }
+
         internal static void BuildPlantRequirements() {
             PlantableDefinitions.Clear();
             MaxGrowRadius = 0f;
+            MaxExtent = 0f;
             if (ZNetScene.instance == null || ZNetScene.instance.m_prefabs == null) {
                 Logger.LogWarning("ZNetScene not ready for plant definitions");
                 return;
@@ -56,9 +63,12 @@ namespace ImpactfulSkills.modules.Multiplant {
                 if (plant == null || PlantableDefinitions.ContainsKey(obj.name)) {
                     continue;
                 }
-                float extent = HorizontalExtent(obj);
+                float seedlingExtent = HorizontalExtent(obj);
+                float grownExtent = GrownExtent(plant);
+                float extent = Mathf.Max(seedlingExtent, grownExtent);
                 PlantableDefinitions.Add(obj.name, new Plantable() { GrowRadius = plant.m_growRadius, Extent = extent, Refgo = obj });
                 if (plant.m_growRadius > MaxGrowRadius) { MaxGrowRadius = plant.m_growRadius; }
+                if (extent > MaxExtent) { MaxExtent = extent; }
 
                 foreach (GameObject grownPlant in plant.m_grownPrefabs) {
                     if (!PlantableDefinitions.ContainsKey(grownPlant.name)) {
@@ -67,7 +77,8 @@ namespace ImpactfulSkills.modules.Multiplant {
                     }
                 }
                 Logger.LogDebug($"Added plant cache entry: {obj.name} growRadius={plant.m_growRadius:F2} " +
-                                $"extent={extent:F2} required={RequiredDistance(plant.m_growRadius, extent):F2} " +
+                                $"extent={extent:F2} (seedling={seedlingExtent:F2} grown={grownExtent:F2}) " +
+                                $"required={RequiredDistance(plant.m_growRadius, extent):F2} " +
                                 $"spacing={SpacingFor(plant.m_growRadius, extent):F2}");
             }
             Logger.LogInfo($"Loaded {PlantableDefinitions.Count} plantable definitions");
@@ -96,13 +107,14 @@ namespace ImpactfulSkills.modules.Multiplant {
         /// puts every transform of the ghost on the "ghost" layer, so the mask test below would
         /// reject all of them and silently return 0.
         /// </summary>
-        internal static float HorizontalExtent(GameObject prefab) {
+        internal static float HorizontalExtent(GameObject prefab, bool includeMeshColliders = true) {
             if (prefab == null) { return 0f; }
 
             float extent = 0f;
             Vector3 pivot = prefab.transform.position;
             foreach (Collider collider in prefab.GetComponentsInChildren<Collider>(true)) {
                 if (collider == null || collider.isTrigger) { continue; }
+                if (!includeMeshColliders && collider is MeshCollider) { continue; }
                 if ((plantSpaceMask & (1 << collider.gameObject.layer)) == 0) { continue; }
                 if (!ShapeExtent(collider, out Vector3 localCenter, out float halfWidth)) { continue; }
 
@@ -112,6 +124,42 @@ namespace ImpactfulSkills.modules.Multiplant {
                 Vector3 offset = collider.transform.TransformPoint(localCenter) - pivot;
                 float reach = new Vector2(offset.x, offset.z).magnitude + halfWidth;
                 if (reach > extent) { extent = reach; }
+            }
+            return extent;
+        }
+
+        /// <summary>
+        /// Widest reach of anything this plant grows into, at the largest scale Plant.Grow can roll.
+        ///
+        /// The seedling's own collider is not the whole story. Plant.Grow replaces the seedling with one
+        /// of m_grownPrefabs, and a grown crop is a Pickable rather than a Plant, so it blocks a
+        /// neighbour's HaveGrowSpace however healthy it is. The grow time is rolled per plant, so a
+        /// patch matures one crop at a time, and every neighbour still growing makes its final
+        /// grow-space check against the grown crops beside it. Pickable_SeedOnion's capsule is 0.30
+        /// against the seedling's 0.18: at the default 0.75 pitch that measuring only the seedling
+        /// allowed, the first seed onion to mature put every neighbour at NoSpace, and
+        /// m_destroyIfCantGrow destroyed each one when its own turn to grow came.
+        ///
+        /// Two things are deliberately left out:
+        ///  - Plants that attach to a wall (vineberries). Grow puts them at the attach point, not the
+        ///    seedling's pivot, and the Vine then spreads on its own, so no reach measured from the
+        ///    pivot describes them. Keeping them clear of other vines is m_growRadiusVines' job.
+        ///  - Mesh colliders. On the grown trees the mesh is the whole tree, crown included (Birch1's
+        ///    bounds are over 6m across), while a neighbour's grow sphere sits at ground level and
+        ///    only ever reaches the trunk. The bounds would spread saplings metres too far apart.
+        /// </summary>
+        internal static float GrownExtent(Plant plant) {
+            if (plant == null || plant.m_grownPrefabs == null || plant.m_attachDistance > 0f) { return 0f; }
+
+            // Grow overwrites the grown prefab's root scale with a roll in [m_minScale, m_maxScale].
+            // Every offset and size below the root scales with it, so the reach does too.
+            float maxScale = Mathf.Max(plant.m_minScale, plant.m_maxScale);
+            float extent = 0f;
+            foreach (GameObject grown in plant.m_grownPrefabs) {
+                if (grown == null) { continue; }
+                float rootScale = grown.transform.localScale.x;
+                float scale = rootScale > 0f ? maxScale / rootScale : maxScale;
+                extent = Mathf.Max(extent, HorizontalExtent(grown, includeMeshColliders: false) * scale);
             }
             return extent;
         }
@@ -177,8 +225,9 @@ namespace ImpactfulSkills.modules.Multiplant {
             GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefabName) : null;
             if (prefab == null) { return 0f; }
             // A modded plant registered after our ZNetScene.Awake pass. Measure once and keep it.
-            float extent = HorizontalExtent(prefab);
+            float extent = Mathf.Max(HorizontalExtent(prefab), GrownExtent(prefab.GetComponent<Plant>()));
             PlantableDefinitions[prefabName] = new Plantable() { Refgo = prefab, Extent = extent };
+            if (extent > MaxExtent) { MaxExtent = extent; }
             return extent;
         }
 

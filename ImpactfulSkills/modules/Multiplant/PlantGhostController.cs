@@ -41,12 +41,17 @@ namespace ImpactfulSkills.modules.Multiplant {
         // ── Neighbour scan ─────────────────────────────────────────────────────
         // Refreshed once per frame instead of once per cell. Physics can tell us whether an existing
         // plant's collider reaches into OUR grow sphere, but it cannot tell us the reverse — that
-        // would mean testing a sphere we do not own — so we need the neighbours' own positions and
-        // radii in hand.
-        private struct Neighbour { internal Vector3 pos; internal float growRadius; }
+        // would mean testing a sphere we do not own — and it only sees the seedling that is there
+        // today, not the larger crop it will grow into. So we need the neighbours' own positions,
+        // radii and lifecycle extents in hand.
+        private struct Neighbour { internal Vector3 pos; internal float growRadius; internal float extent; }
         private static readonly List<Neighbour> _neighbours = new List<Neighbour>();
         private static readonly HashSet<Plant> _neighbourSeen = new HashSet<Plant>();
         private static readonly Collider[] _neighbourBuffer = new Collider[256];
+        // Looking an extent up means reading the instance's name, which allocates, and the list above
+        // is rebuilt every frame. A plant's species never changes, so remember each one. Cleared when
+        // the ghost is rebuilt, which happens after every placement and keeps it small.
+        private static readonly Dictionary<Plant, float> _neighbourExtent = new Dictionary<Plant, float>();
 
         // Pool sizing. Deliberately independent of the AOE toggle so switching it off and on again
         // does not destroy and rebuild every ghost.
@@ -108,6 +113,7 @@ namespace ImpactfulSkills.modules.Multiplant {
 
         /// <summary>Called from SetupPlacementGhost to manage pool lifecycle before BuildGrid.</summary>
         internal static void Prepare(GameObject rootGhost) {
+            _neighbourExtent.Clear();
             if (rootGhost == null) {
                 DestroyPool();
                 return;
@@ -136,6 +142,7 @@ namespace ImpactfulSkills.modules.Multiplant {
             ExtraGhosts.Clear();
             GhostValid.Clear();
             _cells.Clear();
+            _neighbourExtent.Clear();
             PlantGrid.GridPlantingActive = false;
             PlantGridState.ResetSavedOrientation();
         }
@@ -333,10 +340,13 @@ namespace ImpactfulSkills.modules.Multiplant {
             // Only a 1x1 layout slides to find a free cell, so only it needs SnapSystem's full probe
             // margin; a whole block never moves and needs a single cell of slack for the snap offset.
             float search = LayoutCells == 1 ? 3f : 1f;
-            // Plus the furthest a neighbour's own sphere can reach back at us. An ungrown Oak has the
-            // largest reach in the game at 3m, and it is what makes this worth bounding rather than
-            // picking a fixed radius.
-            float radius = spacing * (half + search) + PlantDefinitions.MaxGrowRadius + PlantGrid.HeldExtent;
+            // Plus the furthest either side of a pair can reach the other: a neighbour's own sphere
+            // reaching back at our grown crop (an ungrown Oak has the largest sphere in the game at
+            // 3m, and it is what makes this worth bounding rather than picking a fixed radius), or
+            // our sphere reaching the crop a neighbour will grow into.
+            float reach = Mathf.Max(PlantDefinitions.MaxGrowRadius + PlantGrid.HeldExtent,
+                                    PlantGridState.Plant.m_growRadius + PlantDefinitions.MaxExtent);
+            float radius = spacing * (half + search) + reach;
 
             int hits = Physics.OverlapSphereNonAlloc(centre, radius, _neighbourBuffer, PlantDefinitions.plantSpaceMask);
             for (int i = 0; i < hits; i++) {
@@ -346,16 +356,23 @@ namespace ImpactfulSkills.modules.Multiplant {
                 // collider we hit sits on a child of it.
                 Plant p = c.GetComponentInParent<Plant>();
                 if (p == null || !_neighbourSeen.Add(p)) { continue; }
-                _neighbours.Add(new Neighbour { pos = p.transform.position, growRadius = p.m_growRadius });
+                if (!_neighbourExtent.TryGetValue(p, out float extent)) {
+                    extent = PlantDefinitions.ExtentOf(Utils.GetPrefabName(p.gameObject));
+                    _neighbourExtent[p] = extent;
+                }
+                _neighbours.Add(new Neighbour { pos = p.transform.position, growRadius = p.m_growRadius, extent = extent });
             }
         }
 
-        /// <summary>True when planting at pos would put our collider inside an existing plant's grow sphere.</summary>
-        private static bool IntrudesOnNeighbour(Vector3 pos) {
-            float ownExtent = PlantGrid.HeldExtent;
+        /// <summary>
+        /// True when a plant at pos and an existing seedling would crowd each other at some point in
+        /// their lives: either one, as a seedling or once grown, inside the other's grow sphere.
+        /// </summary>
+        private static bool CrowdsNeighbour(Vector3 pos, Plant held) {
             for (int i = 0; i < _neighbours.Count; i++) {
-                float need = _neighbours[i].growRadius + ownExtent;
-                if (FlatSqrDistance(_neighbours[i].pos, pos) < need * need) { return true; }
+                Neighbour n = _neighbours[i];
+                float need = PlantDefinitions.RequiredDistance(held.m_growRadius, PlantGrid.HeldExtent, n.growRadius, n.extent);
+                if (FlatSqrDistance(n.pos, pos) < need * need) { return true; }
             }
             return false;
         }
@@ -371,20 +388,22 @@ namespace ImpactfulSkills.modules.Multiplant {
             Plant held = PlantGridState.Plant;
             if (held.m_needCultivatedGround && !heightmap.IsCultivated(pos)) { return false; }
 
-            // Forward direction — this IS Valheim's own Plant.HaveGrowSpace test, and it already
-            // accounts for the neighbour's collider size: OverlapSphere reports a collider whose
-            // SURFACE is inside the sphere, so it fires exactly when the centre distance drops below
-            // ourGrowRadius + theirExtent. Nothing analytic we could write here would be more
-            // accurate than letting PhysX do the geometry.
+            // Forward direction, as things stand now — this IS Valheim's own Plant.HaveGrowSpace test,
+            // and it already accounts for the size of whatever is there: OverlapSphere reports a
+            // collider whose SURFACE is inside the sphere, so it fires exactly when the centre
+            // distance drops below ourGrowRadius + theirExtent. For grown crops, rocks and buildings
+            // nothing analytic we could write here would be more accurate than letting PhysX do it.
             if (Physics.OverlapSphereNonAlloc(pos, held.m_growRadius, _spaceBuffer, PlantDefinitions.plantSpaceMask) > 0) {
                 return false;
             }
 
-            // Reverse direction — the one physics cannot answer, because it would mean testing a
-            // sphere we do not own. A neighbour with a larger grow radius can clear our sphere while
-            // our collider sits inside theirs; with m_destroyIfCantGrow set on every crop it is then
-            // the NEIGHBOUR that dies, hours later, with nothing red in the preview to warn anyone.
-            if (IntrudesOnNeighbour(pos)) { return false; }
+            // Everything physics cannot answer about the plants that are still growing. The reverse
+            // direction would mean testing a sphere we do not own: a neighbour with a larger grow
+            // radius can clear our sphere while our crop sits inside theirs. And both directions
+            // change over time, because physics sees today's seedling and not the larger crop it
+            // grows into. With m_destroyIfCantGrow set on every crop, either miss destroys a plant
+            // hours later with nothing red in the preview to warn anyone.
+            if (CrowdsNeighbour(pos, held)) { return false; }
 
             return HasVineSpace(pos, held) && HasAttachPiece(pos, held);
         }

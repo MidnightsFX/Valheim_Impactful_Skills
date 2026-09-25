@@ -1,3 +1,9 @@
+**0.19.4**
+---
+```
+- Fixed multiple crops spacing, when growing crops and fully grown crops have different spacing requirements
+```
+
 **0.19.3**
 ---
 ```

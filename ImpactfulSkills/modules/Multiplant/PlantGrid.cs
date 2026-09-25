@@ -18,8 +18,9 @@ namespace ImpactfulSkills.modules.Multiplant {
         internal static bool MultiplantDisabled = false;
         internal static float Spacing = 0;
         /// <summary>
-        /// Horizontal reach of the held plant's own collider. Physics can answer "does their collider
-        /// reach into my sphere"; only this can answer "does my collider reach into theirs".
+        /// Horizontal reach of the held plant's own collider, at the largest it gets as a seedling or
+        /// once grown. Physics can answer "does their collider reach into my sphere"; only this can
+        /// answer "does my collider reach into theirs".
         /// </summary>
         internal static float HeldExtent = 0;
         /// <summary>Centre distance two of THIS species need from each other. Spacing is always >= this.</summary>

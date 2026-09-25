@@ -137,8 +137,8 @@ namespace ImpactfulSkills.modules.Multiplant {
             // (heldSpacing, which already carries the safety floor), and our cells against the
             // anchor's SPECIES — which is asymmetric, because a neighbour with a bigger grow radius
             // reaches further at us than we do at it. Comparing spacing to spacing missed that: a
-            // magecap patch (1.08) would happily accept a barley grid (0.95) even though the cross
-            // requirement is 1.20, and every barley latticed in would kill a magecap.
+            // magecap patch (1.08) would happily accept a barley grid (0.99) even though the cross
+            // requirement is 1.24, and every barley latticed in would kill a magecap.
             //
             // A step that fails either would crowd plants that IsValidPosition cannot warn about: the
             // ghosts sit on the ghost layer and do not see one another. Report no snap in that case
