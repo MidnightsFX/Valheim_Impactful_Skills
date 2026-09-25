@@ -55,7 +55,8 @@ namespace ImpactfulSkills.patches
 
 
         // Runs after the skill gain rate multiplier, so the catch up bonus is an absolute amount rather than something
-        // the configured rate scales up as well.
+        // the configured rate scales up as well. A gain that has already been zeroed (a skill rate of 0) gets no bonus,
+        // otherwise the bonus alone would keep raising a skill that was configured to stop.
         [HarmonyPatch(typeof(Skills), nameof(Skills.RaiseSkill))]
         public static class PatchSkillIncreaseHigherGainsForLowerSkills
         {
@@ -63,6 +64,7 @@ namespace ImpactfulSkills.patches
             private static void Prefix(Skills __instance, Skills.SkillType skillType, ref float factor)
             {
                 time_since_start += Time.deltaTime;
+                if (factor <= 0f) { return; }
                 if (ValConfig.EnableKnowledgeSharing.Value == true && Player.m_localPlayer != null
                     && __instance.m_player == Player.m_localPlayer && !skill_types_to_avoid_shared_xp.Contains(skillType))
                 {

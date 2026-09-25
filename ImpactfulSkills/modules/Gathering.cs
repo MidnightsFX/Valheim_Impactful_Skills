@@ -3,6 +3,7 @@ using ImpactfulSkills.common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -21,18 +22,24 @@ namespace ImpactfulSkills.patches
 
         private static void PickableLuckLevelsChanged(object s, EventArgs e)
         {
-            try {
-                List<float> tluck_levels = new List<float> { };
-                foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
-                    tluck_levels.Add(float.Parse(item));
-                }
-                if (tluck_levels.Count > 0) {
-                    luck_levels = tluck_levels;
+            luck_levels = ParseLuckLevels(ValConfig.GatheringLuckLevels.Value);
+        }
+
+        // An empty list means no luck drops at all. Invalid entries are skipped on their own rather than throwing the
+        // whole list away, since falling back to a default list would hand out drops the config asked not to.
+        private static List<float> ParseLuckLevels(string value)
+        {
+            List<float> levels = new List<float> { };
+            foreach (var item in value.Split(',')) {
+                string entry = item.Trim();
+                if (entry.Length == 0) { continue; }
+                if (float.TryParse(entry, NumberStyles.Float, CultureInfo.InvariantCulture, out float level)) {
+                    levels.Add(level);
+                } else {
+                    Logger.LogWarning($"GatheringLuckLevels entry '{entry}' is not a number, ignoring it.");
                 }
             }
-            catch (Exception ex) {
-                Logger.LogWarning($"Error parsing GatheringLuckLevels: {ex}");
-            }
+            return levels;
         }
 
         private static void UnallowedPickablesChanged(object s, EventArgs e) {
@@ -53,15 +60,7 @@ namespace ImpactfulSkills.patches
         }
 
         public static void SetupGatherables() {
-            try {
-                foreach (var item in ValConfig.GatheringLuckLevels.Value.Split(',')) {
-                    luck_levels.Add(float.Parse(item));
-                }
-            } catch (Exception ex) {
-                Logger.LogWarning($"Error parsing GatheringLuckLevels, defaults will be used: {ex}");
-                luck_levels.AddRange(new List<float>() { 30, 50, 70, 90, 100 });
-            }
-
+            luck_levels = ParseLuckLevels(ValConfig.GatheringLuckLevels.Value);
             ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
             try {
                 foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Split(',')) {
@@ -132,7 +131,12 @@ namespace ImpactfulSkills.patches
                     return codeMatcher.Instructions();
                 }
 
-                codeMatcher.Start().Advance(blockStart + 2).Insert(
+                // With gathering disabled, fall through into vanilla's block untouched so picking behaves exactly as
+                // it does without the mod: vanilla's own bonus roll, stats and skill XP.
+                codeMatcher.Start().Advance(blockStart + 2).CreateLabel(out Label vanillaBlock);
+                codeMatcher.Insert(
+                    Transpilers.EmitDelegate(UseGatheringLuck),
+                    new CodeInstruction(OpCodes.Brfalse, vanillaBlock),
                     new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
                     new CodeInstruction(OpCodes.Ldarg_1), // Load the character picking it
                     Transpilers.EmitDelegate(DetermineExtraDrops),
@@ -140,6 +144,10 @@ namespace ImpactfulSkills.patches
                     new CodeInstruction(OpCodes.Br, afterVanillaBonus));
 
                 return codeMatcher.Instructions();
+            }
+
+            static bool UseGatheringLuck() {
+                return ValConfig.EnableGathering.Value;
             }
 
             static int DetermineExtraDrops(Pickable __instance, Humanoid character)

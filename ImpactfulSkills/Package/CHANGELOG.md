@@ -1,3 +1,10 @@
+**0.19.3**
+---
+```
+- Fixes voyager XP rate providing 0 XP from shared XP
+- Fixes disabling gatherings luck factor (uses vanilla instead)
+```
+
 **0.19.2**
 ---
 ```
