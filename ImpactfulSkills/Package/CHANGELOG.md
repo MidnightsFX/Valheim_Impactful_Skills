@@ -1,3 +1,12 @@
+**0.20.0**
+---
+```
+- Disabled skills (Animal Handling, Voyager, Hauling, Forging) are hidden from the skills panel, your levels are kept.
+- VoyagerSailingSpeedFactor can now be set below 1 (eg: 0.05 is 5% faster sailing at level 100)
+- Scythe harvest range increased, reaching over 3x the range of AOE harvesting by hand at level 100 (configurable with ScytheHarvestRangeMultiplier)
+- Fixes an error when a ZenBeehive hive's container is left open after being emptied
+```
+
 **0.19.4**
 ---
 ```
