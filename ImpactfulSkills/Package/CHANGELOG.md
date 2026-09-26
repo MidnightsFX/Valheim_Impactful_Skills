@@ -1,3 +1,9 @@
+**0.20.1**
+---
+```
+- Fix potential for early caching causing failed RPC registration
+```
+
 **0.20.0**
 ---
 ```
