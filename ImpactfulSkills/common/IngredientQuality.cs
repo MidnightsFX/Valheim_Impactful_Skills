@@ -1,5 +1,8 @@
 using HarmonyLib;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace ImpactfulSkills {
     /// <summary>
@@ -17,7 +20,8 @@ namespace ImpactfulSkills {
     /// Tier selection here is always the lowest tier that covers the whole cost, mirroring
     /// Player.GetFirstRequiredItem. A rare ingredient is therefore only ever spent when it is the only one you
     /// are carrying, and because both features pick their tier through this same function, what they pay out
-    /// and what gets consumed can never disagree.
+    /// and what gets consumed can never disagree. The one exception is a mod that takes over ConsumeResources
+    /// entirely (the craft from containers mods): consumption is then theirs, at vanilla's any tier.
     /// </summary>
     internal static class IngredientQuality {
 
@@ -151,14 +155,18 @@ namespace ImpactfulSkills {
         /// disagree with the affordability check in Player.HaveRequirementItems.
         /// </summary>
         internal static int SelectTier(Inventory inventory, ItemDrop.ItemData prototype, int required) {
-            if (inventory == null || prototype == null || required <= 0) { return 0; }
+            if (prototype == null) { return 0; }
 
-            int maxQuality = prototype.m_shared.m_maxQuality;
+            return SelectTier(inventory, prototype.m_shared.m_name, prototype.m_shared.m_maxQuality, required);
+        }
+
+        internal static int SelectTier(Inventory inventory, string name, int maxQuality, int required) {
+            if (inventory == null || name == null || required <= 0) { return 0; }
+
             if (maxQuality <= 1) { return 0; }
             if (TierCounts.Length < maxQuality + 1) { TierCounts = new int[maxQuality + 1]; }
             Array.Clear(TierCounts, 0, maxQuality + 1);
 
-            string name = prototype.m_shared.m_name;
             foreach (ItemDrop.ItemData item in inventory.m_inventory) {
                 if (item == null || item.m_shared.m_name != name) { continue; }
                 if (item.m_worldLevel < Game.m_worldLevel) { continue; }
@@ -173,52 +181,61 @@ namespace ImpactfulSkills {
         }
 
         /// <summary>
+        /// Stands in for the m_inventory.RemoveItem call inside Player.ConsumeResources, taking the lowest quality
+        /// tier that covers the whole amount instead of whatever tier comes first in the inventory. The parameters
+        /// are that call's instance followed by its arguments, so swapping the call for this one is stack neutral.
+        ///
+        /// Tier selection is deterministic on inventory contents, so this agrees with what was handed out a few
+        /// lines earlier in DoCrafting by construction - nothing between the two touches the ingredient stacks.
+        /// Anything without a quality level, a caller that already chose a tier (itemQuality >= 0), or an amount no
+        /// single tier covers falls through to vanilla's own removal unchanged.
+        /// </summary>
+        internal static void RemoveItemAtLowestTier(Inventory inventory, string name, int amount, int itemQuality, bool worldLevelBased) {
+            if (AnyFeatureEnabled && itemQuality < 0) {
+                // The requirement itself is not on the stack here, but every stack of an item shares one SharedData,
+                // so any held stack answers for its max quality.
+                ItemDrop.ItemData held = inventory.GetItem(name);
+                int tier = held != null ? SelectTier(inventory, name, held.m_shared.m_maxQuality, amount) : 0;
+                if (tier > 0) {
+                    Logger.LogDebug($"Consuming {amount} {name} from quality tier {tier}.");
+                    itemQuality = tier;
+                }
+            }
+            inventory.RemoveItem(name, amount, itemQuality, worldLevelBased);
+        }
+
+        /// <summary>
         /// Vanilla takes a single itemQuality for the whole requirement array, so it cannot ask for a quality 5
         /// anglerfish and quality 1 bread dough in one call - passing 5 would match no bread and consume nothing.
-        /// This replaces the loop to pick a tier per requirement instead, keeping vanilla's upgrader station filter.
+        /// This redirects the one removal inside its loop to <see cref="RemoveItemAtLowestTier"/>, which picks a tier
+        /// per requirement, and leaves vanilla's loop, upgrader station filter and amounts untouched.
         ///
-        /// Everything that is not a quality bearing craft - building placement included - returns to untouched
-        /// vanilla code through the early outs.
+        /// This has to be a transpiler, not a replacing prefix. The craft from containers mods (CraftFromContainers,
+        /// AzuCraftyBoxes) take over ConsumeResources with a prefix that returns false, and HarmonyX still calls every
+        /// later prefix after one returns false - so a second replacing prefix charged the whole recipe again from the
+        /// player's inventory. Inside the method body, this is skipped along with the rest of vanilla whenever another
+        /// mod takes consumption over. Priority.Last lets a mod transpiling the same call (ValheimPlus's craft from
+        /// chests) rewrite the vanilla IL first, in which case the anchor is gone and this steps aside.
         /// </summary>
         [HarmonyPatch(typeof(Player), nameof(Player.ConsumeResources))]
         internal static class ConsumeQualityIngredientTierPatch {
-            [HarmonyPrefix]
-            private static bool Prefix(Player __instance, Piece.Requirement[] requirements, int qualityLevel, int itemQuality, int multiplier) {
-                // itemQuality >= 0 means the caller already chose a tier for itself.
-                if (AnyFeatureEnabled == false || itemQuality >= 0 || requirements == null) { return true; }
+            private static readonly MethodInfo InventoryRemoveItemMethod = AccessTools.Method(typeof(Inventory), nameof(Inventory.RemoveItem), new Type[] { typeof(string), typeof(int), typeof(int), typeof(bool) });
+            private static readonly MethodInfo RemoveItemAtLowestTierMethod = AccessTools.Method(typeof(IngredientQuality), nameof(RemoveItemAtLowestTier));
 
-                CraftingStation station = __instance.GetCurrentCraftingStation();
-                bool anyQuality = false;
-                foreach (Piece.Requirement requirement in requirements) {
-                    if (IsSpentAt(requirement, station) == false || HasQuality(requirement) == false) { continue; }
-                    anyQuality = true;
-                    break;
+            [HarmonyTranspiler]
+            [HarmonyPriority(Priority.Last)]
+            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                List<CodeInstruction> code = new List<CodeInstruction>(instructions);
+
+                List<CodeInstruction> removals = code.FindAll(instruction => instruction.Calls(InventoryRemoveItemMethod));
+                if (removals.Count != 1) {
+                    Logger.LogWarning($"Unable to patch ingredient quality consumption. Expected 1 call to Inventory.RemoveItem in Player.ConsumeResources, found {removals.Count}, it was likely replaced by another mod. Skipping this patch, crafts will consume ingredients of any quality tier.");
+                    return code;
                 }
-                if (anyQuality == false) { return true; }
 
-                Inventory inventory = __instance.GetInventory();
-                foreach (Piece.Requirement requirement in requirements) {
-                    // GetAmount prices upgrader resources regardless of station, so without this an ordinary station
-                    // would take the upgrader only ingredients too.
-                    if (IsSpentAt(requirement, station) == false) { continue; }
-
-                    int amount = requirement.GetAmount(qualityLevel) * multiplier;
-                    if (amount <= 0) { continue; }
-
-                    // Tier selection is deterministic on inventory contents and always picks the lowest tier that
-                    // covers the cost, so this agrees with what was handed out a few lines earlier in DoCrafting by
-                    // construction - nothing between the two touches the ingredient stacks.
-                    int tier = -1;
-                    if (HasQuality(requirement)) {
-                        int selected = SelectTier(inventory, requirement.m_resItem.m_itemData, amount);
-                        if (selected > 0) { tier = selected; }
-                    }
-
-                    string name = requirement.m_resItem.m_itemData.m_shared.m_name;
-                    Logger.LogDebug($"Consuming {amount} {name} from quality tier {tier}.");
-                    inventory.RemoveItem(name, amount, tier);
-                }
-                return false;
+                removals[0].opcode = OpCodes.Call;
+                removals[0].operand = RemoveItemAtLowestTierMethod;
+                return code;
             }
         }
     }

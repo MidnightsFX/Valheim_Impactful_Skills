@@ -1,3 +1,9 @@
+**0.20.2**
+---
+```
+- Improves compatibility with craft from container mods which skip resource consumption
+```
+
 **0.20.1**
 ---
 ```
