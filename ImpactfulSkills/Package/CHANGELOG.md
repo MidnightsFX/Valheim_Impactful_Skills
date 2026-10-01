@@ -3,6 +3,8 @@
 ```
 - Plants show roughly how long they have left to grow once your Farming is high enough (12), and players can turn this off if another mod already shows it.
 - Creatures you tame or breed can gain an extra star once your Animal Handling is high enough (75).
+- Forging's better odds at the Forge of Potential now also apply with Reforged Potential installed, and the odds shown are the ones actually rolled.
+- The AOE toggle hotkey no longer fires while the inventory, map, build menu or another window is open.
 ```
 
 **0.20.2**
