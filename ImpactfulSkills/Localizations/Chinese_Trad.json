@@ -21,5 +21,10 @@
   "cooking_streak": "連續烹煮 +{0}%",
   "aoe_features_enabled": "範圍收穫/挖掘已啟用",
   "aoe_features_disabled": "範圍收穫/挖掘已停用",
-  "aoe_features_hint": "切換範圍收穫/挖掘"
+  "aoe_features_hint": "切換範圍收穫/挖掘",
+  "farming_grows_in": "約 {0} 後完全成熟",
+  "farming_grows_soon": "即將成熟",
+  "farming_time_hours": "{0}小時{1}分",
+  "farming_time_minutes": "{0}分鐘",
+  "animal_bonus_star": "{0} 獲得了一顆額外的星"
 }

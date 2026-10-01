@@ -21,5 +21,10 @@
   "cooking_streak": "Eldamennskuröð +{0}%",
   "aoe_features_enabled": "Svæðisuppskera/-náma virk",
   "aoe_features_disabled": "Svæðisuppskera/-náma óvirk",
-  "aoe_features_hint": "Víxla svæðisuppskeru/-námu"
+  "aoe_features_hint": "Víxla svæðisuppskeru/-námu",
+  "farming_grows_in": "Fullvaxið eftir ~{0}",
+  "farming_grows_soon": "Fullvaxið á hverri stundu",
+  "farming_time_hours": "{0} klst. {1} mín.",
+  "farming_time_minutes": "{0} mín.",
+  "animal_bonus_star": "{0} fékk auka stjörnu"
 }

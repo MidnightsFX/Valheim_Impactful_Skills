@@ -13,6 +13,8 @@ namespace ImpactfulSkills.compatibility {
         public static bool IsMagicPluginEnabled = false;
         public static bool IsCrystalMagicalEnabled = false;
         public static bool IsZenBeehiveEnabled = false;
+        public static bool IsReforgedPotentialEnabled = false;
+        public static bool IsStarLevelSystemEnabled = false;
 
         // Plant grid compatibility checks
         public static bool IsPlantEasilyEnabled = false;
@@ -37,6 +39,12 @@ namespace ImpactfulSkills.compatibility {
                 }
                 if (plugins.Keys.Contains(ZenBeehive.PluginGUID)) {
                     IsZenBeehiveEnabled = true;
+                }
+                if (plugins.Keys.Contains(ReforgedPotential.PluginGUID)) {
+                    IsReforgedPotentialEnabled = true;
+                }
+                if (plugins.Keys.Contains(StarLevelSystem.PluginGUID)) {
+                    IsStarLevelSystemEnabled = true;
                 }
                 if (plugins.Keys.Contains("advize.PlantEasily")) {
                     IsPlantEasilyEnabled = true;

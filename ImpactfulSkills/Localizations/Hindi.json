@@ -21,5 +21,10 @@
   "cooking_streak": "लगातार पकाने का बोनस +{0}%",
   "aoe_features_enabled": "क्षेत्र कटाई/खनन चालू",
   "aoe_features_disabled": "क्षेत्र कटाई/खनन बंद",
-  "aoe_features_hint": "क्षेत्र कटाई/खनन बदलें"
+  "aoe_features_hint": "क्षेत्र कटाई/खनन बदलें",
+  "farming_grows_in": "लगभग {0} में पूरी तरह विकसित",
+  "farming_grows_soon": "किसी भी क्षण विकसित होगा",
+  "farming_time_hours": "{0} घं {1} मि",
+  "farming_time_minutes": "{0} मि",
+  "animal_bonus_star": "{0} को एक अतिरिक्त सितारा मिला"
 }

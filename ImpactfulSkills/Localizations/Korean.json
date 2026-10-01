@@ -21,5 +21,10 @@
   "cooking_streak": "요리 연속 보너스 +{0}%",
   "aoe_features_enabled": "범위 수확/채굴 활성화",
   "aoe_features_disabled": "범위 수확/채굴 비활성화",
-  "aoe_features_hint": "범위 수확/채굴 전환"
+  "aoe_features_hint": "범위 수확/채굴 전환",
+  "farming_grows_in": "약 {0} 후 완전히 자람",
+  "farming_grows_soon": "곧 다 자람",
+  "farming_time_hours": "{0}시간 {1}분",
+  "farming_time_minutes": "{0}분",
+  "animal_bonus_star": "{0}의 별이 하나 늘었습니다"
 }

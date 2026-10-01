@@ -21,5 +21,10 @@
   "cooking_streak": "Gatavošanas sērija +{0}%",
   "aoe_features_enabled": "Laukuma ražas novākšana/ieguve ieslēgta",
   "aoe_features_disabled": "Laukuma ražas novākšana/ieguve izslēgta",
-  "aoe_features_hint": "Pārslēgt laukuma ražas novākšanu/ieguvi"
+  "aoe_features_hint": "Pārslēgt laukuma ražas novākšanu/ieguvi",
+  "farming_grows_in": "Pilnībā izaugs pēc ~{0}",
+  "farming_grows_soon": "Izaugs jebkurā brīdī",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} iegūst papildu zvaigzni"
 }

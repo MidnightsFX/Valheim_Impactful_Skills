@@ -21,5 +21,10 @@
   "cooking_streak": "Racha de cocina +{0}%",
   "aoe_features_enabled": "Recolección/minería en área activado",
   "aoe_features_disabled": "Recolección/minería en área desactivado",
-  "aoe_features_hint": "Alternar recolección/minería en área"
+  "aoe_features_hint": "Alternar recolección/minería en área",
+  "farming_grows_in": "Completamente crecido en ~{0}",
+  "farming_grows_soon": "Crecerá en cualquier momento",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} gana una estrella adicional"
 }

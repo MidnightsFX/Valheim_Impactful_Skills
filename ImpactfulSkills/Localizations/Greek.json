@@ -21,5 +21,10 @@
   "cooking_streak": "Σερί μαγειρικής +{0}%",
   "aoe_features_enabled": "Συγκομιδή/εξόρυξη περιοχής ενεργή",
   "aoe_features_disabled": "Συγκομιδή/εξόρυξη περιοχής ανενεργή",
-  "aoe_features_hint": "Εναλλαγή συγκομιδής/εξόρυξης περιοχής"
+  "aoe_features_hint": "Εναλλαγή συγκομιδής/εξόρυξης περιοχής",
+  "farming_grows_in": "Πλήρως ανεπτυγμένο σε ~{0}",
+  "farming_grows_soon": "Αναπτύσσεται από στιγμή σε στιγμή",
+  "farming_time_hours": "{0} ώ {1} λ",
+  "farming_time_minutes": "{0} λ",
+  "animal_bonus_star": "{0} κερδίζει ένα επιπλέον αστέρι"
 }

@@ -21,5 +21,10 @@
   "cooking_streak": "ทำอาหารต่อเนื่อง +{0}%",
   "aoe_features_enabled": "เปิดการเก็บเกี่ยว/ขุดเป็นพื้นที่",
   "aoe_features_disabled": "ปิดการเก็บเกี่ยว/ขุดเป็นพื้นที่",
-  "aoe_features_hint": "สลับการเก็บเกี่ยว/ขุดเป็นพื้นที่"
+  "aoe_features_hint": "สลับการเก็บเกี่ยว/ขุดเป็นพื้นที่",
+  "farming_grows_in": "โตเต็มที่ในอีกประมาณ {0}",
+  "farming_grows_soon": "จะโตเต็มที่ในไม่ช้า",
+  "farming_time_hours": "{0} ชม. {1} นาที",
+  "farming_time_minutes": "{0} นาที",
+  "animal_bonus_star": "{0} ได้รับดาวเพิ่มหนึ่งดวง"
 }

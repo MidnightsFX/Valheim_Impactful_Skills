@@ -21,5 +21,10 @@
   "cooking_streak": "Yemek serisi +%{0}",
   "aoe_features_enabled": "Alan hasadı/madenciliği açık",
   "aoe_features_disabled": "Alan hasadı/madenciliği kapalı",
-  "aoe_features_hint": "Alan hasadı/madenciliğini değiştir"
+  "aoe_features_hint": "Alan hasadı/madenciliğini değiştir",
+  "farming_grows_in": "~{0} içinde tamamen büyür",
+  "farming_grows_soon": "Her an büyüyebilir",
+  "farming_time_hours": "{0} sa {1} dk",
+  "farming_time_minutes": "{0} dk",
+  "animal_bonus_star": "{0} fazladan bir yıldız kazandı"
 }

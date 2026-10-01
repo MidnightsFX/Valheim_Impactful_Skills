@@ -21,5 +21,10 @@
   "cooking_streak": "Kuharski niz +{0}%",
   "aoe_features_enabled": "Žetva/kopanje po području uključeni",
   "aoe_features_disabled": "Žetva/kopanje po području isključeni",
-  "aoe_features_hint": "Uključi/isključi žetvu i kopanje po području"
+  "aoe_features_hint": "Uključi/isključi žetvu i kopanje po području",
+  "farming_grows_in": "Potpuno izraste za ~{0}",
+  "farming_grows_soon": "Izrast će svakog trena",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} dobiva dodatnu zvjezdicu"
 }

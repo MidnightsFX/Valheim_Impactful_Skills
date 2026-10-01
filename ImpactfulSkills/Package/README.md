@@ -39,6 +39,7 @@ Pickaxes now improves the amount of ore and stone you get from mining things. Al
 ### Gathering (Farming)
 
 Gathering increases the bonus number of items you can harvest from any plant. This is partly influenced by luck, and partly influenced by your level.
+From an early level (default 12) a healthy plant shows roughly how long it has left to grow when you look at it. If another mod already shows grow times, each player can turn this off for themselves with EnableFarmingGrowthTimeDisplay.
 Additionally at a moderate level of gathering you gain AOE harvesting (default 25) which increases in range with your skill. Gathering skill also increases the range at which you can harvest with the scythe, reaching over 3x as far as AOE harvesting by hand at level 100 (configurable with ScytheHarvestRangeMultiplier).
 Multi-planting unlocks at the same level (default 25), and the size of the planting grid grows in steps as your skill rises.
 Farming also pays for the cultivator: planting costs full stamina at Farming 0 and nothing at all at Farming 100, and every plant in a grid costs the same as one placed by hand (configurable with PlantingCostStaminaReduction).
@@ -155,6 +156,8 @@ Forging is trained by crafting at the workbench, forge, black forge and galdr ta
 
 Masterwork and lightweight are part of the item. They show in its tooltip, stay with it when it is stored, traded or upgraded by anyone, and still apply if your forging skill drops. Which stations get a level, and every bonus and level above, can be changed in the config.
 
+With Reforged Potential installed, forging's odds replace its Upgrade Chance and Break Chance settings. Set EnableRefinementBonus to false to use Reforged Potential's odds instead.
+
 ### Blood Magic
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.
@@ -165,6 +168,9 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 Taming reduces the amount of time it takes to tame creatures. It also multiplies the loot you get from slaughtering tamed creatures, removing the need for massive creature farms. 
 The bonus scales off what the animal would actually have dropped, so it accounts for its star level, the world resource rate, and any loot changes from other mods.
 Breeding gives XP
+
+From level 75, a creature you tame or breed has a chance to gain an extra star (laid eggs carry it to the creature that hatches). The chance grows with your skill, and in multiplayer it is the player closest to the creature whose skill counts.
+Creatures never go past 2 stars this way, unless [Star Level System](https://thunderstore.io/c/valheim/p/MidnightMods/StarLevelSystem/) is installed.
 
 
 ### Knowledge Sharing
@@ -177,8 +183,6 @@ Changing your primary weapon type now takes considerably less time.
 Please note these are not ordered or guaranteed to be implemented, but are ideas that are being considered.
 I am also always happy to talk ideas and suggestions in the discord!
 - Skill announcements, when gaining a skill level that gives you a specific bonus
-- Animal whisper allows taming 1 creature permenantly for your character (lvl 100?)
-- Localization for all languages
 
 ## Suggested Mods to pair with
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius

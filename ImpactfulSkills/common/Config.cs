@@ -91,6 +91,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> BeeHarvestXP;
         public static ConfigEntry<float> AnimalBreedingXP;
         public static ConfigEntry<float> AnimalBreedingXPRange;
+        public static ConfigEntry<bool> EnableAnimalBonusStar;
+        public static ConfigEntry<int> AnimalBonusStarRequiredLevel;
+        public static ConfigEntry<float> AnimalBonusStarChance;
 
         public static ConfigEntry<bool> EnableGathering;
         public static ConfigEntry<bool> EnableGatheringAOE;
@@ -101,6 +104,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<string> GatheringDisallowedItems;
         public static ConfigEntry<bool> EnableFarmingBiomeUnrestricted;
         public static ConfigEntry<int> FarmingBiomeUnrestrictedLevel;
+        public static ConfigEntry<bool> EnableFarmingGrowthTimeDisplay;
+        public static ConfigEntry<int> FarmingGrowthTimeDisplayLevel;
         public static ConfigEntry<bool> EnableFarmingMultiPlant;
         public static ConfigEntry<int> FarmingMultiplantRequiredLevel;
         public static ConfigEntry<int> FarmingMultiplantMaxPlantedAtOnce;
@@ -361,7 +366,10 @@ namespace ImpactfulSkills
             BeeBiomeUnrestrictedLevel = BindServerConfig("AnimalHandling", "BeeBiomeUnrestrictedLevel", 25, "At this level, if enabled, beehives built by you can produce honey in any biome.", false, 0, 100);
             BeeHarvestXP = BindServerConfig("AnimalHandling", "BeeHarvestXP", 2f, "The amount of xp for Animal handling provided by harvesting a single honey from a beehive", false, 0f, 20f);
             AnimalBreedingXP = BindServerConfig("AnimalHandling", "AnimalBreedingXP", 5f, "AnimalHandling XP granted to each nearby player when a tamed animal becomes pregnant or gives birth.", false, 0f, 50f);
-            AnimalBreedingXPRange = BindServerConfig("AnimalHandling", "AnimalBreedingXPRange", 30f, "How close a player must be to a breeding animal to gain the breeding XP.", false, 1f, 100f);
+            AnimalBreedingXPRange = BindServerConfig("AnimalHandling", "AnimalBreedingXPRange", 30f, "How close a player must be to a breeding animal to gain the breeding XP, and to give its offspring a chance at a bonus star.", false, 1f, 100f);
+            EnableAnimalBonusStar = BindServerConfig("AnimalHandling", "EnableAnimalBonusStar", true, "At high Animal Handling, a creature you tame or breed has a chance to gain an extra star. The player closest to the creature rolls with their own skill. Creatures never go past 2 stars this way unless Star Level System is installed.");
+            AnimalBonusStarRequiredLevel = BindServerConfig("AnimalHandling", "AnimalBonusStarRequiredLevel", 75, "The Animal Handling level needed before tamed and bred creatures can gain a bonus star.", false, 0, 100);
+            AnimalBonusStarChance = BindServerConfig("AnimalHandling", "AnimalBonusStarChance", 0.25f, "The chance a creature you tame or breed gains a bonus star, at Animal Handling 100. Scales with your skill, so at level 75 it is three quarters of this.", false, 0f, 1f);
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
@@ -372,6 +380,9 @@ namespace ImpactfulSkills
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
             EnableFarmingBiomeUnrestricted = BindServerConfig("Farming", "EnableFarmingBiomeUnrestricted", true, "At the specified level, plants you have tended can grow in any biome.");
             FarmingBiomeUnrestrictedLevel = BindServerConfig("Farming", "FarmingBiomeUnrestrictedLevel", 50, "At this level, if enabled, plants you have tended ignore the biome they were planted in, along with the heat of the Ashlands and the cold of the Mountains and Deep North. They still need cultivated ground, sunlight and room to grow.", false, 0, 100);
+            // Client sided config, so a player who already gets grow times from another mod can turn this off on any server
+            EnableFarmingGrowthTimeDisplay = BindClientConfig("Farming", "EnableFarmingGrowthTimeDisplay", true, "Shows roughly how long a healthy plant has left to grow when you look at it, once you reach FarmingGrowthTimeDisplayLevel. Turn this off if another mod already shows grow times.");
+            FarmingGrowthTimeDisplayLevel = BindServerConfig("Farming", "FarmingGrowthTimeDisplayLevel", 12, "The Farming level at which plants start showing roughly how long they have left to grow.", false, 0, 100);
             EnableFarmingMultiPlant = BindServerConfig("Farming", "EnableFarmingMultiPlant", true, "Enables farming multi-planting");
             FarmingMultiplantRequiredLevel = BindServerConfig("Farming", "FarmingMultiplantRequiredLevel", 25, "The level that Multiplant is enabled.", false, 0, 100);
             FarmingMultiplantMaxPlantedAtOnce = BindServerConfig("Farming", "FarmingMultiplantMaxPlantedAtOnce", 12, "The total number of plants that can be planted at once at maximum gathering.");

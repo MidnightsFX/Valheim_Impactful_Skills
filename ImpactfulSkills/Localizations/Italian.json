@@ -21,5 +21,10 @@
   "cooking_streak": "Serie culinaria +{0}%",
   "aoe_features_enabled": "Raccolta/scavo ad area attivati",
   "aoe_features_disabled": "Raccolta/scavo ad area disattivati",
-  "aoe_features_hint": "Attiva/disattiva raccolta e scavo ad area"
+  "aoe_features_hint": "Attiva/disattiva raccolta e scavo ad area",
+  "farming_grows_in": "Completamente cresciuto tra ~{0}",
+  "farming_grows_soon": "Crescerà da un momento all'altro",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} ottiene una stella in più"
 }

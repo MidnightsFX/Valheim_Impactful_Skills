@@ -21,5 +21,10 @@
   "cooking_streak": "Ruoanlaittoputki +{0}%",
   "aoe_features_enabled": "Aluesadonkorjuu/-louhinta käytössä",
   "aoe_features_disabled": "Aluesadonkorjuu/-louhinta pois käytöstä",
-  "aoe_features_hint": "Vaihda aluesadonkorjuu/-louhinta"
+  "aoe_features_hint": "Vaihda aluesadonkorjuu/-louhinta",
+  "farming_grows_in": "Täysin kasvanut ~{0} kuluttua",
+  "farming_grows_soon": "Kasvaa minä hetkenä hyvänsä",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} sai ylimääräisen tähden"
 }

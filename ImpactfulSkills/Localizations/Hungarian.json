@@ -21,5 +21,10 @@
   "cooking_streak": "Főzési sorozat +{0}%",
   "aoe_features_enabled": "Területi aratás/bányászat bekapcsolva",
   "aoe_features_disabled": "Területi aratás/bányászat kikapcsolva",
-  "aoe_features_hint": "Területi aratás/bányászat váltása"
+  "aoe_features_hint": "Területi aratás/bányászat váltása",
+  "farming_grows_in": "Kb. {0} múlva kifejlődik",
+  "farming_grows_soon": "Bármelyik pillanatban kifejlődik",
+  "farming_time_hours": "{0} ó {1} p",
+  "farming_time_minutes": "{0} p",
+  "animal_bonus_star": "{0} kapott egy extra csillagot"
 }

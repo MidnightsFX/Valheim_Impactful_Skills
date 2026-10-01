@@ -21,5 +21,10 @@
   "cooking_streak": "Matlagingsrekke +{0}%",
   "aoe_features_enabled": "Områdehøsting/-utvinning på",
   "aoe_features_disabled": "Områdehøsting/-utvinning av",
-  "aoe_features_hint": "Veksle områdehøsting/-utvinning"
+  "aoe_features_hint": "Veksle områdehøsting/-utvinning",
+  "farming_grows_in": "Fullvokst om ~{0}",
+  "farming_grows_soon": "Fullvokst når som helst",
+  "farming_time_hours": "{0} t {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} fikk en ekstra stjerne"
 }

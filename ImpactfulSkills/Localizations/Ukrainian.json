@@ -21,5 +21,10 @@
   "cooking_streak": "Кулінарна серія +{0}%",
   "aoe_features_enabled": "Збір/видобуток по області увімкнено",
   "aoe_features_disabled": "Збір/видобуток по області вимкнено",
-  "aoe_features_hint": "Перемкнути збір/видобуток по області"
+  "aoe_features_hint": "Перемкнути збір/видобуток по області",
+  "farming_grows_in": "Повністю виросте через ~{0}",
+  "farming_grows_soon": "Виросте з хвилини на хвилину",
+  "farming_time_hours": "{0} год {1} хв",
+  "farming_time_minutes": "{0} хв",
+  "animal_bonus_star": "{0} отримує додаткову зірку"
 }

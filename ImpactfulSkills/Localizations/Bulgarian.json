@@ -21,5 +21,10 @@
   "cooking_streak": "Готварска серия +{0}%",
   "aoe_features_enabled": "Събиране/копаене по площ включено",
   "aoe_features_disabled": "Събиране/копаене по площ изключено",
-  "aoe_features_hint": "Превключи събиране/копаене по площ"
+  "aoe_features_hint": "Превключи събиране/копаене по площ",
+  "farming_grows_in": "Напълно пораснало след ~{0}",
+  "farming_grows_soon": "Ще порасне всеки момент",
+  "farming_time_hours": "{0} ч {1} мин",
+  "farming_time_minutes": "{0} мин",
+  "animal_bonus_star": "{0} получава допълнителна звезда"
 }

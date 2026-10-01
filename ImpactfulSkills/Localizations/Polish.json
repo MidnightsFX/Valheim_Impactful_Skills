@@ -21,5 +21,10 @@
   "cooking_streak": "Seria gotowania +{0}%",
   "aoe_features_enabled": "Zbieranie/wydobycie obszarowe włączone",
   "aoe_features_disabled": "Zbieranie/wydobycie obszarowe wyłączone",
-  "aoe_features_hint": "Przełącz zbieranie/wydobycie obszarowe"
+  "aoe_features_hint": "Przełącz zbieranie/wydobycie obszarowe",
+  "farming_grows_in": "W pełni wyrośnie za ~{0}",
+  "farming_grows_soon": "Wyrośnie lada chwila",
+  "farming_time_hours": "{0} godz. {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} zyskuje dodatkową gwiazdkę"
 }

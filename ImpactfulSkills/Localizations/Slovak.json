@@ -21,5 +21,10 @@
   "cooking_streak": "Kuchárska séria +{0}%",
   "aoe_features_enabled": "Plošný zber/ťažba zapnuté",
   "aoe_features_disabled": "Plošný zber/ťažba vypnuté",
-  "aoe_features_hint": "Prepnúť plošný zber/ťažbu"
+  "aoe_features_hint": "Prepnúť plošný zber/ťažbu",
+  "farming_grows_in": "Úplne dorastie o ~{0}",
+  "farming_grows_soon": "Dorastie každú chvíľu",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} získava hviezdu navyše"
 }

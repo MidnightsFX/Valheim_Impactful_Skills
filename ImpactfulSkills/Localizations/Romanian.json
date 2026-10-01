@@ -21,5 +21,10 @@
   "cooking_streak": "Serie culinară +{0}%",
   "aoe_features_enabled": "Recoltare/minerit pe zonă activate",
   "aoe_features_disabled": "Recoltare/minerit pe zonă dezactivate",
-  "aoe_features_hint": "Comută recoltarea/mineritul pe zonă"
+  "aoe_features_hint": "Comută recoltarea/mineritul pe zonă",
+  "farming_grows_in": "Complet crescut în ~{0}",
+  "farming_grows_soon": "Crește din clipă în clipă",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} primește o stea în plus"
 }

@@ -25,6 +25,8 @@ namespace ImpactfulSkills
     [BepInDependency("xeio.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("EardwulfDoesMods.Comfy.MassFarming", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency(compatibility.ZenBeehive.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(compatibility.ReforgedPotential.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(compatibility.StarLevelSystem.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";

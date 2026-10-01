@@ -1,3 +1,10 @@
+**0.21.0**
+---
+```
+- Plants show roughly how long they have left to grow once your Farming is high enough (12), and players can turn this off if another mod already shows it.
+- Creatures you tame or breed can gain an extra star once your Animal Handling is high enough (75).
+```
+
 **0.20.2**
 ---
 ```

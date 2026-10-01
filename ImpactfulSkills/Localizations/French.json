@@ -21,5 +21,10 @@
   "cooking_streak": "Série de cuisine +{0} %",
   "aoe_features_enabled": "Récolte/minage de zone activés",
   "aoe_features_disabled": "Récolte/minage de zone désactivés",
-  "aoe_features_hint": "Basculer récolte/minage de zone"
+  "aoe_features_hint": "Basculer récolte/minage de zone",
+  "farming_grows_in": "Croissance terminée dans ~{0}",
+  "farming_grows_soon": "Croissance terminée d'un instant à l'autre",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} gagne une étoile supplémentaire"
 }

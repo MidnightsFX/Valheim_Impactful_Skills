@@ -21,5 +21,10 @@
   "cooking_streak": "Кулинарная серия +{0}%",
   "aoe_features_enabled": "Сбор/добыча по области включены",
   "aoe_features_disabled": "Сбор/добыча по области выключены",
-  "aoe_features_hint": "Переключить сбор/добычу по области"
+  "aoe_features_hint": "Переключить сбор/добычу по области",
+  "farming_grows_in": "Полностью вырастет через ~{0}",
+  "farming_grows_soon": "Вырастет с минуты на минуту",
+  "farming_time_hours": "{0} ч {1} мин",
+  "farming_time_minutes": "{0} мин",
+  "animal_bonus_star": "{0} получает дополнительную звезду"
 }

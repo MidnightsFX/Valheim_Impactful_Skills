@@ -21,5 +21,10 @@
   "cooking_streak": "Kochserie +{0}%",
   "aoe_features_enabled": "Flächen-Ernten/Abbauen aktiviert",
   "aoe_features_disabled": "Flächen-Ernten/Abbauen deaktiviert",
-  "aoe_features_hint": "Flächen-Ernten/Abbauen umschalten"
+  "aoe_features_hint": "Flächen-Ernten/Abbauen umschalten",
+  "farming_grows_in": "Ausgewachsen in ~{0}",
+  "farming_grows_soon": "Jeden Moment ausgewachsen",
+  "farming_time_hours": "{0} Std. {1} Min.",
+  "farming_time_minutes": "{0} Min.",
+  "animal_bonus_star": "{0} hat einen zusätzlichen Stern erhalten"
 }

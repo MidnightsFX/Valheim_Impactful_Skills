@@ -16,9 +16,7 @@ namespace ImpactfulSkills.patches {
     public static class AOEToggleHotkeyPatch {
         static void Postfix(Player __instance) {
             if (Player.m_localPlayer == null || __instance != Player.m_localPlayer) { return; }
-            // Ignore the hotkey while typing in chat or the developer console.
-            if (Chat.instance != null && Chat.instance.HasFocus()) { return; }
-            if (Console.IsVisible()) { return; }
+            if (IsUIOpen(__instance)) { return; }
 
             if (ValConfig.AOEToggleHotkey.Value.IsDown()) {
                 ValConfig.AOEFeaturesEnabled = !ValConfig.AOEFeaturesEnabled;
@@ -30,6 +28,21 @@ namespace ImpactfulSkills.patches {
                     : Localization.instance.Localize("$aoe_features_disabled");
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, msg);
             }
+        }
+
+        /// <summary>
+        /// True while any UI owns the input, so the hotkey doesn't fire while typing or navigating a menu.
+        /// </summary>
+        private static bool IsUIOpen(Player player) {
+            // Vanilla's movement gate: chat, console, text input (portal tags, signs), inventory/containers,
+            // trader, pause menu, map, build-menu search field, dead/teleporting. Jotunn's GUIManager.BlockInput
+            // (used by many mod UIs) also forces this false.
+            if (!player.TakeInput()) { return true; }
+            // TakeInput stays true with the build piece selection open.
+            if (Hud.IsPieceSelectionVisible()) { return true; }
+            // GameCamera.UpdateMouseCapture requests the cursor whenever a UI is up, which also covers the
+            // radial menu, popups and mod UIs that free the cursor without going through TakeInput.
+            return ZCursor.IsRequested;
         }
     }
 

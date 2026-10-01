@@ -118,7 +118,10 @@ namespace ImpactfulSkills.patches
         [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.DoCrafting))]
         private static class ForgedCraftPatch
         {
+            // Reforged Potential's prefix does the whole refinement itself, AddItem included, so the craft has to be
+            // armed before it runs or the item it makes is never seen.
             [HarmonyPrefix]
+            [HarmonyBefore(compatibility.ReforgedPotential.PluginGUID)]
             private static void Prefix(InventoryGui __instance) {
                 PendingCraft = null;
                 if (ValConfig.EnableForging.Value == false || __instance.m_craftRecipe == null || __instance.m_craftRecipe.m_item == null || Player.m_localPlayer == null) { return; }

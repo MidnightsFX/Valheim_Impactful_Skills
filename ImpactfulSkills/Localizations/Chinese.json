@@ -21,5 +21,10 @@
   "cooking_streak": "连续烹饪 +{0}%",
   "aoe_features_enabled": "范围收获/挖掘已启用",
   "aoe_features_disabled": "范围收获/挖掘已禁用",
-  "aoe_features_hint": "切换范围收获/挖掘"
+  "aoe_features_hint": "切换范围收获/挖掘",
+  "farming_grows_in": "约 {0} 后完全成熟",
+  "farming_grows_soon": "即将成熟",
+  "farming_time_hours": "{0}小时{1}分",
+  "farming_time_minutes": "{0}分钟",
+  "animal_bonus_star": "{0} 获得了一颗额外的星"
 }

@@ -21,5 +21,10 @@
   "cooking_streak": "Sequência culinária +{0}%",
   "aoe_features_enabled": "Colheita/mineração em área ativado",
   "aoe_features_disabled": "Colheita/mineração em área desativado",
-  "aoe_features_hint": "Alternar colheita/mineração em área"
+  "aoe_features_hint": "Alternar colheita/mineração em área",
+  "farming_grows_in": "Totalmente crescido em ~{0}",
+  "farming_grows_soon": "Crescerá a qualquer momento",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} ganhou uma estrela extra"
 }

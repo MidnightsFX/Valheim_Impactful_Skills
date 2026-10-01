@@ -21,5 +21,10 @@
   "cooking_streak": "Куварски низ +{0}%",
   "aoe_features_enabled": "Жетва/копање по области укључени",
   "aoe_features_disabled": "Жетва/копање по области искључени",
-  "aoe_features_hint": "Укључи/искључи жетву и копање по области"
+  "aoe_features_hint": "Укључи/искључи жетву и копање по области",
+  "farming_grows_in": "Потпуно израста за ~{0}",
+  "farming_grows_soon": "Израшће сваког тренутка",
+  "farming_time_hours": "{0} ч {1} мин",
+  "farming_time_minutes": "{0} мин",
+  "animal_bonus_star": "{0} добија додатну звездицу"
 }

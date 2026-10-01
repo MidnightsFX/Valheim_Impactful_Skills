@@ -21,5 +21,10 @@
   "cooking_streak": "Kuchařská série +{0}%",
   "aoe_features_enabled": "Plošná sklizeň/těžba zapnuta",
   "aoe_features_disabled": "Plošná sklizeň/těžba vypnuta",
-  "aoe_features_hint": "Přepnout plošnou sklizeň/těžbu"
+  "aoe_features_hint": "Přepnout plošnou sklizeň/těžbu",
+  "farming_grows_in": "Plně doroste za ~{0}",
+  "farming_grows_soon": "Doroste každou chvíli",
+  "farming_time_hours": "{0} h {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} získává hvězdu navíc"
 }

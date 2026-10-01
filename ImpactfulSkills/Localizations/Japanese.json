@@ -21,5 +21,10 @@
   "cooking_streak": "料理連続ボーナス +{0}%",
   "aoe_features_enabled": "範囲収穫/採掘が有効",
   "aoe_features_disabled": "範囲収穫/採掘が無効",
-  "aoe_features_hint": "範囲収穫/採掘を切り替え"
+  "aoe_features_hint": "範囲収穫/採掘を切り替え",
+  "farming_grows_in": "約{0}で成長完了",
+  "farming_grows_soon": "まもなく成長完了",
+  "farming_time_hours": "{0}時間{1}分",
+  "farming_time_minutes": "{0}分",
+  "animal_bonus_star": "{0}の星が1つ増えた"
 }

@@ -21,5 +21,10 @@
   "cooking_streak": "Готвачка серија +{0}%",
   "aoe_features_enabled": "Берење/копање по област вклучено",
   "aoe_features_disabled": "Берење/копање по област исклучено",
-  "aoe_features_hint": "Вклучи/исклучи берење и копање по област"
+  "aoe_features_hint": "Вклучи/исклучи берење и копање по област",
+  "farming_grows_in": "Целосно израснато за ~{0}",
+  "farming_grows_soon": "Ќе израсне секој момент",
+  "farming_time_hours": "{0} ч {1} мин",
+  "farming_time_minutes": "{0} мин",
+  "animal_bonus_star": "{0} добива дополнителна ѕвезда"
 }

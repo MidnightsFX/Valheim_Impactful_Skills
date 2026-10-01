@@ -17,6 +17,9 @@ namespace ImpactfulSkills.patches
     ///
     /// Those values are read off the idol prefab's shared data, which every copy of that idol shares, so they
     /// are swapped in for the one DoCrafting call and put back in a finalizer.
+    ///
+    /// Reforged Potential makes its own roll against its own config and never reads the idol's odds, so it is
+    /// handed forging's odds as well (see compatibility.ReforgedPotential).
     /// </summary>
     internal static class ForgingRefinement
     {
@@ -29,11 +32,13 @@ namespace ImpactfulSkills.patches
             public float Downgrade => Mathf.Max(0f, 1f - Success - Break);
         }
 
+        internal static bool RefinementEnabled => ValConfig.EnableForging.Value && ValConfig.EnableRefinementBonus.Value;
+
         /// <summary>
         /// How much of the forging bonus applies to this player. 0 when the bonus is off or not yet reached.
         /// </summary>
         internal static float RefineSkillFactor(Player player) {
-            if (ValConfig.EnableForging.Value == false || ValConfig.EnableRefinementBonus.Value == false || player == null) { return 0f; }
+            if (RefinementEnabled == false || player == null) { return 0f; }
             if (Forging.ForgingLevel(player) < ValConfig.RefinementBonusLevel.Value) { return 0f; }
             return player.GetSkillFactor(Forging.ForgingSkill);
         }
@@ -69,6 +74,18 @@ namespace ImpactfulSkills.patches
             return chances;
         }
 
+        /// <summary>
+        /// The odds the next refinement will really be rolled with. False when they are not known: Reforged
+        /// Potential is rolling with its own odds and this could not read them.
+        /// </summary>
+        internal static bool TryGetChances(Player player, ItemDrop.ItemData.SharedData idol, out RefineChances chances) {
+            if (compatibility.Modcheck.IsReforgedPotentialEnabled && (RefinementEnabled == false || compatibility.ReforgedPotential.Supported == false)) {
+                return compatibility.ReforgedPotential.TryGetConfiguredChances(idol, out chances);
+            }
+            chances = EffectiveChances(idol, RefineSkillFactor(player));
+            return true;
+        }
+
         [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.DoCrafting))]
         private static class RefinementChancePatch
         {
@@ -77,10 +94,12 @@ namespace ImpactfulSkills.patches
             private static float SavedBreakChance;
             private static float SavedRefund;
 
+            // Ahead of Reforged Potential, whose prefix makes the roll itself and then skips the original.
             [HarmonyPrefix]
+            [HarmonyBefore(compatibility.ReforgedPotential.PluginGUID)]
             private static void Prefix(InventoryGui __instance) {
                 Restore();
-                if (__instance.m_craftRecipe == null || Player.m_localPlayer == null) { return; }
+                if (RefinementEnabled == false || __instance.m_craftRecipe == null || Player.m_localPlayer == null) { return; }
 
                 CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
                 if (station == null || station.m_upgrader == false) { return; }
@@ -89,9 +108,12 @@ namespace ImpactfulSkills.patches
                 if (idol == null) { return; }
 
                 float skillFactor = RefineSkillFactor(Player.m_localPlayer);
+                RefineChances chances = EffectiveChances(idol, skillFactor);
+                // Below the bonus level these are just the idol's odds, but Reforged Potential still has to be given
+                // them - otherwise its fixed odds apply until the bonus kicks in, then drop to the idol's.
+                if (compatibility.Modcheck.IsReforgedPotentialEnabled) { compatibility.ReforgedPotential.OverrideChances(chances); }
                 if (skillFactor <= 0f) { return; }
 
-                RefineChances chances = EffectiveChances(idol, skillFactor);
                 OverriddenIdol = idol;
                 SavedUpgradeChance = idol.m_upgradeChance;
                 SavedBreakChance = idol.m_breakChance;
@@ -110,6 +132,7 @@ namespace ImpactfulSkills.patches
             }
 
             private static void Restore() {
+                if (compatibility.Modcheck.IsReforgedPotentialEnabled) { compatibility.ReforgedPotential.RestoreChances(); }
                 if (OverriddenIdol == null) { return; }
                 OverriddenIdol.m_upgradeChance = SavedUpgradeChance;
                 OverriddenIdol.m_breakChance = SavedBreakChance;
@@ -133,9 +156,8 @@ namespace ImpactfulSkills.patches
                 if (__instance.m_selectedRecipe.Recipe == null || __instance.m_selectedRecipe.ItemData == null) { return; }
 
                 ItemDrop.ItemData.SharedData idol = FindUpgraderResource(__instance.m_selectedRecipe.Recipe);
-                if (idol == null) { return; }
+                if (idol == null || TryGetChances(player, idol, out RefineChances chances) == false) { return; }
 
-                RefineChances chances = EffectiveChances(idol, RefineSkillFactor(player));
                 string odds = LocalizationManager.Instance.TryTranslate("$forging_refine_chances")
                     .Replace("{0}", Percent(chances.Success))
                     .Replace("{1}", Percent(chances.Downgrade))

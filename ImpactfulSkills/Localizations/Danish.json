@@ -21,5 +21,10 @@
   "cooking_streak": "Madlavningsserie +{0}%",
   "aoe_features_enabled": "Områdehøst/-brydning slået til",
   "aoe_features_disabled": "Områdehøst/-brydning slået fra",
-  "aoe_features_hint": "Skift områdehøst/-brydning"
+  "aoe_features_hint": "Skift områdehøst/-brydning",
+  "farming_grows_in": "Fuldt udvokset om ~{0}",
+  "farming_grows_soon": "Udvokset når som helst",
+  "farming_time_hours": "{0} t {1} min",
+  "farming_time_minutes": "{0} min",
+  "animal_bonus_star": "{0} fik en ekstra stjerne"
 }
