@@ -2,6 +2,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using ImpactfulSkills.patches;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -23,6 +24,9 @@ namespace ImpactfulSkills.compatibility {
     /// The entries are written through their backing field rather than Value. The setter raises SettingChanged,
     /// and Reforged Potential saves its config file on every change (SaveOnConfigSet), which its file watcher then
     /// reloads - twice a refinement.
+    ///
+    /// Its prefix also carries its own copy of vanilla's break refund, so the refund cap is transpiled into it too
+    /// (BreakRefundCap).
     /// </summary>
     internal static class ReforgedPotential {
         internal const string PluginGUID = "akuichi.ReforgedPotential";
@@ -30,6 +34,8 @@ namespace ImpactfulSkills.compatibility {
         private const string PluginType = "ReforgedPotential.ReforgedPotential";
         private const string UpgradeChanceField = "UpgradeChance";
         private const string BreakChanceField = "BreakChance";
+        private const string RollType = "ReforgedPotential.ReforgedPotential+InventoryGuiPatch";
+        private const string RollMethod = "DoCraftingPrefix";
 
         private static FieldInfo upgrade_chance_field;
         private static FieldInfo break_chance_field;
@@ -129,6 +135,35 @@ namespace ImpactfulSkills.compatibility {
             chances.Break = (1f - chances.Success) * Mathf.Clamp01(breakOnFailure.Value);
             chances.Refund = Mathf.Clamp01(idol.m_breakReturnIngreientsAmount);
             return true;
+        }
+
+        private static MethodBase RefinementRoll() {
+            Type patch = AccessTools.TypeByName(RollType);
+            return patch != null ? AccessTools.Method(patch, RollMethod) : null;
+        }
+
+        /// <summary>
+        /// Reforged Potential's roll prices its break refund the way vanilla does, but off the level being attempted
+        /// rather than the item's current one, so it climbs past the item's max quality just the same. It gets the
+        /// same cap (ForgingRefinement.BreakRefundAmount).
+        /// </summary>
+        [HarmonyPatch]
+        private static class BreakRefundCap {
+            private static bool Prepare(MethodBase original) {
+                if (Modcheck.IsReforgedPotentialEnabled == false) { return false; }
+
+                bool found = RefinementRoll() != null;
+                if (original == null && found == false) {
+                    Logger.LogWarning($"Reforged Potential is installed but {RollType}.{RollMethod} was not found, so items it breaks above their max level may return more than they are worth. This mod may need an update to match the installed Reforged Potential version.");
+                }
+                return found;
+            }
+
+            private static MethodBase TargetMethod() { return RefinementRoll(); }
+
+            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                return ForgingRefinement.CapBreakRefund(instructions, "Reforged Potential");
+            }
         }
     }
 }

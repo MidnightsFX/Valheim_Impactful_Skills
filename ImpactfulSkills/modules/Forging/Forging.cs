@@ -20,6 +20,8 @@ namespace ImpactfulSkills.patches
         private static HashSet<string> Tier1Stations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private static HashSet<string> Tier2Stations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, float> StationXPWeights = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+        private static HashSet<string> NoXPItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static HashSet<string> MetalIngredients = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public static void SetupForgingSkill() {
             SkillConfig forging = new SkillConfig();
@@ -36,21 +38,36 @@ namespace ImpactfulSkills.patches
             forging.IncreaseStep = 1f;
             ForgingSkill = SkillManager.Instance.AddSkill(forging);
 
-            Tier1Stations = ParseStationNames(ValConfig.StationBonusTier1Stations.Value);
-            Tier2Stations = ParseStationNames(ValConfig.StationBonusTier2Stations.Value);
+            Tier1Stations = ParseNameList(ValConfig.StationBonusTier1Stations.Value);
+            Tier2Stations = ParseNameList(ValConfig.StationBonusTier2Stations.Value);
             StationXPWeights = ParseStationXPWeights(ValConfig.ForgingStationXPWeights.Value);
-            ValConfig.StationBonusTier1Stations.SettingChanged += (s, e) => Tier1Stations = ParseStationNames(ValConfig.StationBonusTier1Stations.Value);
-            ValConfig.StationBonusTier2Stations.SettingChanged += (s, e) => Tier2Stations = ParseStationNames(ValConfig.StationBonusTier2Stations.Value);
+            NoXPItems = ParseNameList(ValConfig.ForgingNoXPItems.Value);
+            MetalIngredients = ParseNameList(ValConfig.ForgingMetalIngredients.Value);
+            ValConfig.StationBonusTier1Stations.SettingChanged += (s, e) => Tier1Stations = ParseNameList(ValConfig.StationBonusTier1Stations.Value);
+            ValConfig.StationBonusTier2Stations.SettingChanged += (s, e) => Tier2Stations = ParseNameList(ValConfig.StationBonusTier2Stations.Value);
             ValConfig.ForgingStationXPWeights.SettingChanged += (s, e) => StationXPWeights = ParseStationXPWeights(ValConfig.ForgingStationXPWeights.Value);
+            ValConfig.ForgingNoXPItems.SettingChanged += (s, e) => NoXPItems = ParseNameList(ValConfig.ForgingNoXPItems.Value);
+            ValConfig.ForgingMetalIngredients.SettingChanged += (s, e) => MetalIngredients = ParseNameList(ValConfig.ForgingMetalIngredients.Value);
         }
 
-        private static HashSet<string> ParseStationNames(string value) {
-            HashSet<string> stations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static HashSet<string> ParseNameList(string value) {
+            HashSet<string> names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (string entry in value.Split(',')) {
                 string name = entry.Trim();
-                if (name.Length > 0) { stations.Add(name); }
+                if (name.Length > 0) { names.Add(name); }
             }
-            return stations;
+            return names;
+        }
+
+        /// <summary>
+        /// Whether a name list holds this name, either outright or through an entry ending in * that it starts with.
+        /// </summary>
+        private static bool ListMatches(HashSet<string> names, string name) {
+            if (names.Contains(name)) { return true; }
+            foreach (string entry in names) {
+                if (entry.Length > 1 && entry.EndsWith("*") && name.StartsWith(entry.Substring(0, entry.Length - 1), StringComparison.OrdinalIgnoreCase)) { return true; }
+            }
+            return false;
         }
 
         private static Dictionary<string, float> ParseStationXPWeights(string value) {
@@ -113,11 +130,34 @@ namespace ImpactfulSkills.patches
         }
 
         /// <summary>
+        /// How much of the usual forging XP this item is worth: none for starter gear (ForgingNoXPItems), the
+        /// non-metal multiplier for anything made without metal, full for everything else.
+        ///
+        /// The whole recipe is checked rather than what the current quality level costs, so an item is worth the same
+        /// whether it is crafted, upgraded or refined - the Forge of Potential uses the same recipe, with the idol as
+        /// one more resource.
+        /// </summary>
+        internal static float ItemXPMultiplier(Recipe recipe) {
+            if (recipe == null || recipe.m_item == null) { return 1f; }
+            if (ListMatches(NoXPItems, recipe.m_item.gameObject.name)) { return 0f; }
+
+            if (recipe.m_resources != null) {
+                foreach (Piece.Requirement requirement in recipe.m_resources) {
+                    if (requirement.m_resItem != null && ListMatches(MetalIngredients, requirement.m_resItem.gameObject.name)) { return 1f; }
+                }
+            }
+            return ValConfig.ForgingNonMetalXPMultiplier.Value;
+        }
+
+        /// <summary>
         /// Awards forging XP for a craft that went through. Called by ForgedItems once DoCrafting has finished, when
         /// what actually happened is known.
         /// </summary>
         internal static void GrantCraftXP(Player player, ForgedItems.CraftContext craft) {
             if (ValConfig.EnableForging.Value == false || player == null) { return; }
+
+            float itemMultiplier = ItemXPMultiplier(craft.Recipe);
+            if (itemMultiplier <= 0f) { return; }
 
             float xp = 0f;
             if (craft.AtUpgrader) {
@@ -145,8 +185,9 @@ namespace ImpactfulSkills.patches
                 }
             }
 
+            xp *= itemMultiplier;
             if (xp <= 0f) { return; }
-            Logger.LogDebug($"Forging XP {xp} for {craft.PrefabName} (upgrade: {craft.IsUpgrade}, refinement: {craft.AtUpgrader}).");
+            Logger.LogDebug($"Forging XP {xp} for {craft.PrefabName} (upgrade: {craft.IsUpgrade}, refinement: {craft.AtUpgrader}, item multiplier: {itemMultiplier}).");
             player.RaiseSkill(ForgingSkill, xp);
         }
     }

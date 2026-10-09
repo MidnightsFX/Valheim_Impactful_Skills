@@ -1,3 +1,14 @@
+**0.21.1**
+---
+```
+- Forging gives no XP for wooden training weapons and Meadows gear, and half XP for anything made without metal.
+- Crossbow hits give more XP the further away the target is.
+- Skilled (lvl 50) crossbow users no longer lose their reload progress when sprinting, jumping or dodging.
+- Items refined past their normal max level no longer return far more materials than they are worth when they break.
+- Refining an item to very high levels gets steadily harder and riskier, so items can no longer be pushed to absurd levels.
+- Smiths with lightweight can switch it off for what they craft by pressing the AOE toggle key in the crafting window.
+```
+
 **0.21.0**
 ---
 ```

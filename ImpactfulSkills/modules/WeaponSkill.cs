@@ -208,5 +208,114 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        /// <summary>
+        /// Sprinting, jumping and dodging clear the players action queue, and a crossbow reload is just a timed action
+        /// in that queue. Vanilla re-queues the reload as soon as it is gone, but always from zero. Above the required
+        /// level we note how far the reload got when one of these clears it, and hand that progress back to the reload
+        /// vanilla queues next. Sprinting clears the queue every tick, so the reload holds still until the sprint ends.
+        /// </summary>
+        public static class CrossbowReloadPause
+        {
+            // Jump and dodge re-queue the reload on the very next tick, and sprinting saves again every tick, so a real
+            // pause is always restored well inside this. It stops a stale pause coming back after a weapon swap.
+            private const float PausedReloadTimeout = 1f;
+            private static ItemDrop.ItemData PausedReloadWeapon;
+            private static float PausedReloadProgress;
+            private static float PausedReloadAt;
+
+            [HarmonyPatch]
+            public static class PauseReloadOnMovement
+            {
+                static IEnumerable<MethodBase> TargetMethods() {
+                    yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.CheckRun));
+                    yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.OnJump));
+                    yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.UpdateDodge));
+                }
+
+                [HarmonyTranspiler]
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+                {
+                    var codeMatcher = new CodeMatcher(instructions);
+                    if (codeMatcher.TryMatchStartForward($"Unable to patch crossbow reload pause for {original.Name}.",
+                        new CodeMatch(i => i.opcode == OpCodes.Callvirt && i.operand is MethodInfo method && method.Name == nameof(Player.ClearActionQueue))
+                    )) {
+                        // Set keeps any labels on the call. The player is already on the stack as the call's instance.
+                        codeMatcher.Set(OpCodes.Call, AccessTools.Method(typeof(CrossbowReloadPause), nameof(ClearActionQueuePausingReload)));
+                    }
+                    return codeMatcher.Instructions();
+                }
+            }
+
+            [HarmonyPatch(typeof(Player), nameof(Player.QueueReloadAction))]
+            public static class ResumePausedReload
+            {
+                private static void Postfix(Player __instance) {
+                    if (PausedReloadWeapon == null) { return; }
+                    Player.MinorActionData reload = FindReload(__instance);
+                    if (reload == null) { return; }
+
+                    if (reload.m_item == PausedReloadWeapon && reload.m_time == 0f && Time.time - PausedReloadAt <= PausedReloadTimeout) {
+                        reload.m_time = PausedReloadProgress;
+                    }
+                    PausedReloadWeapon = null;
+                }
+            }
+
+            private static void ClearActionQueuePausingReload(Player player) {
+                if (ValConfig.EnableWeaponSkill.Value && ValConfig.EnableCrossbowReloadPause.Value && player == Player.m_localPlayer) {
+                    Player.MinorActionData reload = FindReload(player);
+                    if (reload != null && reload.m_time > 0f && player.GetSkillLevel(reload.m_item.m_shared.m_skillType) >= ValConfig.CrossbowReloadPauseLevel.Value) {
+                        PausedReloadWeapon = reload.m_item;
+                        PausedReloadProgress = reload.m_time;
+                        PausedReloadAt = Time.time;
+                    }
+                }
+                player.ClearActionQueue();
+            }
+
+            private static Player.MinorActionData FindReload(Player player) {
+                foreach (Player.MinorActionData action in player.m_actionQueue) {
+                    if (action.m_type == Player.MinorActionData.ActionType.Reload) { return action; }
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Crossbow hits on a creature grant more XP the further the target is from the shooter. Projectile.OnHit runs
+        /// on the shooters client, so m_owner is the local player.
+        /// </summary>
+        [HarmonyPatch(typeof(Projectile), nameof(Projectile.OnHit))]
+        public static class CrossbowDistanceXP
+        {
+            [HarmonyTranspiler]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                var codeMatcher = new CodeMatcher(instructions);
+                // m_raiseSkillAmount is also copied into the HitData earlier on, only the load feeding RaiseSkill is ours.
+                if (codeMatcher.TryMatchStartForward("Unable to patch crossbow distance XP.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Projectile), nameof(Projectile.m_raiseSkillAmount))),
+                    new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.RaiseSkill)))
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        new CodeInstruction(OpCodes.Ldarg_2),
+                        Transpilers.EmitDelegate(ScaleCrossbowXPByDistance)
+                    );
+                }
+                return codeMatcher.Instructions();
+            }
+
+            private static float ScaleCrossbowXPByDistance(float xp, Projectile projectile, Vector3 hitPoint) {
+                if (ValConfig.EnableWeaponSkill.Value == false || ValConfig.EnableCrossbowDistanceXP.Value == false) { return xp; }
+                if (projectile.m_skill != Skills.SkillType.Crossbows || !(projectile.m_owner is Player player)) { return xp; }
+
+                float distance = Vector3.Distance(player.transform.position, hitPoint);
+                float bonus = ValConfig.CrossbowDistanceXPMaxBonus.Value * Mathf.Clamp01(distance / ValConfig.CrossbowDistanceXPMaxDistance.Value);
+                Logger.LogDebug($"Crossbow hit at {distance:0.0}m, XP bonus {bonus:0.00} ({xp} -> {xp * (1f + bonus)})");
+                return xp * (1f + bonus);
+            }
+        }
+
     }
 }

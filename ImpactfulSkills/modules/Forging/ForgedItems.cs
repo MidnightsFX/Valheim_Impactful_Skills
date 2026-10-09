@@ -1,9 +1,13 @@
+using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace ImpactfulSkills.patches
 {
@@ -56,6 +60,13 @@ namespace ImpactfulSkills.patches
 
         private static CraftContext PendingCraft = null;
 
+        /// <summary>
+        /// Whether the local player's own skill makes what they craft lightweight, switched in the crafting window
+        /// with the AOE toggle hotkey. Runtime only like AOEFeaturesEnabled, so it is back on each session. An item
+        /// that is already lightweight keeps it when upgraded either way.
+        /// </summary>
+        internal static bool LightweightCraftingEnabled = true;
+
         internal static bool IsForgeable(ItemDrop.ItemData.SharedData shared) {
             if (shared == null || shared.m_maxStackSize > 1) { return false; }
             switch (shared.m_itemType) {
@@ -92,6 +103,10 @@ namespace ImpactfulSkills.patches
 
         internal static bool QualifiesForLightweight(Player player) {
             return ValConfig.EnableForging.Value && ValConfig.EnableLightweight.Value && player != null && Forging.ForgingLevel(player) >= ValConfig.LightweightLevel.Value;
+        }
+
+        internal static bool MakesLightweight(Player player) {
+            return LightweightCraftingEnabled && QualifiesForLightweight(player);
         }
 
         /// <summary>
@@ -218,7 +233,7 @@ namespace ImpactfulSkills.patches
                 if (__result == null || itemsBefore == null) { return; }
 
                 bool masterwork = craft.HadMasterwork || QualifiesForMasterwork(Player.m_localPlayer);
-                bool lightweight = craft.HadLightweight || QualifiesForLightweight(Player.m_localPlayer);
+                bool lightweight = craft.HadLightweight || MakesLightweight(Player.m_localPlayer);
                 if (masterwork == false && lightweight == false) { return; }
 
                 foreach (ItemDrop.ItemData item in __instance.GetAllItems()) {
@@ -357,6 +372,10 @@ namespace ImpactfulSkills.patches
         /// <summary>
         /// The recipe panel describes the item from its prefab, which never carries any marks, so name the perks the
         /// craft will produce next to the recipe title the way Crafting shows an earned quality.
+        ///
+        /// While the player's own skill decides whether the item comes out lightweight, the AOE toggle hotkey switches
+        /// that here, with a hint at the top of the description. UpdateRecipe only runs while the inventory is open,
+        /// which keeps the hotkey from switching AOE (AOEToggle.cs), so one press never does both.
         /// </summary>
         [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateRecipe))]
         private static class ForgedPerkPreviewPatch
@@ -368,14 +387,36 @@ namespace ImpactfulSkills.patches
                 if (recipe == null || recipe.m_item == null || IsForgeable(recipe.m_item.m_itemData.m_shared) == false) { return; }
 
                 ItemDrop.ItemData upgradeItem = __instance.m_selectedRecipe.ItemData;
+                KeyboardShortcut hotkey = ValConfig.AOEToggleHotkey.Value;
+                bool lightweightChoice = QualifiesForLightweight(player) && LightweightActive(upgradeItem) == false && hotkey.MainKey != KeyCode.None;
+                if (lightweightChoice) {
+                    if (hotkey.IsDown() && TypingInCraftingWindow() == false) {
+                        LightweightCraftingEnabled = !LightweightCraftingEnabled;
+                        player.Message(MessageHud.MessageType.TopLeft, Translate(LightweightCraftingEnabled ? "$forging_lightweight_enabled" : "$forging_lightweight_disabled"));
+                    }
+                    __instance.m_recipeDecription.text = $"[<color=yellow><b>{hotkey}</b></color>] {Translate("$forging_lightweight_hint")}\n\n{__instance.m_recipeDecription.text}";
+                }
+
                 bool masterwork = QualifiesForMasterwork(player) || MasterworkActive(upgradeItem);
-                bool lightweight = QualifiesForLightweight(player) || LightweightActive(upgradeItem);
+                bool lightweight = MakesLightweight(player) || LightweightActive(upgradeItem);
                 if (masterwork == false && lightweight == false) { return; }
 
                 List<string> perks = new List<string>();
                 if (masterwork) { perks.Add(Translate("$forging_masterwork")); }
                 if (lightweight) { perks.Add(Translate("$forging_lightweight")); }
                 __instance.m_recipeName.text = $"{__instance.m_recipeName.text} <color=#E8B04A>({string.Join(", ", perks)})</color>";
+            }
+
+            /// <summary>
+            /// True while chat, the console or a text field (such as a recipe search box another mod adds) has the
+            /// keyboard, so typing the hotkey's letter does not flip the toggle.
+            /// </summary>
+            private static bool TypingInCraftingWindow() {
+                if ((Chat.instance != null && Chat.instance.HasFocus()) || global::Console.IsVisible() || TextInput.IsVisible() || Menu.IsVisible()) { return true; }
+                GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+                if (selected == null) { return false; }
+                return (selected.TryGetComponent(out TMP_InputField tmpField) && tmpField.isFocused)
+                    || (selected.TryGetComponent(out InputField field) && field.isFocused);
             }
         }
 

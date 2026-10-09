@@ -148,6 +148,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> WeaponSkillParryBonus;
         public static ConfigEntry<float> WeaponSkillEquipSpeedFactor;
         public static ConfigEntry<int> WeaponSkillEquipRequiredLevel;
+        public static ConfigEntry<bool> EnableCrossbowReloadPause;
+        public static ConfigEntry<int> CrossbowReloadPauseLevel;
+        public static ConfigEntry<bool> EnableCrossbowDistanceXP;
+        public static ConfigEntry<float> CrossbowDistanceXPMaxBonus;
+        public static ConfigEntry<float> CrossbowDistanceXPMaxDistance;
 
         public static ConfigEntry<bool> EnableCooking;
         public static ConfigEntry<bool> EnableCookingDegradeReduction;
@@ -221,6 +226,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> RefineSuccessChanceBonus;
         public static ConfigEntry<float> RefineBreakChanceReduction;
         public static ConfigEntry<float> RefineBreakRefundBonus;
+        public static ConfigEntry<bool> EnableRefinementDecay;
+        public static ConfigEntry<int> RefineDecayStartLevel;
+        public static ConfigEntry<float> RefineDecayRate;
         public static ConfigEntry<bool> EnableMasterwork;
         public static ConfigEntry<int> MasterworkLevel;
         public static ConfigEntry<float> MasterworkStatBonus;
@@ -235,6 +243,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> ForgingUpgradeXP;
         public static ConfigEntry<float> ForgingRefineAttemptXP;
         public static ConfigEntry<float> ForgingRefineSuccessXPMultiplier;
+        public static ConfigEntry<string> ForgingNoXPItems;
+        public static ConfigEntry<string> ForgingMetalIngredients;
+        public static ConfigEntry<float> ForgingNonMetalXPMultiplier;
 
         public static ConfigEntry<bool> EnableSwimming;
         public static ConfigEntry<int> SwimSpeedRequiredLevel;
@@ -281,7 +292,7 @@ namespace ImpactfulSkills
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
                 new KeyboardShortcut(UnityEngine.KeyCode.N),
-                "Hotkey to toggle AOE harvesting, AOE mining and AOE planting on/off.");
+                "Hotkey to toggle AOE harvesting, AOE mining and AOE planting on/off. In the crafting window it instead toggles whether what you craft is made lightweight, once your forging is high enough.");
             EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
             WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
@@ -432,6 +443,11 @@ namespace ImpactfulSkills
             WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
             WeaponSkillEquipRequiredLevel = BindServerConfig("WeaponSkills", "WeaponSkillEquipRequiredLevel", 45, "The level that equip speed bonuses start being applied based on your skill", true, 0, 100);
             WeaponSkillEquipSpeedFactor = BindServerConfig("WeaponSkills", "WeaponSkillEquipSpeedFactor", 2f, "How much faster your equipment is equipped based on your weapon skill.", true, 0f, 20f);
+            EnableCrossbowReloadPause = BindServerConfig("WeaponSkills", "EnableCrossbowReloadPause", true, "Sprinting, jumping and dodging pause your crossbow reload instead of restarting it, once your crossbow skill reaches CrossbowReloadPauseLevel.");
+            CrossbowReloadPauseLevel = BindServerConfig("WeaponSkills", "CrossbowReloadPauseLevel", 50, "The crossbow skill level at which sprinting, jumping and dodging pause your reload instead of restarting it.", false, 0, 100);
+            EnableCrossbowDistanceXP = BindServerConfig("WeaponSkills", "EnableCrossbowDistanceXP", true, "Crossbow hits grant bonus XP based on how far away the target is.");
+            CrossbowDistanceXPMaxBonus = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxBonus", 5f, "The bonus crossbow XP for a hit at CrossbowDistanceXPMaxDistance or further, growing evenly from nothing at point blank. 5 is a 500% bonus (6x the XP).", false, 0f, 20f);
+            CrossbowDistanceXPMaxDistance = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxDistance", 150f, "The distance in meters from you to the hit at which the full CrossbowDistanceXPMaxBonus is reached.", false, 10f, 500f);
 
             EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
             BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
@@ -472,6 +488,9 @@ namespace ImpactfulSkills
             RefineSuccessChanceBonus = BindServerConfig("Forging", "RefineSuccessChanceBonus", 0.2f, "Added to the chance that a refinement succeeds, at forging level 100. Vanilla idols have a 0.65 chance, so 0.2 makes it 0.85.", false, 0f, 1f);
             RefineBreakChanceReduction = BindServerConfig("Forging", "RefineBreakChanceReduction", 1f, "How much of the chance that a failed refinement destroys the item is removed, at forging level 100. 1 means failures never destroy the item at level 100, they lower its level instead.", false, 0f, 1f);
             RefineBreakRefundBonus = BindServerConfig("Forging", "RefineBreakRefundBonus", 0.35f, "Added to the share of ingredients returned when a refinement destroys the item, at forging level 100. Vanilla idols return 0.35, so 0.35 makes it 0.7.", false, 0f, 1f);
+            EnableRefinementDecay = BindServerConfig("Forging", "EnableRefinementDecay", true, "Refinements past RefineDecayStartLevel get harder with every level: a lower chance to succeed, fewer materials back when the item breaks, and forging's protection against breaking fades. Keeps items from being refined to absurd levels.");
+            RefineDecayStartLevel = BindServerConfig("Forging", "RefineDecayStartLevel", 10, "Refining an item up to this level has the normal odds, every level beyond it is penalized by RefineDecayRate.", false, 1, 200);
+            RefineDecayRate = BindServerConfig("Forging", "RefineDecayRate", 0.05f, "How much of the refinement odds is lost for each level past RefineDecayStartLevel, compounding. 0.05 leaves 95% one level past, 77% five levels past and 60% ten levels past. Applies to the success chance, the materials returned on a break and forging's protection against breaking.", false, 0f, 1f);
             EnableMasterwork = BindServerConfig("Forging", "EnableMasterwork", true, "Enables masterwork equipment. Weapons, armor and shields crafted or upgraded by a skilled smith are improved.");
             MasterworkLevel = BindServerConfig("Forging", "MasterworkLevel", 75, "The forging level required to craft masterwork equipment.", false, 0, 100);
             MasterworkStatBonus = BindServerConfig("Forging", "MasterworkStatBonus", 0.1f, "How much masterwork improves damage (weapons), armor (armor) and block power (shields). 0.1 is 10%.", false, 0f, 2f);
@@ -486,6 +505,9 @@ namespace ImpactfulSkills
             ForgingUpgradeXP = BindServerConfig("Forging", "ForgingUpgradeXP", 1f, "Forging XP for upgrading a weapon, armor piece or shield. Scaled by the station multiplier and the new quality level.", false, 0f, 20f);
             ForgingRefineAttemptXP = BindServerConfig("Forging", "ForgingRefineAttemptXP", 2f, "Forging XP for each refinement attempt at the Forge of Potential. Scaled by the quality level being attempted.", false, 0f, 20f);
             ForgingRefineSuccessXPMultiplier = BindServerConfig("Forging", "ForgingRefineSuccessXPMultiplier", 2f, "Multiplies the refinement XP when the attempt succeeds.", false, 1f, 10f);
+            ForgingNoXPItems = BindServerConfig("Forging", "ForgingNoXPItems", "SwordWood,THSwordWood,AxeWood,BattleaxeWood,MaceWood,SledgeWood,SpearWood,AtgeirWood,KnifeWood,Club,AxeStone,AxeFlint,KnifeFlint,SpearFlint,Bow,PickaxeAntler,Hammer,Hoe,Torch,ShieldWood,ShieldWoodTower,ArmorRagsChest,ArmorRagsLegs,ArmorLeatherChest,ArmorLeatherLegs,HelmetLeather,CapeDeerHide,ArrowWood,ArrowFlint,ArrowFire", "Comma separated list of item prefab names that give no forging XP when crafted, upgraded or refined. End an entry with * to match every prefab starting with it.");
+            ForgingMetalIngredients = BindServerConfig("Forging", "ForgingMetalIngredients", "Copper,CopperOre,CopperScrap,Tin,TinOre,Bronze,BronzeScrap,BronzeNails,Iron,IronOre,IronScrap,IronNails,Chain,Silver,SilverOre,BlackMetal,BlackMetalScrap,MechanicalSpring,Flametal,FlametalOre,FlametalNew,FlametalOreNew,Gold,GoldOre,AxeHead1,AxeHead2,Mold*", "Comma separated list of ingredient prefab names that count as metal. Items whose recipe uses none of them give ForgingNonMetalXPMultiplier of the usual forging XP. End an entry with * to match every prefab starting with it.");
+            ForgingNonMetalXPMultiplier = BindServerConfig("Forging", "ForgingNonMetalXPMultiplier", 0.5f, "Multiplies the forging XP for items made without metal (see ForgingMetalIngredients).", false, 0f, 1f);
 
             EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
             EnableCookingDegradeReduction = BindServerConfig("Cooking", "EnableCookingDegradeReduction", true, "When enabled, cooking contributes to preventing food from degrading over time.");

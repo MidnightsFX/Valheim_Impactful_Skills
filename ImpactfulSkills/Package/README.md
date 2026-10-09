@@ -54,6 +54,8 @@ At a higher level (default 50) your plants stop caring about the biome they are 
 All weapon skills now give a corresponding reduction to their stamina cost that is configurable (default 50% at level 100).
 Vanilla provides a bonus of 33% at level 100, which is somewhat hidden. This makes it configurable and visibile on item tooltips.
 Parrying provides a tiny bit of bonus XP.
+Crossbow hits grant more XP the further away the target is, up to 500% bonus XP at 150m (configurable with CrossbowDistanceXPMaxBonus and CrossbowDistanceXPMaxDistance).
+At crossbow level 50 (configurable), sprinting, jumping and dodging pause your reload instead of restarting it.
 
 | WeaponSkill 0 | WeaponSkill 50 | WeaponSkill 100 |
 | ------------- | ------------- | ------------- |
@@ -146,9 +148,9 @@ The crafting panel shows the quality you are about to get before you press craft
 
 Forging improves your crafting stations and your odds at the Forge of Potential, and at higher levels lets you craft equipment that is better than what anyone else can make.
 
-Forging is trained by crafting at the workbench, forge, black forge and galdr table, with extra XP for crafting and upgrading weapons, armor and shields, and for every refinement attempt at the Forge of Potential (more when it succeeds).
+Forging is trained by crafting at the workbench, forge, black forge and galdr table, with extra XP for crafting and upgrading weapons, armor and shields, and for every refinement attempt at the Forge of Potential (more when it succeeds). Wooden training weapons and Meadows gear give no forging XP, and anything made without metal gives half. Both can be changed in the config.
 
-- Innate - Better odds at the Forge of Potential (scales with level). At level 100 a refinement succeeds 85% of the time instead of 65%, a failed refinement lowers the item's level instead of destroying it, and an item that does break returns 70% of its materials instead of 35%. The odds are shown when you select an item at the forge.
+- Innate - Better odds at the Forge of Potential (scales with level). At level 100 a refinement succeeds 85% of the time instead of 65%, a failed refinement lowers the item's level instead of destroying it, and an item that does break returns 70% of its materials instead of 35%. Refining past level 10 gets harder with every level: lower odds, fewer materials back, and failures increasingly destroy the item. An item above its normal max level returns materials as if it were at that max level. The odds are shown when you select an item at the forge.
 - 25 - When you use a forge, or workbench it is considered 1 level higher.
 - 50 - When you use a black forge, or galdur table it is considered 1 level higher.
 - 75 - Masterwork: weapons you craft or upgrade deal 10% more damage, armor gives 10% more armor and shields 10% more block power
@@ -156,7 +158,9 @@ Forging is trained by crafting at the workbench, forge, black forge and galdr ta
 
 Masterwork and lightweight are part of the item. They show in its tooltip, stay with it when it is stored, traded or upgraded by anyone, and still apply if your forging skill drops. Which stations get a level, and every bonus and level above, can be changed in the config.
 
-With Reforged Potential installed, forging's odds replace its Upgrade Chance and Break Chance settings. Set EnableRefinementBonus to false to use Reforged Potential's odds instead.
+Press the AOE toggle key (N by default) in the crafting window to choose whether what you make comes out lightweight. It is back on each time you log in.
+
+With Reforged Potential installed, forging's odds replace its Upgrade Chance and Break Chance settings. Set EnableRefinementBonus to false to use Reforged Potential's odds instead, along with its own level limits rather than forging's refinement decay.
 
 ### Blood Magic
 
