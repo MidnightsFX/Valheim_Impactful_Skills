@@ -15,6 +15,7 @@ namespace ImpactfulSkills.compatibility {
         public static bool IsZenBeehiveEnabled = false;
         public static bool IsReforgedPotentialEnabled = false;
         public static bool IsStarLevelSystemEnabled = false;
+        public static bool IsSkillsReworkedEnabled = false;
 
         // Plant grid compatibility checks
         public static bool IsPlantEasilyEnabled = false;
@@ -45,6 +46,9 @@ namespace ImpactfulSkills.compatibility {
                 }
                 if (plugins.Keys.Contains(StarLevelSystem.PluginGUID)) {
                     IsStarLevelSystemEnabled = true;
+                }
+                if (plugins.Keys.Contains(SkillsReworked.PluginGUID)) {
+                    IsSkillsReworkedEnabled = true;
                 }
                 if (plugins.Keys.Contains("advize.PlantEasily")) {
                     IsPlantEasilyEnabled = true;

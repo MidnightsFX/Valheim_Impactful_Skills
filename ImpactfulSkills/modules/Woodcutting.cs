@@ -87,7 +87,7 @@ namespace ImpactfulSkills.patches
 
         public static void ModifyChop(HitData hit) {
             if (ValConfig.EnableWoodcutting.Value == true && hit != null && Player.m_localPlayer != null && hit.m_attacker == Player.m_localPlayer.GetZDOID()) {
-                float player_woodcutting_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
+                float player_woodcutting_skill_factor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.WoodCutting, ValConfig.WoodcuttingBonusesPastLevel100);
                 Logger.LogDebug($"Player skillfactor: {player_woodcutting_skill_factor}");
                 float player_chop_bonus = 1 + (ValConfig.WoodCuttingDmgMod.Value * (player_woodcutting_skill_factor * 100f) / 100f);
                 Logger.LogDebug($"Player woodcutting dmg multiplier: {player_chop_bonus}");
@@ -128,7 +128,7 @@ namespace ImpactfulSkills.patches
                 }
             }
             int drop_amount = 0;
-            float player_woodcutting_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.WoodCutting);
+            float player_woodcutting_skill_factor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.WoodCutting, ValConfig.WoodcuttingBonusesPastLevel100);
             
             // (F - 1) so the factor is a true total multiplier: the vanilla drop still spawns, and we add
             // (F - 1) x base on top, scaled by skill. F = 1 -> no bonus (vanilla), F = 2 -> 2x at level 100.

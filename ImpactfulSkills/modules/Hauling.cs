@@ -28,7 +28,7 @@ namespace ImpactfulSkills.patches {
             private static void Postfix(Player __instance, ref float __result) {
                 if (ValConfig.EnableHauling.Value == false || ValConfig.EnableCarryWeightBonus.Value == false) { return; }
 
-                __result += (__instance.GetSkillFactor(HaulingSkill) * ValConfig.HaulingMaxWeightBonus.Value);
+                __result += (__instance.GetBonusSkillFactor(HaulingSkill, ValConfig.HaulingBonusesPastLevel100) * ValConfig.HaulingMaxWeightBonus.Value);
             }
         }
 
@@ -39,7 +39,8 @@ namespace ImpactfulSkills.patches {
                 // This is only called by the znet view owner of the cart
                 if (ValConfig.EnableHauling.Value == false || ValConfig.EnableHaulingCartMassReduction.Value == false || Player.m_localPlayer == null) { return; }
 
-                mass *= (1 - (Player.m_localPlayer.GetSkillFactor(HaulingSkill) * ValConfig.HaulingCartMassReduction.Value));
+                // Stops at 100% even past level 100, so the cart's mass never goes negative.
+                mass *= (1 - Mathf.Clamp01(Player.m_localPlayer.GetBonusSkillFactor(HaulingSkill, ValConfig.HaulingBonusesPastLevel100) * ValConfig.HaulingCartMassReduction.Value));
             }
         }
     }

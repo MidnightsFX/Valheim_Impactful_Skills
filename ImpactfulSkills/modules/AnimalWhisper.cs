@@ -77,7 +77,7 @@ namespace ImpactfulSkills.patches
                 // Check if the player is close enough to the animal
                 if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 30f)
                 {
-                    float player_skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalHandling);
+                    float player_skill_factor = Player.m_localPlayer.GetBonusSkillFactor(AnimalHandling, ValConfig.AnimalHandlingBonusesPastLevel100);
                     float modified_time = time * ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value) + 1f);
                     Logger.LogDebug($"animal taming remaining time {time}, modified: {modified_time}");
                     time = modified_time;
@@ -117,7 +117,7 @@ namespace ImpactfulSkills.patches
             if (ValConfig.EnableBeeBonuses.Value == false || Player.m_localPlayer == null || honey <= 0) { return 0; }
             if (Player.m_localPlayer.GetSkillLevel(AnimalHandling) < ValConfig.BetterBeesLevel.Value) { return 0; }
 
-            return RollBonusAmount(honey * ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetSkillFactor(AnimalHandling));
+            return RollBonusAmount(honey * ValConfig.BeeHoneyOutputIncreaseBySkill.Value * Player.m_localPlayer.GetBonusSkillFactor(AnimalHandling, ValConfig.AnimalHandlingBonusesPastLevel100));
         }
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace ImpactfulSkills.patches
                 // (F - 1) so the factor is a true total multiplier: the amount vanilla calculated stays
                 // in the list and we add (F - 1) x it on top, scaled by skill. F = 1 -> vanilla,
                 // F = 3 -> 3x at level 100.
-                float bonus_factor = (ValConfig.TamedAnimalLootIncreaseFactor.Value - 1f) * Player.m_localPlayer.GetSkillFactor(AnimalHandling);
+                float bonus_factor = (ValConfig.TamedAnimalLootIncreaseFactor.Value - 1f) * Player.m_localPlayer.GetBonusSkillFactor(AnimalHandling, ValConfig.AnimalHandlingBonusesPastLevel100);
                 if (bonus_factor <= 0f) { return; }
 
                 for (int i = 0; i < __result.Count; i++) {

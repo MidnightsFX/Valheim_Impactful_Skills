@@ -16,6 +16,8 @@ namespace ImpactfulSkills.patches
     /// for a space, the same convention blaxxun's SkillManager uses for its skills, and case, spaces and underscores are
     /// all ignored when comparing, so Animal_Handling, AnimalHandling and animal_handling all work. The name can be the
     /// one in the player's own language, or the one in the skill's token, which works in every language.
+    ///
+    /// SkillsReworked's attribute skill lists accept the same names (compatibility/SkillsReworked.cs).
     /// </summary>
     internal static class ConsoleSkillNames
     {
@@ -25,7 +27,7 @@ namespace ImpactfulSkills.patches
 
         internal static void Register(SkillConfig skill) { skills.Add(skill); }
 
-        private static SkillConfig Find(string name) {
+        internal static SkillConfig Find(string name) {
             if (string.IsNullOrEmpty(name) || Localization.instance == null) { return null; }
 
             string typed = Squash(name);

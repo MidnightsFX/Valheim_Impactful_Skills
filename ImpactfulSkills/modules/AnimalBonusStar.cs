@@ -132,7 +132,7 @@ namespace ImpactfulSkills.patches
             float skill_factor = Player.m_localPlayer.GetSkillFactor(AnimalWhisper.AnimalHandling);
             if (skill_factor * 100f < ValConfig.AnimalBonusStarRequiredLevel.Value) { return; }
 
-            float chance = skill_factor * ValConfig.AnimalBonusStarChance.Value;
+            float chance = SkillCaps.BonusFactor(skill_factor, ValConfig.AnimalHandlingBonusesPastLevel100) * ValConfig.AnimalBonusStarChance.Value;
             float roll = UnityEngine.Random.value;
             Logger.LogDebug($"Bonus star roll for {name}: {roll} < {chance}");
             if (roll >= chance) { return; }

@@ -1,3 +1,10 @@
+**0.21.3**
+---
+```
+- Skill boosts from other mods' gear no longer push this mod's bonuses past their full strength (configurable)
+- This mod's skills can now be grouped under SkillsReworked attributes by their plain names.
+```
+
 **0.21.2**
 ---
 ```

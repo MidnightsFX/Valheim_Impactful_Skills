@@ -159,7 +159,7 @@ namespace ImpactfulSkills.patches
                     return 0;
                 }
                 // Increase item drops based on luck, and the gathering skill
-                float skill_influence = 0.5f * (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Farming));
+                float skill_influence = 0.5f * (Player.m_localPlayer.GetBonusSkillLevel(Skills.SkillType.Farming, ValConfig.FarmingBonusesPastLevel100));
                 float luck_roll = UnityEngine.Random.Range(0f, 50f);
                 float full_roll = luck_roll + skill_influence;
                 int extra_drops = 0;
@@ -250,7 +250,7 @@ namespace ImpactfulSkills.patches
 
                     Logger.LogDebug($"Checking for AOE gathering {(player_skill_factor * 100f) >= ValConfig.FarmingRangeRequiredLevel.Value} && {enabled_aoe_gathering}");
                     if ((player_skill_factor * 100f) >= ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
-                        float pickable_distance = ValConfig.GatheringRangeFactor.Value * player_skill_factor;
+                        float pickable_distance = ValConfig.GatheringRangeFactor.Value * SkillCaps.BonusFactor(player_skill_factor, ValConfig.FarmingBonusesPastLevel100);
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
                         Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
                         aoe_gathering_activated_at = Time.realtimeSinceStartup;

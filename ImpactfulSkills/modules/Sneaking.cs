@@ -3,6 +3,7 @@ using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using UnityEngine;
 
 namespace ImpactfulSkills.patches
 {
@@ -59,7 +60,7 @@ namespace ImpactfulSkills.patches
 
             public static float SneakSpeedBonus(Character __instance) {
                 if (!ValConfig.EnableStealth.Value || __instance.IsEncumbered()) { return 0f; }
-                float skillFactor = __instance.GetSkillFactor(Skills.SkillType.Sneak);
+                float skillFactor = __instance.GetBonusSkillFactor(Skills.SkillType.Sneak, ValConfig.SneakBonusesPastLevel100);
                 float num = ValConfig.SneakSpeedFactor.Value * (skillFactor * 100f);
                 return num;
             }
@@ -72,7 +73,8 @@ namespace ImpactfulSkills.patches
                     if (!ValConfig.EnableStealth.Value || !(Player.m_localPlayer != null) || !(__instance == Player.m_localPlayer)) { return; }
                     float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Sneak);
                     if ((double)skillLevel < (double)ValConfig.SneakNoiseReductionLevel.Value) { return; }
-                    float num = (float)((100.0 - (double)(ValConfig.SneakNoiseReductionFactor.Value * skillLevel)) / 100.0) * range;
+                    // Stops at silent even past level 100.
+                    float num = Mathf.Max(0f, (float)((100.0 - (double)(ValConfig.SneakNoiseReductionFactor.Value * SkillCaps.BonusLevel(skillLevel, ValConfig.SneakBonusesPastLevel100))) / 100.0)) * range;
                     range = num;
                 }
             }
@@ -81,7 +83,7 @@ namespace ImpactfulSkills.patches
         public static class SneakingBackstabBonusDmg {
             public static float ModifyBackstab(float backstab_base, Attack attack_instance) {
                 if (!ValConfig.EnableSneakBonusDamage.Value || !attack_instance.m_character.IsPlayer() || ValConfig.SneakBackstabBonusLevel.Value > (double)attack_instance.m_character.GetSkillLevel(Skills.SkillType.Sneak)) { return backstab_base; }
-                float skillFactor = attack_instance.m_character.GetSkillFactor(Skills.SkillType.Sneak);
+                float skillFactor = attack_instance.m_character.GetBonusSkillFactor(Skills.SkillType.Sneak, ValConfig.SneakBonusesPastLevel100);
                 float num1 = backstab_base * (ValConfig.SneakBackstabBonusFactor.Value * skillFactor);
                 float num2 = backstab_base + num1;
                 Logger.LogDebug(string.Format($"Adding bonus backstab {num1} = total ({num2})"));

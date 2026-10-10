@@ -3,6 +3,7 @@ using ImpactfulSkills.common;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using UnityEngine;
 
 namespace ImpactfulSkills.patches
 {
@@ -45,7 +46,7 @@ namespace ImpactfulSkills.patches
                 // 50% = 0.5x height at level 100, 200% = 2x height at level 100
                 float jumpHeightMultiplier = ValConfig.JumpHeightFactor.Value / 100f;
                 // Scale the multiplier based on skill level (0 at level 0, full at level 100)
-                float scaledMultiplier = 1f + ((jumpHeightMultiplier - 1f) * skillFactor);
+                float scaledMultiplier = 1f + ((jumpHeightMultiplier - 1f) * SkillCaps.BonusFactor(skillFactor, ValConfig.JumpBonusesPastLevel100));
                 float modifiedJumpForce = character.m_jumpForce * scaledMultiplier;
 
                 Logger.LogDebug($"Jump force modified: {character.m_jumpForce} -> {modifiedJumpForce} (skill: {skillLevel}, multiplier: {scaledMultiplier})");
@@ -114,7 +115,8 @@ namespace ImpactfulSkills.patches
                 }
 
                 // Calculate fall damage reduction
-                float damageReductionFactor = 1f - (ValConfig.FallDamageReductionFactor.Value * skillFactor);
+                // Stops at 100% even past level 100, so a fall never heals.
+                float damageReductionFactor = 1f - Mathf.Clamp01(ValConfig.FallDamageReductionFactor.Value * SkillCaps.BonusFactor(skillFactor, ValConfig.JumpBonusesPastLevel100));
                 float reducedDamage = falldmg * damageReductionFactor;
                 Logger.LogDebug($"Fall damage reduced: {falldmg} -> {reducedDamage} (reduction: {damageReductionFactor})");
 
@@ -135,7 +137,7 @@ namespace ImpactfulSkills.patches
                 }
 
                 // Increase max fall height based on skill
-                float modifiedMaxFallHeight = MinFallDamageHeight + (ValConfig.FallDamageHeightBonus.Value * skillFactor);
+                float modifiedMaxFallHeight = MinFallDamageHeight + (ValConfig.FallDamageHeightBonus.Value * SkillCaps.BonusFactor(skillFactor, ValConfig.JumpBonusesPastLevel100));
                 //Logger.LogDebug($"Modified jump height that you can fall without recieving damage {modifiedMaxFallHeight}");
                 return modifiedMaxFallHeight;
             }

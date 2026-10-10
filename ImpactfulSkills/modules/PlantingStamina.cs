@@ -67,7 +67,17 @@ namespace ImpactfulSkills.patches
             if (tool == null) { return 0f; }
             float fullCost = tool.m_shared.m_attack.m_attackStamina * (1f + player.GetEquipmentHomeItemModifier());
             player.GetSEMan().ModifyHomeItemStaminaUsage(fullCost, ref fullCost);
-            return Mathf.Max(0f, fullCost * (1f - Reduction() * player.GetSkillFactor(Skills.SkillType.Farming)));
+            float skillFactor = player.GetSkillFactor(Skills.SkillType.Farming);
+            return WithFarmingReduction(fullCost, fullCost * (1f - VanillaReduction * skillFactor), skillFactor, Reduction());
+        }
+
+        /// <summary>
+        /// Our reduction in place of vanilla's, stopping at its level 100 value unless FarmingBonusesPastLevel100 is
+        /// on - but never dearer than what vanilla charged, which a skill boosted past 100 can take below our capped
+        /// price (see SkillCaps).
+        /// </summary>
+        private static float WithFarmingReduction(float fullCost, float vanillaCost, float skillFactor, float reduction) {
+            return Mathf.Max(0f, Mathf.Min(vanillaCost, fullCost * (1f - reduction * SkillCaps.BonusFactor(skillFactor, ValConfig.FarmingBonusesPastLevel100))));
         }
 
         [HarmonyPatch(typeof(Player), "GetBuildStamina")]
@@ -81,10 +91,11 @@ namespace ImpactfulSkills.patches
 
                 float skillFactor = __instance.GetSkillFactor(Skills.SkillType.Farming);
                 // __result already has vanilla's half-reduction baked in; undo it before applying ours so
-                // the two do not stack. The divisor bottoms out at 0.5 (skillFactor is clamped to 1), so
-                // it can never divide by zero or flip the sign.
+                // the two do not stack. The undo needs the factor vanilla used, which other mods can push
+                // past 1 (see SkillCaps). From 2 up vanilla's own cost is already zero or less and the
+                // guard above returns, so the divisor can never reach zero or flip the sign.
                 float fullCost = __result / (1f - VanillaReduction * skillFactor);
-                __result = Mathf.Max(0f, fullCost * (1f - reduction * skillFactor));
+                __result = WithFarmingReduction(fullCost, __result, skillFactor, reduction);
             }
         }
     }

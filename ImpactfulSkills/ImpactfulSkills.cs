@@ -27,6 +27,7 @@ namespace ImpactfulSkills
     [BepInDependency(compatibility.ZenBeehive.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency(compatibility.ReforgedPotential.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency(compatibility.StarLevelSystem.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(compatibility.SkillsReworked.PluginGUID, BepInDependency.DependencyFlags.SoftDependency)]
     internal class ImpactfulSkills : BaseUnityPlugin
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";

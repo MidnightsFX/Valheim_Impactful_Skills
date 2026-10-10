@@ -13,7 +13,9 @@ namespace ImpactfulSkills.patches {
 
                 if (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Blocking) >= ValConfig.BlockPowerRequiredLevel.Value) {
                     float baseBlock = __result / (1f + (skillFactor) * 0.5f); // Vanilla block
-                    __result = baseBlock + baseBlock * (skillFactor) * ValConfig.BlockPowerFactor.Value; // its configuraable!
+                    // Our share stops at its level 100 value unless BlockingBonusesPastLevel100 is on (see SkillCaps), but
+                    // never drops below what vanilla already gave a skill boosted past 100.
+                    __result = Mathf.Max(__result, baseBlock + baseBlock * SkillCaps.BonusFactor(skillFactor, ValConfig.BlockingBonusesPastLevel100) * ValConfig.BlockPowerFactor.Value); // its configuraable!
                     // noisey
                     //Logger.LogDebug($"Blocking bonus enabled | original: {baseBlock}, improved {__result}");
                 }
@@ -34,7 +36,7 @@ namespace ImpactfulSkills.patches {
                 if (ValConfig.EnableParryStaminaGain.Value != true && parriedYes == true) { return; }
 
                 if (skillLevel >= ValConfig.BlockStaminaGainRequiredLevel.Value) {
-                    float staminaGain = (skillLevel / 100) * ValConfig.BlockStaminaGainFactor.Value * __instance.m_blockStaminaDrain;
+                    float staminaGain = (SkillCaps.BonusLevel(skillLevel, ValConfig.BlockingBonusesPastLevel100) / 100) * ValConfig.BlockStaminaGainFactor.Value * __instance.m_blockStaminaDrain;
                     Logger.LogDebug($"Blocking returning stamina {staminaGain}, full cost: {__instance.m_blockStaminaDrain}");
                     __instance.AddStamina(staminaGain);
                 }

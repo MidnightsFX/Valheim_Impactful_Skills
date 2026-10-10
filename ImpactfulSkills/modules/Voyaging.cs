@@ -33,7 +33,7 @@ namespace ImpactfulSkills.patches
 
                 // NOTE: XP gain is handled in VoyagerXPPatch (Ship.UpdateSail). GetSailForce only
                 // runs on the boat's ZDO owner (the driver), so awarding XP here skipped passengers.
-                float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
+                float player_skill = Player.m_localPlayer.GetBonusSkillFactor(VoyagingSkill, ValConfig.VoyagerBonusesPastLevel100);
                 if (player_skill > 0f) {
                     float bonus = 1f + (player_skill * ValConfig.VoyagerSailingSpeedFactor.Value);
                     // Logger.LogDebug($"Increasing player sailspeed: {bonus}");
@@ -43,7 +43,7 @@ namespace ImpactfulSkills.patches
                     float rowingbonus = 1;
                     foreach (Player friend in __instance.m_players) {
                         if (friend == Player.m_localPlayer) { continue; }
-                        rowingbonus += friend.GetSkillFactor(VoyagingSkill) * ValConfig.MaxFriendsRowSpeedBonus.Value;
+                        rowingbonus += friend.GetBonusSkillFactor(VoyagingSkill, ValConfig.VoyagerBonusesPastLevel100) * ValConfig.MaxFriendsRowSpeedBonus.Value;
                     }
                     __result *= rowingbonus;
                 }
@@ -93,8 +93,9 @@ namespace ImpactfulSkills.patches
                 Ship ship = __instance.GetComponent<Ship>();
                 if (ship == null || !ship.m_players.Contains(Player.m_localPlayer)) { return; }
 
-                float player_skill = Player.m_localPlayer.GetSkillFactor(VoyagingSkill);
-                float dmg_reduction = player_skill * ValConfig.VoyagerDamageReductionAmount.Value;
+                float player_skill = Player.m_localPlayer.GetBonusSkillFactor(VoyagingSkill, ValConfig.VoyagerBonusesPastLevel100);
+                // Stops at 100% even past level 100, so damage never repairs the ship.
+                float dmg_reduction = Mathf.Clamp01(player_skill * ValConfig.VoyagerDamageReductionAmount.Value);
                 Logger.LogDebug($"Reducing Ship damage by {dmg_reduction * 100}%");
                 hit.m_damage.Modify(1 - dmg_reduction);
             }
@@ -160,7 +161,7 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null) {
                     float player_skill = Player.m_localPlayer.GetSkillLevel(VoyagingSkill);
                     if (player_skill >= ValConfig.VoyagerPaddleSpeedBonusLevel.Value) {
-                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (player_skill / 100));
+                        Vector3 ship_modified_motion = ship_motion * (1 + ValConfig.VoyagerPaddleSpeedBonus.Value * (SkillCaps.BonusLevel(player_skill, ValConfig.VoyagerBonusesPastLevel100) / 100));
                         //Logger.LogInfo($"Improving ship paddle speed: {ship_motion} -> {ship_modified_motion}");
                         return ship_modified_motion;
                     }
@@ -330,7 +331,7 @@ namespace ImpactfulSkills.patches
         private class VoyagerNotSoBlindWhileSailingPatch {
             private static void Prefix(ref float radius) {
                 if (ValConfig.EnableVoyager.Value == true && Player.m_localPlayer != null && Player.m_localPlayer.m_attachedToShip == true && Player.m_localPlayer.IsAttached()) {
-                    radius *= (Player.m_localPlayer.GetSkillFactor(VoyagingSkill) * ValConfig.VoyagerIncreaseExplorationRadius.Value) + 1f;
+                    radius *= (Player.m_localPlayer.GetBonusSkillFactor(VoyagingSkill, ValConfig.VoyagerBonusesPastLevel100) * ValConfig.VoyagerIncreaseExplorationRadius.Value) + 1f;
                 }
             }
         }

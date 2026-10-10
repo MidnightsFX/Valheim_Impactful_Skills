@@ -16,8 +16,9 @@ namespace ImpactfulSkills.patches
                 float chance = UnityEngine.Random.value;
                 float chanceToNotUseDurability = ValConfig.ChanceForDurabilityLossPrevention.Value;
                 if (ValConfig.ScaleDurabilitySaveBySkillLevel.Value) {
-                    chanceToNotUseDurability *= skillFactor;
+                    chanceToNotUseDurability *= SkillCaps.BonusFactor(skillFactor, ValConfig.CraftingBonusesPastLevel100);
                 }
+                // The level check below stays uncapped, DurabilitySaveLevel goes up to 150.
                 if (ValConfig.DurabilitySaveLevel.Value <= skillFactor * 100.0 && chance < chanceToNotUseDurability) {
                     Logger.LogDebug(string.Format("Skipping durability usage {0} < {1}", chance, chanceToNotUseDurability));
                     return 0.0f;
@@ -37,10 +38,10 @@ namespace ImpactfulSkills.patches
             float skillLevel;
             // Maybe this should just use the skill that is defined as the crafting station skill?
             if (instance.m_craftRecipe.m_craftingStation != null && instance.m_craftRecipe.m_craftingStation.m_craftingSkill == Skills.SkillType.Cooking) {
-                skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Cooking);
+                skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Cooking, ValConfig.CookingBonusesPastLevel100);
                 skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Cooking);
             } else {
-                skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
+                skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100);
                 skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
             }
             
@@ -60,8 +61,11 @@ namespace ImpactfulSkills.patches
 
         private static void DetermineCraftingRefund(InventoryGui instance)
         {
+            // The level gate reads the boosted level, but the chance and the amount stop at their level 100 values
+            // unless CraftingBonusesPastLevel100 is on. Uncapped, a +534 Crafting EpicLoot set made every craft return
+            // more than it cost (see SkillCaps).
             float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
-            float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Crafting);
+            float skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100);
             if (ValConfig.EnableMaterialReturns.Value == false || skillLevel < ValConfig.CraftingMaterialReturnsLevel.Value) { return; }
 
             Dictionary<ItemDrop, int> resourcesToReturn = new Dictionary<ItemDrop, int>();

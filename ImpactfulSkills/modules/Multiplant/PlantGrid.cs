@@ -45,7 +45,7 @@ namespace ImpactfulSkills.modules.Multiplant {
         /// Anything below the first step is a single plant, i.e. plain vanilla planting.
         /// </summary>
         internal static int MaxToPlantAtOnce() {
-            int maxToPlant = Mathf.RoundToInt(ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Farming));
+            int maxToPlant = Mathf.RoundToInt(ValConfig.FarmingMultiplantMaxPlantedAtOnce.Value * Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Farming, ValConfig.FarmingBonusesPastLevel100));
             int increment = Mathf.Max(1, ValConfig.FarmingMultiplantCountIncrement.Value);
             maxToPlant -= maxToPlant % increment;
             if (maxToPlant <= 1) {

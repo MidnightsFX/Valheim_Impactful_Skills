@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace ImpactfulSkills.patches
 {
@@ -34,7 +35,7 @@ namespace ImpactfulSkills.patches
                 if (!ValConfig.EnableSwimming.Value) { return __instance.m_swimSpeed; }
                 float skillFactor = __instance.GetSkillFactor(Skills.SkillType.Swim);
                 if (ValConfig.SwimSpeedRequiredLevel.Value > skillFactor*100) { return __instance.m_swimSpeed; }
-                float swim_increase_speed = 1 + (ValConfig.SwimmingSpeedFactor.Value * skillFactor);
+                float swim_increase_speed = 1 + (ValConfig.SwimmingSpeedFactor.Value * SkillCaps.BonusFactor(skillFactor, ValConfig.SwimmingBonusesPastLevel100));
                 return __instance.m_swimSpeed + swim_increase_speed;
             }
         }
@@ -65,7 +66,8 @@ namespace ImpactfulSkills.patches
                 if (!ValConfig.EnableSwimming.Value || !ValConfig.EnableSwimStaminaCostReduction.Value || Player.m_localPlayer == null) { return swimCost; }
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Swim);
                 if (ValConfig.SwimStaminaReductionLevel.Value > skillFactor * 100) { return swimCost; }
-                float modified_swim_cost_factor = (1f - (ValConfig.SwimStaminaCostReductionFactor.Value * skillFactor)) * swimCost;
+                // Stops at 100% even past level 100, so swimming never pays stamina back.
+                float modified_swim_cost_factor = (1f - Mathf.Clamp01(ValConfig.SwimStaminaCostReductionFactor.Value * SkillCaps.BonusFactor(skillFactor, ValConfig.SwimmingBonusesPastLevel100))) * swimCost;
                 return modified_swim_cost_factor;
             }
         }

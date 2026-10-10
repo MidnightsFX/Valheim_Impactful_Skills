@@ -125,6 +125,9 @@ namespace ImpactfulSkills.patches
 
         private static float ModifyStaminaDrainCostForBow() {
             if (ValConfig.EnableWeaponSkill.Value != true || Player.m_localPlayer == null) { return 0.33f; }
+            // Never capped, whatever WeaponSkillBonusesPastLevel100 says (see SkillCaps): this stands in for vanilla's
+            // 0.33, which vanilla then multiplies by its own uncapped factor. A factor past 1 only lowers this towards
+            // the 0.01 floor, capping it would raise it.
             float skilled_cost = 0.33f - (ValConfig.WeaponSkillBowDrawStaminaCostReduction.Value * 0.33f * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Bows));
             if (skilled_cost <0.01f) { skilled_cost = 0.01f; }
             return skilled_cost;
@@ -138,10 +141,14 @@ namespace ImpactfulSkills.patches
                 return (stam_cost - vanilla_stam_reduction);
             }
 
-            float stam_cost_reduction = stam_cost * ValConfig.WeaponSkillStaminaReduction.Value * skillfactor;
+            // skillfactor is vanilla's own, which other mods can push past 1, so ours stops at its level 100 value
+            // unless WeaponSkillBonusesPastLevel100 is on (see SkillCaps). Vanilla's formula above keeps the factor it
+            // was given.
+            float stam_cost_reduction = stam_cost * ValConfig.WeaponSkillStaminaReduction.Value * SkillCaps.BonusFactor(skillfactor, ValConfig.WeaponSkillBonusesPastLevel100);
             stam_cost_reduction *= (1 + reduce_factor); // Inherit vanilla/other mod reduction factor into the new reduction calculation
             //Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} - r:{stam_cost_reduction} = {(stam_cost - stam_cost_reduction)} s:{skillfactor}");
-            return (stam_cost - stam_cost_reduction);
+            // An attack can become free, but never pay stamina back.
+            return Mathf.Max(0f, stam_cost - stam_cost_reduction);
         }
 
 
@@ -157,7 +164,7 @@ namespace ImpactfulSkills.patches
             {
                 if (Player.m_localPlayer == null) return duration;
                 float skillFactor = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType) * 100f;
-                float speedMultiplier = 1f + (skillFactor / 100 * ValConfig.WeaponSkillEquipSpeedFactor.Value);
+                float speedMultiplier = 1f + (SkillCaps.BonusLevel(skillFactor, ValConfig.WeaponSkillBonusesPastLevel100) / 100 * ValConfig.WeaponSkillEquipSpeedFactor.Value);
 
                 if (skillFactor >= ValConfig.WeaponSkillEquipRequiredLevel.Value)
                 {

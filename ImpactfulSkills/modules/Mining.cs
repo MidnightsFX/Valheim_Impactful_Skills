@@ -71,7 +71,9 @@ namespace ImpactfulSkills.patches {
         public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null) {
             if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID()) { return; }
             float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor(Skills.SkillType.Pickaxes);
-            float num1 = (float)(1.0 + (double)ValConfig.MiningDmgMod.Value * ((double)skillFactor * 100.0) / 100.0);
+            // The level checks below read skillFactor, the bonuses read bonusFactor (see SkillCaps).
+            float bonusFactor = SkillCaps.BonusFactor(skillFactor, ValConfig.MiningBonusesPastLevel100);
+            float num1 = (float)(1.0 + (double)ValConfig.MiningDmgMod.Value * ((double)bonusFactor * 100.0) / 100.0);
             Logger.LogDebug($"Player mining dmg multiplier: {num1}");
             hit.m_damage.m_pickaxe *= num1;
             if (ValConfig.EnableMiningCritHit.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RequiredLevelForMiningCrit.Value && (double)UnityEngine.Random.value <= (double)ValConfig.ChanceForMiningCritHit.Value) {
@@ -111,7 +113,7 @@ namespace ImpactfulSkills.patches {
             // Check for whole rock breaker
             if (!Mining.rockbreaker_running && Mining.current_aoe_strike == null) {
                 float num2 = UnityEngine.Random.value;
-                float num3 = skillFactor * ValConfig.RockBreakerMaxChance.Value;
+                float num3 = bonusFactor * ValConfig.RockBreakerMaxChance.Value;
                 Logger.LogDebug(string.Format("Rock breaker roll: {0} <= {1}", (object)num2, (object)num3));
                 if (ValConfig.EnableMiningRockBreaker.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RockBreakerRequiredLevel.Value && (double)num2 <= (double)num3) {
                     Logger.LogDebug("Rock breaker activated!");
@@ -150,7 +152,7 @@ namespace ImpactfulSkills.patches {
             if (!ValConfig.EnableMiningAOE.Value || (double)skillFactor * 100.0 < (double)ValConfig.MiningAOELevel.Value || Mining.current_aoe_strike != null) { return; }
                 
             float chance = ValConfig.ChanceForAOEOnHit.Value;
-            if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value) { chance -= 1f * skillFactor; }
+            if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value) { chance -= 1f * bonusFactor; }
             if (chance < 0f) { chance = 0f; }
             float aoe_roll = UnityEngine.Random.value;
             if (aoe_roll < chance) {
@@ -159,7 +161,7 @@ namespace ImpactfulSkills.patches {
                 Logger.LogDebug($"Player mining aoe activated: {aoe_roll} > {chance}");
                 Vector3 point = hit.m_point;
                 HitData aoedmg = hit;
-                double radius = (double)ValConfig.MiningAOERange.Value * (double)skillFactor;
+                double radius = (double)ValConfig.MiningAOERange.Value * (double)bonusFactor;
                 int rockmask = Mining.rockmask;
                 Collider[] mine_targets = Physics.OverlapSphere(point, (float)radius, rockmask);
                 Mining.current_aoe_strike = mine_targets;
@@ -278,7 +280,7 @@ namespace ImpactfulSkills.patches {
             if (nearbyDistance > ValConfig.DistanceMiningDropMultiplierChecks.Value) {
                 Logger.LogDebug(string.Format("Player too far away from rock to get increased loot: {0}", nearbyDistance));
             } else {
-                float skillFactor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Pickaxes);
+                float skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Pickaxes, ValConfig.MiningBonusesPastLevel100);
                 float mineSkillFactor = ValConfig.MiningLootFactor.Value * (skillFactor * 100f);
                 // (F - 1) so the factor is a true total multiplier for drop amounts: the vanilla drop still
                 // spawns, and we add (F - 1) x base on top, scaled by skill. F = 1 -> vanilla, F = 2 -> 2x at

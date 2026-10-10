@@ -46,12 +46,14 @@ namespace ImpactfulSkills.patches
         internal static bool RefinementEnabled => ValConfig.EnableForging.Value && ValConfig.EnableRefinementBonus.Value;
 
         /// <summary>
-        /// How much of the forging bonus applies to this player. 0 when the bonus is off or not yet reached.
+        /// How much of the forging bonus applies to this player. 0 when the bonus is off or not yet reached, and no
+        /// more than 1 unless ForgingBonusesPastLevel100 is on - past that the break reduction alone would outlast the
+        /// decay for dozens of levels.
         /// </summary>
         internal static float RefineSkillFactor(Player player) {
             if (RefinementEnabled == false || player == null) { return 0f; }
             if (Forging.ForgingLevel(player) < ValConfig.RefinementBonusLevel.Value) { return 0f; }
-            return player.GetSkillFactor(Forging.ForgingSkill);
+            return player.GetBonusSkillFactor(Forging.ForgingSkill, ValConfig.ForgingBonusesPastLevel100);
         }
 
         /// <summary>

@@ -39,7 +39,7 @@ namespace ImpactfulSkills.patches
             public static float RunSpeedBonus(Character __instance)
             {
                 if (ValConfig.EnableRun.Value == true && Player.m_localPlayer != null && __instance == Player.m_localPlayer) {
-                    float player_skill_factor = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Run);
+                    float player_skill_factor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Run, ValConfig.RunBonusesPastLevel100);
                     return ValConfig.RunSpeedFactor.Value * (player_skill_factor * 100f);
                 }
                 return 0f;
