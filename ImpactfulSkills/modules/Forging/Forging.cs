@@ -37,6 +37,7 @@ namespace ImpactfulSkills.patches
             forging.Identifier = "midnightsfx.forging";
             forging.IncreaseStep = 1f;
             ForgingSkill = SkillManager.Instance.AddSkill(forging);
+            ConsoleSkillNames.Register(forging);
 
             Tier1Stations = ParseNameList(ValConfig.StationBonusTier1Stations.Value);
             Tier2Stations = ParseNameList(ValConfig.StationBonusTier2Stations.Value);

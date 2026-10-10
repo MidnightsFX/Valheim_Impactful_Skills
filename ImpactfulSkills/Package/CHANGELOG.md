@@ -1,3 +1,10 @@
+**0.21.2**
+---
+```
+- Animal Handling, and any other skill of this mod with a space in its name, can now be raised and reset from the console by typing underscores in place of the spaces.
+- Lucky crafting refunds no longer hand back Forge of Potential idols, or materials a craft never took.
+```
+
 **0.21.1**
 ---
 ```

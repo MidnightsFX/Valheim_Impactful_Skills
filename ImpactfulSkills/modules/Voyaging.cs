@@ -22,6 +22,7 @@ namespace ImpactfulSkills.patches
             voyage.Identifier = "midnightsfx.voyager";
             voyage.IncreaseStep = 0.15f;
             VoyagingSkill = SkillManager.Instance.AddSkill(voyage);
+            ConsoleSkillNames.Register(voyage);
         }
 
         [HarmonyPatch(typeof(Ship), nameof(Ship.GetSailForce))]

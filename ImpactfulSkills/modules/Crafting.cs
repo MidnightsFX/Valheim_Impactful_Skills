@@ -68,7 +68,12 @@ namespace ImpactfulSkills.patches
             if (instance.m_craftRecipe.m_requireOnlyOneIngredient) {
                 Logger.LogDebug("Require any resource recipes do not get a refund.");
             } else {
+                CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
                 foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources) {
+                    // Upgrader resources (the Forge of Potential's idols) are never refunded. ConsumeResources only
+                    // charges an idol at an upgrader station, and charges nothing but the idol there, so refunding
+                    // either an idol or anything the station did not charge would hand out a free item.
+                    if (resource.m_upgraderResource || IngredientQuality.IsSpentAt(resource, station) == false) { continue; }
                     float roll = UnityEngine.Random.value;
                     float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
                     Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");

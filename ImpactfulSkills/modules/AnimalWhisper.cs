@@ -21,6 +21,7 @@ namespace ImpactfulSkills.patches
             animalh.Identifier = "midnightsfx.animalwhisper";
             animalh.IncreaseStep = 0.1f;
             AnimalHandling = SkillManager.Instance.AddSkill(animalh);
+            ConsoleSkillNames.Register(animalh);
 
         }
 

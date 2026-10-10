@@ -19,6 +19,7 @@ namespace ImpactfulSkills.patches {
             hauling.Identifier = "midnightsfx.hauling";
             hauling.IncreaseStep = 0.1f;
             HaulingSkill = SkillManager.Instance.AddSkill(hauling);
+            ConsoleSkillNames.Register(hauling);
         }
 
         [HarmonyPatch(typeof(Player))]

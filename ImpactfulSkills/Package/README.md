@@ -183,6 +183,12 @@ Expertise in one area of knowledge now allows you to gain skills faster in other
 Changing your primary weapon type now takes considerably less time.
 
 
+## Console commands
+
+The new skills work with `raiseskill` and `resetskill`. The console splits what you type on spaces, so write a skill name that has a space in it with an underscore instead, eg `raiseskill Animal_Handling 50`. Tab completion offers the names in this form.
+The name of the skill in your own language works, and so do `AnimalHandling`, `Voyager`, `Hauling` and `Forging` whatever language the game is in.
+
+
 ## Roadmap ideas
 Please note these are not ordered or guaranteed to be implemented, but are ideas that are being considered.
 I am also always happy to talk ideas and suggestions in the discord!
