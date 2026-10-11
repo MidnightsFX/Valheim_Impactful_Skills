@@ -78,7 +78,7 @@ namespace ImpactfulSkills.patches
                     // With RefundOnlySpentMaterials on, upgrader resources (the Forge of Potential's idols) are never
                     // refunded. ConsumeResources only charges an idol at an upgrader station, and charges nothing but the
                     // idol there, so refunding either an idol or anything the station did not charge hands out a free item.
-                    if (ValConfig.RefundOnlySpentMaterials.Value && (resource.m_upgraderResource || IngredientQuality.IsSpentAt(resource, station) == false)) { continue; }
+                    if ((ValConfig.RefundUpgraderResources.Value == false && resource.m_upgraderResource) || (ValConfig.RefundOnlySpentMaterials.Value  && IngredientQuality.IsSpentAt(resource, station) == false)) { continue; }
                     float roll = UnityEngine.Random.value;
                     float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
                     Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");
