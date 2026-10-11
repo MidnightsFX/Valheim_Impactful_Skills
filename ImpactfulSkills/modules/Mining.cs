@@ -72,11 +72,13 @@ namespace ImpactfulSkills.patches {
             if (!ValConfig.EnableMining.Value || hit == null || Player.m_localPlayer == null || hit.m_attacker != Player.m_localPlayer.GetZDOID()) { return; }
             float skillFactor = ((Character)Player.m_localPlayer).GetSkillFactor(Skills.SkillType.Pickaxes);
             // The level checks below read skillFactor, the bonuses read bonusFactor (see SkillCaps).
+            // The checks round skillFactor * 100 back to a whole level: 0.35f is just under 0.35, so level 35
+            // would otherwise only pass a 35 requirement at 36.
             float bonusFactor = SkillCaps.BonusFactor(skillFactor, ValConfig.MiningBonusesPastLevel100);
             float num1 = (float)(1.0 + (double)ValConfig.MiningDmgMod.Value * ((double)bonusFactor * 100.0) / 100.0);
             Logger.LogDebug($"Player mining dmg multiplier: {num1}");
             hit.m_damage.m_pickaxe *= num1;
-            if (ValConfig.EnableMiningCritHit.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RequiredLevelForMiningCrit.Value && (double)UnityEngine.Random.value <= (double)ValConfig.ChanceForMiningCritHit.Value) {
+            if (ValConfig.EnableMiningCritHit.Value && Mathf.Round(skillFactor * 100f) >= ValConfig.RequiredLevelForMiningCrit.Value && (double)UnityEngine.Random.value <= (double)ValConfig.ChanceForMiningCritHit.Value) {
                 Logger.LogDebug("Mining Critical hit activated");
                 hit.m_damage.m_pickaxe *= ValConfig.CriticalHitDmgMult.Value;
             }
@@ -115,7 +117,7 @@ namespace ImpactfulSkills.patches {
                 float num2 = UnityEngine.Random.value;
                 float num3 = bonusFactor * ValConfig.RockBreakerMaxChance.Value;
                 Logger.LogDebug(string.Format("Rock breaker roll: {0} <= {1}", (object)num2, (object)num3));
-                if (ValConfig.EnableMiningRockBreaker.Value && (double)skillFactor * 100.0 >= (double)ValConfig.RockBreakerRequiredLevel.Value && (double)num2 <= (double)num3) {
+                if (ValConfig.EnableMiningRockBreaker.Value && Mathf.Round(skillFactor * 100f) >= ValConfig.RockBreakerRequiredLevel.Value && (double)num2 <= (double)num3) {
                     Logger.LogDebug("Rock breaker activated!");
                     HitData aoedmg = hit;
                     aoedmg.m_damage.m_pickaxe = ValConfig.RockBreakerDamage.Value;
@@ -149,7 +151,7 @@ namespace ImpactfulSkills.patches {
                 }
             }
             // Check for AOE mining, guard clause
-            if (!ValConfig.EnableMiningAOE.Value || (double)skillFactor * 100.0 < (double)ValConfig.MiningAOELevel.Value || Mining.current_aoe_strike != null) { return; }
+            if (!ValConfig.EnableMiningAOE.Value || Mathf.Round(skillFactor * 100f) < ValConfig.MiningAOELevel.Value || Mining.current_aoe_strike != null) { return; }
                 
             float chance = ValConfig.ChanceForAOEOnHit.Value;
             if (ValConfig.ChanceForAOEOnHitScalesWithSkill.Value) { chance -= 1f * bonusFactor; }

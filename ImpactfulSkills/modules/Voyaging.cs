@@ -178,8 +178,8 @@ namespace ImpactfulSkills.patches
         private const float VanillaNoWindHeadwind = 0.8f;
         private static readonly float VanillaCuttingAngle = Mathf.Acos(VanillaFullWindHeadwind) * Mathf.Rad2Deg;
 
-        // 0 at VoyagerReduceCuttingStart, 1 at level 100.
-        private static float GetCuttingProgress(float skillLevel) {
+        // 0 at VoyagerReduceCuttingStart, 1 at level 100. UnlockMessages reads it too, to announce the level it rises above 0.
+        internal static float GetCuttingProgress(float skillLevel) {
             return Mathf.InverseLerp(ValConfig.VoyagerReduceCuttingStart.Value, 100f, skillLevel);
         }
 

@@ -15,6 +15,8 @@ Got a bug to report or just want to chat about the mod? Drop by the discord or g
 
 All of the below effects are **configurable**! Want it to be more powerful or less powerful? Its easy to modify through the config file or an in-game config editor!
 
+When a skill level-up unlocks one of these features, its name is shown in the middle of the screen, eg "Rockbreaker unlocked!". Server admins can turn this off for everyone with EnableUnlockMessages, and each player can turn it off for themselves with ShowUnlockMessages.
+
 ### Woodcutting
 
 Woodcutting now improves the amount of wood you get from trees and bushes. Along with the amount of seeds, and resin you get.
@@ -194,7 +196,7 @@ The same names work in [SkillsReworked](https://thunderstore.io/c/valheim/p/M2Va
 ## Roadmap ideas
 Please note these are not ordered or guaranteed to be implemented, but are ideas that are being considered.
 I am also always happy to talk ideas and suggestions in the discord!
-- Skill announcements, when gaining a skill level that gives you a specific bonus
+- Nothing is planned right now, suggestions are welcome!
 
 ## Suggested Mods to pair with
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius

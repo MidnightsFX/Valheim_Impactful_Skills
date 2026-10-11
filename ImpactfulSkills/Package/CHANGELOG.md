@@ -1,3 +1,11 @@
+**0.22.0**
+---
+```
+- Server synced config for lucky craftin to allow returning crafting ingrediants that were not part of the craft
+- A message now appears when a skill level-up unlocks one of this mod's features, which admins and players can turn off.
+- Mining and durability perks now start at exactly the level they are set to.
+```
+
 **0.21.3**
 ---
 ```

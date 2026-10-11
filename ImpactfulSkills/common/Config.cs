@@ -26,6 +26,9 @@ namespace ImpactfulSkills
         public static bool AOEFeaturesEnabled = true;
         // Local (per-player, NOT server-synced) hotkey that toggles AOEFeaturesEnabled.
         public static ConfigEntry<KeyboardShortcut> AOEToggleHotkey;
+        // Unlock messages show only while both the server allows them and the player wants them.
+        public static ConfigEntry<bool> EnableUnlockMessages;
+        public static ConfigEntry<bool> ShowUnlockMessages;
 
         public static ConfigEntry<bool> EnableWoodcutting;
         public static ConfigEntry<float> WoodCuttingDmgMod;
@@ -221,6 +224,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> CraftingMaterialReturnsLevel;
         public static ConfigEntry<float> MaxCraftingMaterialReturnPercent;
         public static ConfigEntry<float> ChanceForMaterialReturn;
+        public static ConfigEntry<bool> RefundOnlySpentMaterials;
         public static ConfigEntry<bool> ScaleCraftedEquipmentQuality;
         public static ConfigEntry<bool> CraftingBonusesPastLevel100;
 
@@ -308,6 +312,8 @@ namespace ImpactfulSkills
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
                 new KeyboardShortcut(UnityEngine.KeyCode.N),
                 "Hotkey to toggle AOE harvesting, AOE mining and AOE planting on/off. In the crafting window it instead toggles whether what you craft is made lightweight, once your forging is high enough.");
+            ShowUnlockMessages = BindClientConfig("Client config", "ShowUnlockMessages", true, "Shows a message in the middle of the screen when one of your skill level-ups unlocks one of this mod's features, if the server allows it with EnableUnlockMessages.");
+            EnableUnlockMessages = BindServerConfig("Notifications", "EnableUnlockMessages", true, "Shows each player a message in the middle of the screen when a skill level-up unlocks one of this mod's features. Turning this off hides them for everyone; each player can also turn them off for themselves with ShowUnlockMessages.");
             EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
             WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
             WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
@@ -498,6 +504,7 @@ namespace ImpactfulSkills
             CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
             MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
+            RefundOnlySpentMaterials = BindServerConfig("Crafting", "RefundOnlySpentMaterials", true, "Material returns only hand back materials the craft actually spent. Forge of Potential idols are never returned, and neither is anything the crafting station did not charge. Disable to let material returns roll every ingredient in the recipe.");
             ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
             CraftingBonusesPastLevel100 = BindServerConfig("Crafting", "CraftingBonusesPastLevel100", false, PastLevel100Description("Crafting", "Can make crafting refunds hand back more materials than a craft costs."));
 

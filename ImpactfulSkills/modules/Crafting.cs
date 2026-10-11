@@ -18,8 +18,9 @@ namespace ImpactfulSkills.patches
                 if (ValConfig.ScaleDurabilitySaveBySkillLevel.Value) {
                     chanceToNotUseDurability *= SkillCaps.BonusFactor(skillFactor, ValConfig.CraftingBonusesPastLevel100);
                 }
-                // The level check below stays uncapped, DurabilitySaveLevel goes up to 150.
-                if (ValConfig.DurabilitySaveLevel.Value <= skillFactor * 100.0 && chance < chanceToNotUseDurability) {
+                // The level check below stays uncapped, DurabilitySaveLevel goes up to 150. It rounds back to a whole
+                // level, since 0.35f is just under 0.35 and level 35 would otherwise only pass a 35 requirement at 36.
+                if (ValConfig.DurabilitySaveLevel.Value <= Mathf.Round(skillFactor * 100f) && chance < chanceToNotUseDurability) {
                     Logger.LogDebug(string.Format("Skipping durability usage {0} < {1}", chance, chanceToNotUseDurability));
                     return 0.0f;
                 }
@@ -74,10 +75,10 @@ namespace ImpactfulSkills.patches
             } else {
                 CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
                 foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources) {
-                    // Upgrader resources (the Forge of Potential's idols) are never refunded. ConsumeResources only
-                    // charges an idol at an upgrader station, and charges nothing but the idol there, so refunding
-                    // either an idol or anything the station did not charge would hand out a free item.
-                    if (resource.m_upgraderResource || IngredientQuality.IsSpentAt(resource, station) == false) { continue; }
+                    // With RefundOnlySpentMaterials on, upgrader resources (the Forge of Potential's idols) are never
+                    // refunded. ConsumeResources only charges an idol at an upgrader station, and charges nothing but the
+                    // idol there, so refunding either an idol or anything the station did not charge hands out a free item.
+                    if (ValConfig.RefundOnlySpentMaterials.Value && (resource.m_upgraderResource || IngredientQuality.IsSpentAt(resource, station) == false)) { continue; }
                     float roll = UnityEngine.Random.value;
                     float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
                     Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");
