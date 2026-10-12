@@ -224,9 +224,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> CraftingMaterialReturnsLevel;
         public static ConfigEntry<float> MaxCraftingMaterialReturnPercent;
         public static ConfigEntry<float> ChanceForMaterialReturn;
-        public static ConfigEntry<bool> RefundOnlySpentMaterials;
-
-        public static ConfigEntry<bool> RefundUpgraderResources;
+        public static ConfigEntry<bool> RefundIdolsFromCrafting;
+        public static ConfigEntry<bool> RefundForgeOfPotentialIdols;
         public static ConfigEntry<bool> ScaleCraftedEquipmentQuality;
         public static ConfigEntry<bool> CraftingBonusesPastLevel100;
 
@@ -506,8 +505,8 @@ namespace ImpactfulSkills
             CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
             MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
             ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
-            RefundOnlySpentMaterials = BindServerConfig("Crafting", "RefundOnlySpentMaterials", true, "Material returns only hand back materials the craft actually spent. Disable to let material returns roll every ingredient in the recipe.");
-            RefundUpgraderResources = BindServerConfig("Crafting", "RefundUpgraderResources", false, "Allow idols to be refunded at the Forge of Potential based on Crafting skill. Enable to allow chance for idols to be refunded at the Forge of Potential.");
+            RefundIdolsFromCrafting = BindServerConfig("Crafting", "RefundIdolsFromCrafting", false, "Material returns from crafting a new item can also hand back the Forge of Potential idol its recipe lists. Crafting at a regular station never uses the idol up, so this hands out idols that were not spent. Upgrades never return the idol, they only return materials the upgrade cost.");
+            RefundForgeOfPotentialIdols = BindServerConfig("Crafting", "RefundForgeOfPotentialIdols", false, "Refining an item at the Forge of Potential can trigger a material return, which only ever hands back the idol the refinement used. While disabled the Forge of Potential never triggers material returns.");
             ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
             CraftingBonusesPastLevel100 = BindServerConfig("Crafting", "CraftingBonusesPastLevel100", false, PastLevel100Description("Crafting", "Can make crafting refunds hand back more materials than a craft costs."));
 
