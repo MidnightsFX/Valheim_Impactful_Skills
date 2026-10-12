@@ -3,6 +3,7 @@ using ImpactfulSkills.common;
 using Jotunn.Managers;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 
@@ -60,36 +61,73 @@ namespace ImpactfulSkills.patches
             return craftedTotal;
         }
 
+        /// <summary>
+        /// How much of a requirement the craft just spent, and so the most a refund may be worked out from - 0 when
+        /// it spent none. Mirrors Player.ConsumeResources: a regular station charges every requirement but the idol,
+        /// at GetAmount for the quality being made, so an upgrade only refunds what the upgrade cost rather than what
+        /// crafting the item cost. The Forge of Potential charges nothing but the idol.
+        ///
+        /// Idols only come back when a setting allows it. A refinement at the Forge of Potential spends one
+        /// (RefundForgeOfPotentialIdols). Crafting at a regular station never spends one, so returning it there is a
+        /// free idol (RefundIdolsFromCrafting), and it is never given for an upgrade.
+        /// </summary>
+        private static int RefundableAmount(Piece.Requirement resource, CraftingStation station, int quality, bool upgrading) {
+            if (resource.m_resItem == null) { return 0; }
+
+            bool spent = IngredientQuality.IsSpentAt(resource, station);
+            if (resource.m_upgraderResource) {
+                bool allowed = spent ? ValConfig.RefundForgeOfPotentialIdols.Value : upgrading == false && ValConfig.RefundIdolsFromCrafting.Value;
+                if (allowed == false) { return 0; }
+            } else if (spent == false) {
+                return 0;
+            }
+            return resource.GetAmount(quality);
+        }
+
+        // Runs right after the craft spends its materials, inside DoCrafting or inside Reforged Potential's
+        // replacement for it. It must not throw: that cuts the rest of DoCrafting short, and Reforged Potential
+        // catches it and lets vanilla's DoCrafting craft the item a second time.
         private static void DetermineCraftingRefund(InventoryGui instance)
         {
-            // The level gate reads the boosted level, but the chance and the amount stop at their level 100 values
-            // unless CraftingBonusesPastLevel100 is on. Uncapped, a +534 Crafting EpicLoot set made every craft return
-            // more than it cost (see SkillCaps).
-            float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
-            float skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100);
-            if (ValConfig.EnableMaterialReturns.Value == false || skillLevel < ValConfig.CraftingMaterialReturnsLevel.Value) { return; }
+            try {
+                // The level gate reads the boosted level, but the chance and the amount stop at their level 100 values
+                // unless CraftingBonusesPastLevel100 is on. Uncapped, a +534 Crafting EpicLoot set made every craft return
+                // more than it cost (see SkillCaps).
+                float skillLevel = Player.m_localPlayer.GetSkillLevel(Skills.SkillType.Crafting);
+                float skillFactor = Player.m_localPlayer.GetBonusSkillFactor(Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100);
+                if (ValConfig.EnableMaterialReturns.Value == false || skillLevel < ValConfig.CraftingMaterialReturnsLevel.Value) { return; }
 
-            Dictionary<ItemDrop, int> resourcesToReturn = new Dictionary<ItemDrop, int>();
-            if (instance.m_craftRecipe.m_requireOnlyOneIngredient) {
-                Logger.LogDebug("Require any resource recipes do not get a refund.");
-            } else {
+                if (instance.m_craftRecipe.m_requireOnlyOneIngredient) {
+                    Logger.LogDebug("Require any resource recipes do not get a refund.");
+                    return;
+                }
+
+                // The same quality DoCrafting just charged for. The upgraded item has already replaced the old one in
+                // the inventory, but m_craftUpgradeItem still holds the old one at its old quality.
+                bool upgrading = instance.m_craftUpgradeItem != null;
+                int quality = upgrading ? instance.m_craftUpgradeItem.m_quality + 1 : 1;
                 CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
+                Dictionary<ItemDrop, int> resourcesToReturn = new Dictionary<ItemDrop, int>();
                 foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources) {
-                    // With RefundOnlySpentMaterials on, upgrader resources (the Forge of Potential's idols) are never
-                    // refunded. ConsumeResources only charges an idol at an upgrader station, and charges nothing but the
-                    // idol there, so refunding either an idol or anything the station did not charge hands out a free item.
-                    if (ValConfig.RefundOnlySpentMaterials.Value && (resource.m_upgraderResource || IngredientQuality.IsSpentAt(resource, station) == false)) { continue; }
+                    int spent = RefundableAmount(resource, station, quality, upgrading);
+                    if (spent <= 0) { continue; }
+
                     float roll = UnityEngine.Random.value;
                     float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
                     Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");
+                    int returnedAmount = 0;
                     if (roll <= chance) {
-                        if (resource.m_amount > 1) {
-                            int returnedAmount = Mathf.RoundToInt(resource.m_amount * (ValConfig.MaxCraftingMaterialReturnPercent.Value * skillFactor));
-                            resourcesToReturn.Add(resource.m_resItem, returnedAmount);
+                        if (spent > 1) {
+                            returnedAmount = Mathf.RoundToInt(spent * (ValConfig.MaxCraftingMaterialReturnPercent.Value * skillFactor));
                         } else if (roll < chance / 2.0) {
-                            resourcesToReturn.Add(resource.m_resItem, 1);
+                            returnedAmount = 1;
                         }
                     }
+                    if (returnedAmount <= 0) { continue; }
+
+                    // A recipe may list the same item twice.
+                    resourcesToReturn.TryGetValue(resource.m_resItem, out int alreadyReturned);
+                    resourcesToReturn[resource.m_resItem] = alreadyReturned + returnedAmount;
                 }
                 if (resourcesToReturn.Count == 0) { return; }
 
@@ -100,7 +138,28 @@ namespace ImpactfulSkills.patches
                     bool didRefund = Player.m_localPlayer.GetInventory().AddItem(keyValuePair.Key.gameObject, keyValuePair.Value);
                     Logger.LogDebug($"Refund to add: {keyValuePair.Key.name} {keyValuePair.Value} | refunded? {didRefund}");
                 }
+            } catch (Exception e) {
+                Logger.LogWarning($"Crafting refund failed: {e}");
             }
+        }
+
+        private static readonly MethodInfo ConsumeResourcesMethod = AccessTools.Method(typeof(Player), nameof(Player.ConsumeResources));
+
+        /// <summary>
+        /// Calls DetermineCraftingRefund right after the craft spends its materials. Shared by vanilla's DoCrafting
+        /// and Reforged Potential's copy of it, which both keep the InventoryGui in argument 0.
+        /// </summary>
+        internal static IEnumerable<CodeInstruction> InsertCraftingRefund(IEnumerable<CodeInstruction> instructions, string target) {
+            CodeMatcher codeMatcher = new CodeMatcher(instructions);
+            if (codeMatcher.TryMatchStartForward($"Unable to patch Crafting Refunds in {target}.", new CodeMatch(instr => instr.Calls(ConsumeResourcesMethod)))) {
+                // No local is loaded here on purpose. This used to push local 14 as a "how many were
+                // crafted" argument that DetermineCraftingRefund never read, and 1.0 renumbered that local
+                // to a bool - so it was feeding a bool to an int parameter that was then ignored.
+                codeMatcher.Advance(1).InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    Transpilers.EmitDelegate<Action<InventoryGui>>(Crafting.DetermineCraftingRefund));
+            }
+            return codeMatcher.Instructions();
         }
 
         // Quality transfer state. The DoCrafting prefix works out what quality the craft has earned, the
@@ -355,23 +414,8 @@ namespace ImpactfulSkills.patches
         {
             [HarmonyTranspiler]
             [HarmonyPatch("DoCrafting")]
-            public static IEnumerable<CodeInstruction> Transpiler(
-              IEnumerable<CodeInstruction> instructions)
-            {
-                CodeMatcher codeMatcher = new CodeMatcher(instructions, (ILGenerator)null);
-                if (codeMatcher.TryMatchStartForward("Unable to patch Crafting Refunds.",
-                    new CodeMatch(new OpCode?(OpCodes.Callvirt), (object) AccessTools.Method(typeof (Player), "ConsumeResources", (Type[]) null, (Type[]) null), (string) null)
-                )) {
-                    // No local is loaded here on purpose. This used to push local 14 as a "how many were
-                    // crafted" argument that DetermineCraftingRefund never read, and 1.0 renumbered that local
-                    // to a bool - so it was feeding a bool to an int parameter that was then ignored.
-                    codeMatcher.Advance(1).InsertAndAdvance(new CodeInstruction[2]
-                    {
-          new CodeInstruction(OpCodes.Ldarg_0, (object) null),
-          Transpilers.EmitDelegate<Action<InventoryGui>>(new Action<InventoryGui>(Crafting.DetermineCraftingRefund))
-                    });
-                }
-                return (IEnumerable<CodeInstruction>)codeMatcher.Instructions();
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                return InsertCraftingRefund(instructions, "DoCrafting");
             }
         }
 

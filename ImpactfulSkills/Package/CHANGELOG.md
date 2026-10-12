@@ -1,3 +1,11 @@
+**0.22.1**
+---
+```
+- Lucky crafting refunds from upgrading an item can no longer return more than the upgrade itself cost.
+- Refining at the Forge of Potential no longer triggers lucky crafting refunds.
+- Servers can optionally let lucky crafting refunds return idols, both when refining and when crafting new items.
+```
+
 **0.22.0**
 ---
 ```

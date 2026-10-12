@@ -26,7 +26,7 @@ namespace ImpactfulSkills.compatibility {
     /// reloads - twice a refinement.
     ///
     /// Its prefix also carries its own copy of vanilla's break refund, so the refund cap is transpiled into it too
-    /// (BreakRefundCap).
+    /// (BreakRefundCap), and its own copy of the craft, so the crafting refund is too (CraftingRefund).
     /// </summary>
     internal static class ReforgedPotential {
         internal const string PluginGUID = "akuichi.ReforgedPotential";
@@ -163,6 +163,25 @@ namespace ImpactfulSkills.compatibility {
 
             private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
                 return ForgingRefinement.CapBreakRefund(instructions, "Reforged Potential");
+            }
+        }
+
+        /// <summary>
+        /// Its roll skips vanilla's DoCrafting at the Forge of Potential, and with it the crafting refund, so the
+        /// refund is called from its own copy of the craft too. That is what lets RefundForgeOfPotentialIdols work
+        /// alongside it. Its prefix rewrites the recipe's idol for each level before the craft, so the refund reads
+        /// the idol and amount it actually charged. BreakRefundCap already warns when the roll is missing.
+        /// </summary>
+        [HarmonyPatch]
+        private static class CraftingRefund {
+            private static bool Prepare() {
+                return Modcheck.IsReforgedPotentialEnabled && RefinementRoll() != null;
+            }
+
+            private static MethodBase TargetMethod() { return RefinementRoll(); }
+
+            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                return Crafting.InsertCraftingRefund(instructions, "Reforged Potential");
             }
         }
     }
