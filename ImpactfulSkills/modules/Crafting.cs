@@ -109,9 +109,13 @@ namespace ImpactfulSkills.patches
                 CraftingStation station = Player.m_localPlayer.GetCurrentCraftingStation();
                 Dictionary<ItemDrop, int> resourcesToReturn = new Dictionary<ItemDrop, int>();
                 foreach (Piece.Requirement resource in instance.m_craftRecipe.m_resources) {
-                    int spent = RefundableAmount(resource, station, quality, upgrading);
-                    if (spent <= 0) { continue; }
+                    // With RefundUpgraderResources on allows idols to be refunded at the Forge of Potential
 
+                    // With RefundOnlySpentMaterials on, prevents refunding materials the craft intended to spend
+                    // ConsumeResources only charges an idol at an upgrader station, and charges nothing but the
+                    // idol there, RefundUpgraderResources is the flag to allow for whether or not the idol intended to be used 
+                    // could be reufunded.
+                    if ((ValConfig.RefundUpgraderResources.Value == false && resource.m_upgraderResource) || (ValConfig.RefundOnlySpentMaterials.Value && IngredientQuality.IsSpentAt(resource, station) == false)) { continue; }
                     float roll = UnityEngine.Random.value;
                     float chance = ValConfig.ChanceForMaterialReturn.Value * skillFactor;
                     Logger.LogDebug($"Checking refund chance for {resource.m_resItem.name} {roll} < {chance}");
