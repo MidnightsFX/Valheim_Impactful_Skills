@@ -230,6 +230,12 @@ namespace ImpactfulSkills.patches
             private static float PausedReloadProgress;
             private static float PausedReloadAt;
 
+            /// <summary>
+            /// Looks for the reload on either side of the method rather than rewriting its ClearActionQueue call. Other
+            /// mods replace that same call (ZenPlayer's Change Gear While Moving swaps the one in CheckRun for its own
+            /// clear that keeps equip actions), and only the first rewrite of a call wins, silently breaking the other.
+            /// Watching from outside also catches the reload when that replacement removes it instead of vanilla.
+            /// </summary>
             [HarmonyPatch]
             public static class PauseReloadOnMovement
             {
@@ -239,17 +245,20 @@ namespace ImpactfulSkills.patches
                     yield return AccessTools.DeclaredMethod(typeof(Player), nameof(Player.UpdateDodge));
                 }
 
-                [HarmonyTranspiler]
-                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
-                {
-                    var codeMatcher = new CodeMatcher(instructions);
-                    if (codeMatcher.TryMatchStartForward($"Unable to patch crossbow reload pause for {original.Name}.",
-                        new CodeMatch(i => i.opcode == OpCodes.Callvirt && i.operand is MethodInfo method && method.Name == nameof(Player.ClearActionQueue))
-                    )) {
-                        // Set keeps any labels on the call. The player is already on the stack as the call's instance.
-                        codeMatcher.Set(OpCodes.Call, AccessTools.Method(typeof(CrossbowReloadPause), nameof(ClearActionQueuePausingReload)));
+                private static void Prefix(Player __instance, out Player.MinorActionData __state) {
+                    __state = null;
+                    if (ValConfig.EnableWeaponSkill.Value && ValConfig.EnableCrossbowReloadPause.Value && __instance == Player.m_localPlayer) {
+                        __state = FindReload(__instance);
                     }
-                    return codeMatcher.Instructions();
+                }
+
+                // Nothing in these methods finishes a reload, so one that went missing was cleared away.
+                private static void Postfix(Player __instance, Player.MinorActionData __state) {
+                    if (__state == null || __state.m_time <= 0f || __instance.m_actionQueue.Contains(__state)) { return; }
+                    if (__instance.GetSkillLevel(__state.m_item.m_shared.m_skillType) < ValConfig.CrossbowReloadPauseLevel.Value) { return; }
+                    PausedReloadWeapon = __state.m_item;
+                    PausedReloadProgress = __state.m_time;
+                    PausedReloadAt = Time.time;
                 }
             }
 
@@ -266,18 +275,6 @@ namespace ImpactfulSkills.patches
                     }
                     PausedReloadWeapon = null;
                 }
-            }
-
-            private static void ClearActionQueuePausingReload(Player player) {
-                if (ValConfig.EnableWeaponSkill.Value && ValConfig.EnableCrossbowReloadPause.Value && player == Player.m_localPlayer) {
-                    Player.MinorActionData reload = FindReload(player);
-                    if (reload != null && reload.m_time > 0f && player.GetSkillLevel(reload.m_item.m_shared.m_skillType) >= ValConfig.CrossbowReloadPauseLevel.Value) {
-                        PausedReloadWeapon = reload.m_item;
-                        PausedReloadProgress = reload.m_time;
-                        PausedReloadAt = Time.time;
-                    }
-                }
-                player.ClearActionQueue();
             }
 
             private static Player.MinorActionData FindReload(Player player) {
