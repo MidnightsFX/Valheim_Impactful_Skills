@@ -16,7 +16,7 @@ namespace ImpactfulSkills.patches
         };
 
         [HarmonyPatch(typeof(SE_Shield), nameof(SE_Shield.OnDamaged))]
-        public static class VoyagerSpeedPatch
+        public static class BloodMagicShieldXPPatch
         {
             private static void Prefix(HitData hit, Character attacker, SE_Shield __instance)
             {
