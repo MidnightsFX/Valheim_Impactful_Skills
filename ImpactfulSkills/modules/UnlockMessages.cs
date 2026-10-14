@@ -181,6 +181,11 @@ namespace ImpactfulSkills.patches
                 () => ValConfig.EnableForging.Value && ValConfig.EnableLightweight.Value,
                 (level, _) => level >= ValConfig.LightweightLevel.Value);
 
+            // BloodMagic.cs shield feature
+            Add(Skills.SkillType.BloodMagic, "$unlock_shield_reset", 
+                () => ValConfig.EnableBloodMagic.Value && ValConfig.EnableBloodMagicShieldReset.Value,
+                (level, _) => level >= ValConfig.BloodMagicShieldResetLevel.Value);
+
             return all;
         }
 

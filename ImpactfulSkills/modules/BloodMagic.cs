@@ -36,5 +36,20 @@ namespace ImpactfulSkills.patches
                 }
             }
         }
+
+        /// <summary>
+        /// Shield of Protection is a status effect and when reapplying it to a creature that still has it, the damage taken by the shield is not reset,
+        /// only the timer before the status effect expires is. This modifies the virtual method ResetTime which is inheirited from StatusEffect by SE_Shield
+        /// to also reset the accumulated damage when reseting the status effect. 
+        /// </summary>
+        [HarmonyPatch(typeof(SE_Shield), nameof(SE_Shield.ResetTime))]
+        public static class ShieldOfProtectionResetDamageOnRefresh
+        {
+            private static void Prefix(SE_Shield __instance){
+                if (ValConfig.EnableBloodMagic.Value != true ||  ValConfig.EnableBloodMagicShieldRest.Value != true || !Player.m_localPlayer) { return; }
+                if (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.BloodMagic) < ValConfig.BloodMagicShieldResetLevel.Value) { return; }
+                __instance.m_damage = 0f;
+            }
+        }
     }
 }
