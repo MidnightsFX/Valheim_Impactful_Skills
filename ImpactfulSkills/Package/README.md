@@ -58,6 +58,7 @@ Vanilla provides a bonus of 33% at level 100, which is somewhat hidden. This mak
 Parrying provides a tiny bit of bonus XP.
 Crossbow hits grant more XP the further away the target is, up to 500% bonus XP at 150m (configurable with CrossbowDistanceXPMaxBonus and CrossbowDistanceXPMaxDistance).
 At crossbow level 50 (configurable), sprinting, jumping and dodging pause your reload instead of restarting it.
+Elemental and blood magic weapons that reload get the same pause at level 50 in their magic skill (configurable with EnableMagicReloadPause and MagicReloadPauseLevel).
 
 | WeaponSkill 0 | WeaponSkill 50 | WeaponSkill 100 |
 | ------------- | ------------- | ------------- |

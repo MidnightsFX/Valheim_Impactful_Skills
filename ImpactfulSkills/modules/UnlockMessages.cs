@@ -124,7 +124,8 @@ namespace ImpactfulSkills.patches
                 () => ValConfig.VoyagerImpactResistance.Value,
                 (level, _) => level >= ValConfig.VoyagerImpactResistanceLevel.Value);
 
-            // WeaponSkill.cs EquipSpeedHelper, which has no toggle, and CrossbowReloadPause
+            // WeaponSkill.cs EquipSpeedHelper, which has no toggle, and ReloadPause. The reload pause name is not
+            // crossbow specific, so the magic skills share it.
             foreach (Skills.SkillType skill in EquipSkills) {
                 Add(skill, "$unlock_quick_equip",
                     () => true,
@@ -133,6 +134,11 @@ namespace ImpactfulSkills.patches
             Add(Skills.SkillType.Crossbows, "$unlock_crossbow_pause",
                 () => ValConfig.EnableWeaponSkill.Value && ValConfig.EnableCrossbowReloadPause.Value,
                 (level, _) => level >= ValConfig.CrossbowReloadPauseLevel.Value);
+            foreach (Skills.SkillType skill in new[] { Skills.SkillType.ElementalMagic, Skills.SkillType.BloodMagic }) {
+                Add(skill, "$unlock_crossbow_pause",
+                    () => ValConfig.EnableWeaponSkill.Value && ValConfig.EnableMagicReloadPause.Value,
+                    (level, _) => level >= ValConfig.MagicReloadPauseLevel.Value);
+            }
 
             // Blocking.cs
             Add(Skills.SkillType.Blocking, "$unlock_block_power",

@@ -216,15 +216,18 @@ namespace ImpactfulSkills.patches
         }
 
         /// <summary>
-        /// Sprinting, jumping and dodging clear the players action queue, and a crossbow reload is just a timed action
-        /// in that queue. Vanilla re-queues the reload as soon as it is gone, but always from zero. Above the required
-        /// level we note how far the reload got when one of these clears it, and hand that progress back to the reload
-        /// vanilla queues next. Sprinting clears the queue every tick, so the reload holds still until the sprint ends.
+        /// Sprinting, jumping and dodging clear the players action queue, and a reload (crossbows, and the elemental or
+        /// blood magic weapons that reload) is just a timed action in that queue. Vanilla re-queues the reload as soon as
+        /// it is gone, but always from zero. Above the required level we note how far the reload got when one of these
+        /// clears it, and hand that progress back to the reload vanilla queues next. Sprinting clears the queue every
+        /// tick, so the reload holds still until the sprint ends. A reload drains its eitr while it runs, so a resumed one
+        /// only costs the eitr for the time it has left.
         /// </summary>
-        public static class CrossbowReloadPause
+        public static class ReloadPause
         {
             // Jump and dodge re-queue the reload on the very next tick, and sprinting saves again every tick, so a real
-            // pause is always restored well inside this. It stops a stale pause coming back after a weapon swap.
+            // pause is always restored well inside this. It stops a stale pause coming back after a weapon swap. A
+            // reload that waits on eitr to start again is kept from timing out by KeepPauseWhileWaiting.
             private const float PausedReloadTimeout = 1f;
             private static ItemDrop.ItemData PausedReloadWeapon;
             private static float PausedReloadProgress;
@@ -247,7 +250,7 @@ namespace ImpactfulSkills.patches
 
                 private static void Prefix(Player __instance, out Player.MinorActionData __state) {
                     __state = null;
-                    if (ValConfig.EnableWeaponSkill.Value && ValConfig.EnableCrossbowReloadPause.Value && __instance == Player.m_localPlayer) {
+                    if (ValConfig.EnableWeaponSkill.Value && (ValConfig.EnableCrossbowReloadPause.Value || ValConfig.EnableMagicReloadPause.Value) && __instance == Player.m_localPlayer) {
                         __state = FindReload(__instance);
                     }
                 }
@@ -255,10 +258,27 @@ namespace ImpactfulSkills.patches
                 // Nothing in these methods finishes a reload, so one that went missing was cleared away.
                 private static void Postfix(Player __instance, Player.MinorActionData __state) {
                     if (__state == null || __state.m_time <= 0f || __instance.m_actionQueue.Contains(__state)) { return; }
-                    if (__instance.GetSkillLevel(__state.m_item.m_shared.m_skillType) < ValConfig.CrossbowReloadPauseLevel.Value) { return; }
+                    if (!CanPause(__instance, __state.m_item)) { return; }
                     PausedReloadWeapon = __state.m_item;
                     PausedReloadProgress = __state.m_time;
                     PausedReloadAt = Time.time;
+                }
+            }
+
+            /// <summary>
+            /// Vanilla only re-queues a reload that drains eitr once there is enough eitr to start it, which can take well
+            /// past the timeout when the reload that was interrupted used most of it. While the paused weapon is still out
+            /// and unloaded with no reload queued, the pause is kept fresh. Swapping weapons stops this, so the timeout
+            /// still clears a stale pause.
+            /// </summary>
+            [HarmonyPatch(typeof(Player), nameof(Player.UpdateWeaponLoading))]
+            public static class KeepPauseWhileWaiting
+            {
+                private static void Postfix(Player __instance, ItemDrop.ItemData weapon) {
+                    if (PausedReloadWeapon == null || weapon != PausedReloadWeapon) { return; }
+                    if (__instance.m_weaponLoaded != weapon && FindReload(__instance) == null) {
+                        PausedReloadAt = Time.time;
+                    }
                 }
             }
 
@@ -282,6 +302,16 @@ namespace ImpactfulSkills.patches
                     if (action.m_type == Player.MinorActionData.ActionType.Reload) { return action; }
                 }
                 return null;
+            }
+
+            // Elemental and blood magic weapons have their own settings, every other weapon that reloads (crossbows,
+            // and any a mod adds) uses the crossbow ones. Each is checked against the weapon's own skill.
+            private static bool CanPause(Player player, ItemDrop.ItemData weapon) {
+                Skills.SkillType skill = weapon.m_shared.m_skillType;
+                if (skill == Skills.SkillType.ElementalMagic || skill == Skills.SkillType.BloodMagic) {
+                    return ValConfig.EnableMagicReloadPause.Value && player.GetSkillLevel(skill) >= ValConfig.MagicReloadPauseLevel.Value;
+                }
+                return ValConfig.EnableCrossbowReloadPause.Value && player.GetSkillLevel(skill) >= ValConfig.CrossbowReloadPauseLevel.Value;
             }
         }
 

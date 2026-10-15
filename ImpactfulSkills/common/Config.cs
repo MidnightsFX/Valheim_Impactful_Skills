@@ -161,6 +161,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> WeaponSkillEquipRequiredLevel;
         public static ConfigEntry<bool> EnableCrossbowReloadPause;
         public static ConfigEntry<int> CrossbowReloadPauseLevel;
+        public static ConfigEntry<bool> EnableMagicReloadPause;
+        public static ConfigEntry<int> MagicReloadPauseLevel;
         public static ConfigEntry<bool> EnableCrossbowDistanceXP;
         public static ConfigEntry<float> CrossbowDistanceXPMaxBonus;
         public static ConfigEntry<float> CrossbowDistanceXPMaxDistance;
@@ -480,6 +482,8 @@ namespace ImpactfulSkills
             WeaponSkillEquipSpeedFactor = BindServerConfig("WeaponSkills", "WeaponSkillEquipSpeedFactor", 2f, "How much faster your equipment is equipped based on your weapon skill.", true, 0f, 20f);
             EnableCrossbowReloadPause = BindServerConfig("WeaponSkills", "EnableCrossbowReloadPause", true, "Sprinting, jumping and dodging pause your crossbow reload instead of restarting it, once your crossbow skill reaches CrossbowReloadPauseLevel.");
             CrossbowReloadPauseLevel = BindServerConfig("WeaponSkills", "CrossbowReloadPauseLevel", 50, "The crossbow skill level at which sprinting, jumping and dodging pause your reload instead of restarting it.", false, 0, 100);
+            EnableMagicReloadPause = BindServerConfig("WeaponSkills", "EnableMagicReloadPause", true, "Sprinting, jumping and dodging pause the reload of an elemental or blood magic weapon instead of restarting it, once the weapon's magic skill reaches MagicReloadPauseLevel.");
+            MagicReloadPauseLevel = BindServerConfig("WeaponSkills", "MagicReloadPauseLevel", 50, "The elemental or blood magic skill level (whichever the weapon uses) at which sprinting, jumping and dodging pause its reload instead of restarting it.", false, 0, 100);
             EnableCrossbowDistanceXP = BindServerConfig("WeaponSkills", "EnableCrossbowDistanceXP", true, "Crossbow hits grant bonus XP based on how far away the target is.");
             CrossbowDistanceXPMaxBonus = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxBonus", 5f, "The bonus crossbow XP for a hit at CrossbowDistanceXPMaxDistance or further, growing evenly from nothing at point blank. 5 is a 500% bonus (6x the XP).", false, 0f, 20f);
             CrossbowDistanceXPMaxDistance = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxDistance", 150f, "The distance in meters from you to the hit at which the full CrossbowDistanceXPMaxBonus is reached.", false, 10f, 500f);
