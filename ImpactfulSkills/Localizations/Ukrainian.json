@@ -62,5 +62,6 @@
   "unlock_bonus_cooking": "Бонусне готування",
   "unlock_station_tier1": "Майстерність верстата й кузні",
   "unlock_station_tier2": "Майстерність чорної кузні й столу гальдру",
-  "unlock_refinement": "Знання Кузні потенціалу"
+  "unlock_refinement": "Знання Кузні потенціалу",
+  "unlock_shield_reset": "Оновлення щита магії крові"
 }

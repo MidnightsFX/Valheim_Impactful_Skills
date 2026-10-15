@@ -206,3 +206,9 @@ I am also always happy to talk ideas and suggestions in the discord!
 [*][url=https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/]Deathlink[/url] - Makes item loss, equipment loss and skill loss on death configurable[/*]
 [*][url=https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/]FortifySkillsRedux[/url] - Provides a system to prevent skill degredation but still provides risk.[/*]
 [/list]
+
+[line]
+
+If you enjoy my mods donations are appreciated. My mods will never be paid and donations are not required.
+
+[url=https://ko-fi.com/midnightsfx][img]https://raster.shields.io/badge/Ko--fi-Support%20me-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white[/img][/url]

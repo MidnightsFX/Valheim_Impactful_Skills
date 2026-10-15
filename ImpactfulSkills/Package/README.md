@@ -168,6 +168,8 @@ With Reforged Potential installed, forging's odds replace its Upgrade Chance and
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.
 
+Once your blood magic reaches BloodMagicShieldResetLevel (50 by default), recasting the shield on someone who already has it also restores how much damage it can absorb, not just its duration. Set EnableBloodMagicShieldReset to false to turn this off.
+
 
 ### Animal Whisper (new skill)
 
@@ -202,3 +204,9 @@ I am also always happy to talk ideas and suggestions in the discord!
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius
 - [Deathlink](https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/) - Makes item loss, equipment loss and skill loss on death configurable
 - [FortifySkillsRedux](https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/) - Provides a system to prevent skill degredation but still provides risk.
+
+---
+
+If you enjoy my mods donations are appreciated. My mods will never be paid and donations are not required.
+
+<a href="https://ko-fi.com/midnightsfx"><img height="36" src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi"></a>

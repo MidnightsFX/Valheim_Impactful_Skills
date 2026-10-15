@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using ImpactfulSkills.common;
 using System.Collections.Generic;
 using TMPro;
 using System.Reflection;
@@ -42,8 +43,8 @@ namespace ImpactfulSkills.patches
 
         /// <summary>
         /// Shield of Protection is a status effect and when reapplying it to a creature that still has it, the damage taken by the shield is not reset,
-        /// only the timer before the status effect expires is. This modifies the virtual method ResetTime which is inheirited from StatusEffect by SE_Shield
-        /// to also reset the accumulated damage when reseting the status effect. 
+        /// only the timer before the status effect expires is. SE_Shield does not override ResetTime, so this hooks the call to it in
+        /// Character.RPC_Damage instead, which is where a hit refreshes a status effect the character already has.
         /// </summary>
         [HarmonyPatch(typeof(Character))]
         public static class ShieldOfProtectionResetDamageOnRefresh
@@ -72,7 +73,9 @@ namespace ImpactfulSkills.patches
                 };
                 if (codeMatcher.TryMatchStartForward("Unable to patch blood magic shield reset in RPC_Damage.", codeMatches))
                 {
+                    // RPC_Damage(long sender, HitData hit), the hit carries the casters skill level.
                     codeMatcher.InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_2),
                         Transpilers.EmitDelegate(ResetShieldHealth)
                     );
                 }
@@ -80,24 +83,27 @@ namespace ImpactfulSkills.patches
             }
 
             /// <summary>
-            ///     Check if the status effect is a shield and there is a valid local player, then reset the shield
-            ///     damage accumulated if all conditions are met. Returns the statusEffect that is passed to this 
+            ///     Check if the status effect is a shield and the caster's blood magic level is high enough, then reset the shield
+            ///     damage accumulated if all conditions are met. The caster's level comes from the hit, since RPC_Damage runs on
+            ///     whichever machine owns the shielded character, where the local player (if any) is not the caster.
+            ///     Returns the statusEffect that is passed to this
             ///     method so that it is placed back onto the stack such that the original call to StatusEffect.ResetTime()
             ///     can still run. This also avoids consuming or replacing any vanilla code to hopefully maintain compatiability
             ///     with most other mods and avoids breaking other transpiler patches that rely on the StatusEffect being placed 
             ///     on the stack.
             /// </summary>
             /// <param name="statusEffect"></param>
+            /// <param name="hit"></param>
             /// <returns></returns>
-            private static StatusEffect ResetShieldHealth(StatusEffect statusEffect)
+            private static StatusEffect ResetShieldHealth(StatusEffect statusEffect, HitData hit)
             {
-                if (ValConfig.EnableBloodMagic.Value != true ||  ValConfig.EnableBloodMagicShieldRest.Value != true ||
-                    statusEffect.m_name != "$se_shield" || !Player.m_localPlayer) {
+                if (ValConfig.EnableBloodMagic.Value != true ||  ValConfig.EnableBloodMagicShieldReset.Value != true ||
+                    statusEffect.m_name != "$se_shield") {
                     return statusEffect;
                 }
-                
-                if (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.BloodMagic) < ValConfig.BloodMagicShieldResetLevel.Value) { 
-                    return statusEffect; 
+
+                if (hit.m_skillLevel < ValConfig.BloodMagicShieldResetLevel.Value) {
+                    return statusEffect;
                 }
                 
                 if (statusEffect is SE_Shield shield) {

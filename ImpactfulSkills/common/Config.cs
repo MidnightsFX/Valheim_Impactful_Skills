@@ -385,7 +385,7 @@ namespace ImpactfulSkills
             EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
             BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
             BloodMagicXP = BindServerConfig("BloodMagic", "BloodMagicXP", 1f, "How much XP is gained, used by other blood magic skill settings.", false, 0.1f, 10f);
-            EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.", false);
+            EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.");
             BloodMagicShieldResetLevel = BindServerConfig("BloodMagic", "BloodMagicShieldResetLevel", 50, "The minimum blood magic skill level required to be able to reset shield health when reapplying a shield. Has no effect if blood magic skill changes are not enabled or BloodMagicShieldReset is not enabled.", false, 1, 100);
 
             EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");

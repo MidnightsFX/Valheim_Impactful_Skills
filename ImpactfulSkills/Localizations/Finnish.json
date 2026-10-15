@@ -62,5 +62,6 @@
   "unlock_bonus_cooking": "Bonusruoanlaitto",
   "unlock_station_tier1": "Työpöydän ja pajan mestari",
   "unlock_station_tier2": "Mustan pajan ja galdr-pöydän mestari",
-  "unlock_refinement": "Potentiaalin pajan asiantuntemus"
+  "unlock_refinement": "Potentiaalin pajan asiantuntemus",
+  "unlock_shield_reset": "Verimagian kilven palautus"
 }

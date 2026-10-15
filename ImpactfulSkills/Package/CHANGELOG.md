@@ -1,3 +1,9 @@
+**0.23.0**
+---
+```
+- Recasting a blood magic shield on someone who already has one now restores its full strength once your blood magic is high enough, with a message when you unlock it.
+```
+
 **0.22.1**
 ---
 ```
