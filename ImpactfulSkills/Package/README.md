@@ -58,6 +58,7 @@ Vanilla provides a bonus of 33% at level 100, which is somewhat hidden. This mak
 Parrying provides a tiny bit of bonus XP.
 Crossbow hits grant more XP the further away the target is, up to 500% bonus XP at 150m (configurable with CrossbowDistanceXPMaxBonus and CrossbowDistanceXPMaxDistance).
 At crossbow level 50 (configurable), sprinting, jumping and dodging pause your reload instead of restarting it.
+Elemental and blood magic weapons that reload get the same pause at level 50 in their magic skill (configurable with EnableMagicReloadPause and MagicReloadPauseLevel).
 
 | WeaponSkill 0 | WeaponSkill 50 | WeaponSkill 100 |
 | ------------- | ------------- | ------------- |
@@ -168,6 +169,8 @@ With Reforged Potential installed, forging's odds replace its Upgrade Chance and
 
 Blood magic now gives XP for the shield for damage taken, in addition to 1 xp when the shield is broken.
 
+Once your blood magic reaches BloodMagicShieldResetLevel (50 by default), recasting the shield on someone who already has it also restores how much damage it can absorb, not just its duration. Set EnableBloodMagicShieldReset to false to turn this off.
+
 
 ### Animal Whisper (new skill)
 
@@ -202,3 +205,9 @@ I am also always happy to talk ideas and suggestions in the discord!
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius
 - [Deathlink](https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/) - Makes item loss, equipment loss and skill loss on death configurable
 - [FortifySkillsRedux](https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/) - Provides a system to prevent skill degredation but still provides risk.
+
+---
+
+If you enjoy my mods donations are appreciated. My mods will never be paid and donations are not required.
+
+<a href="https://ko-fi.com/midnightsfx"><img height="36" src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi"></a>

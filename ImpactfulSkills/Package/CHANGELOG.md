@@ -1,3 +1,10 @@
+**0.23.0**
+---
+```
+- Recasting a blood magic shield on someone who already has one now restores its full strength once your blood magic is high enough, with a message when you unlock it.
+- Skilled elemental and blood magic users no longer lose the reload progress of magic weapons that reload when sprinting, jumping or dodging, even when low on eitr.
+```
+
 **0.22.1**
 ---
 ```

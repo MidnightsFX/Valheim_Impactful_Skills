@@ -62,5 +62,6 @@
   "unlock_bonus_cooking": "โบนัสการทำอาหาร",
   "unlock_station_tier1": "ความเชี่ยวชาญโต๊ะช่างและเตาตีเหล็ก",
   "unlock_station_tier2": "ความเชี่ยวชาญเตาตีเหล็กดำและโต๊ะกัลเดอร์",
-  "unlock_refinement": "ความชำนาญเตาหลอมแห่งศักยภาพ"
+  "unlock_refinement": "ความชำนาญเตาหลอมแห่งศักยภาพ",
+  "unlock_shield_reset": "การฟื้นฟูโล่เวทมนตร์เลือด"
 }

@@ -62,5 +62,6 @@
   "unlock_bonus_cooking": "ბონუს მზარეულობა",
   "unlock_station_tier1": "სამუშაო მაგიდისა და სამჭედლოს ოსტატობა",
   "unlock_station_tier2": "შავი სამჭედლოსა და გალდრის მაგიდის ოსტატობა",
-  "unlock_refinement": "პოტენციალის სამჭედლოს ცოდნა"
+  "unlock_refinement": "პოტენციალის სამჭედლოს ცოდნა",
+  "unlock_shield_reset": "სისხლის მაგიის ფარის განახლება"
 }

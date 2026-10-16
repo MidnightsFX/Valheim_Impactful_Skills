@@ -64,6 +64,7 @@ Vanilla provides a bonus of 33% at level 100, which is somewhat hidden. This mak
 Parrying provides a tiny bit of bonus XP.
 Crossbow hits grant more XP the further away the target is, up to 500% bonus XP at 150m (configurable with CrossbowDistanceXPMaxBonus and CrossbowDistanceXPMaxDistance).
 At crossbow level 50 (configurable), sprinting, jumping and dodging pause your reload instead of restarting it.
+Elemental and blood magic weapons that reload get the same pause at level 50 in their magic skill (configurable with EnableMagicReloadPause and MagicReloadPauseLevel).
 
 [b]WeaponSkill 0[/b]
 [img]https://github.com/MidnightsFX/Valheim_Impactful_Skills/blob/master/ImpactfulSkills/Art/sword_0.png?raw=true[/img]
@@ -206,3 +207,9 @@ I am also always happy to talk ideas and suggestions in the discord!
 [*][url=https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/]Deathlink[/url] - Makes item loss, equipment loss and skill loss on death configurable[/*]
 [*][url=https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/]FortifySkillsRedux[/url] - Provides a system to prevent skill degredation but still provides risk.[/*]
 [/list]
+
+[line]
+
+If you enjoy my mods donations are appreciated. My mods will never be paid and donations are not required.
+
+[url=https://ko-fi.com/midnightsfx][img]https://raster.shields.io/badge/Ko--fi-Support%20me-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white[/img][/url]
