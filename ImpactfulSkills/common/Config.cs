@@ -204,6 +204,10 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableBloodMagicShieldReset;
         public static ConfigEntry<int> BloodMagicShieldResetLevel;
 
+        public static ConfigEntry<bool> EnableElementalMagic;
+        public static ConfigEntry <bool> EnableElementalMagicSpreadReduction;
+        public static ConfigEntry<float> ElementalMagicProjectileSpreadReduction;
+
         public static ConfigEntry<bool> EnableKnowledgeSharing;
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
         public static ConfigEntry<float> VoyagerSkillGainRate;
@@ -390,6 +394,10 @@ namespace ImpactfulSkills
             EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.");
             BloodMagicShieldResetLevel = BindServerConfig("BloodMagic", "BloodMagicShieldResetLevel", 50, "The minimum blood magic skill level required to be able to reset shield health when reapplying a shield. Has no effect if blood magic skill changes are not enabled or BloodMagicShieldReset is not enabled.", false, 1, 100);
 
+            EnableElementalMagic = BindServerConfig("ElementalMagic", "EnableElementalMagic", true, "Enable elemental magic skill changes.");
+            EnableElementalMagicSpreadReduction = BindServerConfig("ElementalMagic", nameof(EnableElementalMagicSpreadReduction), true, "Enable reducing the spread of projectiles fired from weapons that use the elemental magic skill as your skill level increases.");
+            ElementalMagicProjectileSpreadReduction = BindServerConfig("ElementalMagic", nameof(ElementalMagicProjectileSpreadReduction), 0.5f, "How much the spread of projectiles is reduced based on your elemental magic skill level at level 100. 0.5 will make level 100 elemental magic weapons have 50% less spread. Vanilla is 0.0.", false, 0.0f, 1f);
+      
             EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
             SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
