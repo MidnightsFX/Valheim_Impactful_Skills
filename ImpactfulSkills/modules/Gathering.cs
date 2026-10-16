@@ -14,8 +14,8 @@ namespace ImpactfulSkills.patches
     public static class Gathering
     {
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
-        static readonly HashSet<String> UnallowedPickables = new HashSet<String>() { };
-        static readonly HashSet<String> DefaultUnallowedPickables = new HashSet<string>() {
+        static readonly HashSet<string> UnallowedPickables = new HashSet<string>() { };
+        private static readonly HashSet<String> DefaultUnallowedPickables = new HashSet<string>() {
             "SurtlingCore",
             "Flint", 
             "Wood",
@@ -59,6 +59,9 @@ namespace ImpactfulSkills.patches
         private static bool enabled_aoe_gathering = true;
         private static float aoe_gathering_activated_at = 0;
 
+        public static string GetDefaultUnallowedPickablesString(){
+            return string.Join(",", DefaultUnallowedPickables);
+        }
 
         private static void PickableLuckLevelsChanged(object s, EventArgs e)
         {
