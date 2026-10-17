@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Werkbank- en smidsemeesterschap",
   "unlock_station_tier2": "Zwarte smidse- en galdrtafelmeesterschap",
   "unlock_refinement": "Expertise met de Smidse van Potentieel",
-  "unlock_shield_reset": "Herstel van het bloedmagieschild"
+  "unlock_shield_reset": "Herstel van het bloedmagieschild",
+  "unlock_elemental_accuracy": "Precisie van elementaire magie"
 }

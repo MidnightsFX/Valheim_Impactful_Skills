@@ -1,5 +1,4 @@
-﻿using BepInEx.Configuration;
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
 
 namespace ImpactfulSkills.patches
@@ -7,10 +6,6 @@ namespace ImpactfulSkills.patches
     [HarmonyPatch]
     public static class ElementalMagic
     {
-        private static float cached_projectileAccuracy;
-        private static float cached_projectileAccuracyMin;
-        private static ItemDrop.ItemData WeaponRef;
-
         /// <summary>
         ///     Checks if elemental magic config settings are enabled does an early return if they are not.
         ///     Checks if the attack is made by the local player using an elementa magic weapon, and if it 
@@ -23,72 +18,64 @@ namespace ImpactfulSkills.patches
         ///     you can aim more accurately faster. However, the elemental magic ice staff never becomes more
         ///     accurate in the vanilla game no matter how high your elemental magic skill is and it is the only
         ///     magic weapon that has a random scatter to it's projectiles.
+        ///
+        ///     The reduction only applies from ElementalMagicSpreadReductionLevel on. Like other level requirements it
+        ///     reads the boosted level (see SkillCaps), and once reached the full reduction for your level applies.
         /// </summary>
         /// <param name="__instance"></param>
+        /// <param name="__result">False when the attack did not start, and is thrown away.</param>
         [HarmonyPostfix]
         [HarmonyBefore("blacks7ar.BowPlugin", "Searica.Valheim.ProjectileTweaks")]
         [HarmonyPriority(Priority.VeryHigh)]
         [HarmonyPatch(typeof(Attack), nameof(Attack.Start))]
-        internal static void AttackStartPrefix(Attack __instance)
+        internal static void AttackStartPostfix(Attack __instance, bool __result)
         {
-            if (!ValConfig.EnableElementalMagic.Value || !ValConfig.EnableElementalMagicSpreadReduction.Value)
+            if (!__result || !ValConfig.EnableElementalMagic.Value || !ValConfig.EnableElementalMagicSpreadReduction.Value)
             {
                 return;
             }
 
-            if (!TryGetPlayerWeapon(__instance, out WeaponRef))
+            if (!IsLocalPlayerElementalAttack(__instance))
             {
                 return;
             }
 
-            if (WeaponRef == null || WeaponRef.m_shared.m_skillType != Skills.SkillType.ElementalMagic)
+            if (Player.m_localPlayer.GetSkillLevel(Skills.SkillType.ElementalMagic) < ValConfig.ElementalMagicSpreadReductionLevel.Value)
             {
                 return;
             }
-  
-            SetSpread(__instance, ValConfig.ElementalMagicProjectileSpreadReduction);
+
+            SetSpread(__instance, ComputeSpreadMultiplier());
         }
 
         /// <summary>
-        ///     Postfix patch runs on all attacks but we only care about getting the weapon from the local player.
+        ///     Postfix patch runs on all attacks but we only care about the local player's elemental magic weapons.
+        ///     Start has already set m_weapon to the item this attack belongs to.
         /// </summary>
         /// <param name="attack"></param>
         /// <returns></returns>
-        private static bool TryGetPlayerWeapon(Attack attack, out ItemDrop.ItemData weapon)
+        private static bool IsLocalPlayerElementalAttack(Attack attack)
         {
-            if (attack == null || !attack.m_character || !attack.m_character.IsPlayer() || attack.m_character != Player.m_localPlayer)
+            if (attack == null || !attack.m_character || attack.m_character != Player.m_localPlayer)
             {
-                weapon = null;
                 return false;
             }
 
-            weapon = attack.m_character.GetCurrentWeapon();
-            return true;
+            return attack.m_weapon != null && attack.m_weapon.m_shared.m_skillType == Skills.SkillType.ElementalMagic;
         }
 
 
         /// <summary>
-        ///     Projectile accuracy is a misleading name in the game code. It dictates how much the projectile can 
+        ///     Projectile accuracy is a misleading name in the game code. It dictates how much the projectile can
         ///     deviate from the intended path so it is equivalent to amount of spread in the launched projectiles.
-        ///     Cache the default values of the attack and set up a delegate method to trigger updates to the attack
-        ///     if the config setting is changed while the attack still exists. Then do a manual update of the accuracy 
-        ///     values for this attack.
+        ///
+        ///     Humanoid.StartAttack clones the weapon's attack for every swing, so scaling this copy in place never
+        ///     compounds, and a changed config setting is picked up by the next swing without any extra handling.
         /// </summary>
         /// <param name="attack"></param>
-        /// <param name="spreadConfig"></param>
-        private static void SetSpread(Attack attack, ConfigEntry<float> spreadConfig)
+        /// <param name="multiplier"></param>
+        private static void SetSpread(Attack attack, float multiplier)
         {
-            cached_projectileAccuracy = attack.m_projectileAccuracy;
-            cached_projectileAccuracyMin = attack.m_projectileAccuracyMin;
-
-            spreadConfig.SettingChanged += (sender, e) =>
-            {
-                float multiplier = ComputeSpreadMultiplier(spreadConfig);
-                attack.m_projectileAccuracy = cached_projectileAccuracy * multiplier;
-                attack.m_projectileAccuracyMin = cached_projectileAccuracyMin * multiplier;
-            };
-
-            float multiplier = ComputeSpreadMultiplier(spreadConfig);
             attack.m_projectileAccuracy *= multiplier;
             attack.m_projectileAccuracyMin *= multiplier;
         }
@@ -97,14 +84,13 @@ namespace ImpactfulSkills.patches
         /// <summary>
         ///     Lower spread multiplier is better so scale the multiplier down as skill level increases. Uses SkillCaps method
         ///     to ensure the configuration settings for bonuses past level 100 are considered and allow to pushing the spread multiplier
-        ///     even closer to 0 for skill levels above 100 if it is not already 0 at level 100. Output is clamped to range 0-1 to prevent 
+        ///     even closer to 0 for skill levels above 100 if it is not already 0 at level 100. Output is clamped to range 0-1 to prevent
         ///     negative spread from occuring or the spread of the attack ever becoming worse than vanilla.
         /// </summary>
-        /// <param name="spreadConfig"></param>
         /// <returns></returns>
-        private static float ComputeSpreadMultiplier(ConfigEntry<float> spreadConfig)
+        private static float ComputeSpreadMultiplier()
         {
-            return Mathf.Clamp01(1.0f - (spreadConfig.Value * SkillCaps.GetBonusSkillFactor(Player.m_localPlayer, Skills.SkillType.ElementalMagic, ValConfig.WeaponSkillBonusesPastLevel100)));
+            return Mathf.Clamp01(1.0f - (ValConfig.ElementalMagicProjectileSpreadReduction.Value * SkillCaps.GetBonusSkillFactor(Player.m_localPlayer, Skills.SkillType.ElementalMagic, ValConfig.WeaponSkillBonusesPastLevel100)));
         }
 
     }

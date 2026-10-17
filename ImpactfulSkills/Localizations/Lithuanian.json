@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Darbastalio ir kalvės meistriškumas",
   "unlock_station_tier2": "Juodosios kalvės ir galdr stalo meistriškumas",
   "unlock_refinement": "Potencialo kalvės žinios",
-  "unlock_shield_reset": "Kraujo magijos skydo atnaujinimas"
+  "unlock_shield_reset": "Kraujo magijos skydo atnaujinimas",
+  "unlock_elemental_accuracy": "Elementų magijos tikslumas"
 }

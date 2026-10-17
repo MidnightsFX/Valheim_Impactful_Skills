@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Maîtrise de l'établi et de la forge",
   "unlock_station_tier2": "Maîtrise de la forge noire et de la table de galdr",
   "unlock_refinement": "Expertise de la Forge du Potentiel",
-  "unlock_shield_reset": "Renouvellement du bouclier de magie du sang"
+  "unlock_shield_reset": "Renouvellement du bouclier de magie du sang",
+  "unlock_elemental_accuracy": "Précision de la magie élémentaire"
 }

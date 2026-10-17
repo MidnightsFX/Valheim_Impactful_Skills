@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Werkbank- & Schmiedemeister",
   "unlock_station_tier2": "Schwarzschmiede- & Galdrtisch-Meister",
   "unlock_refinement": "Expertise der Schmiede des Potenzials",
-  "unlock_shield_reset": "Erneuerung des Blutmagie-Schilds"
+  "unlock_shield_reset": "Erneuerung des Blutmagie-Schilds",
+  "unlock_elemental_accuracy": "Präzision der Elementarmagie"
 }

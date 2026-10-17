@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Maestría de banco de trabajo y forja",
   "unlock_station_tier2": "Maestría de forja negra y mesa de galdr",
   "unlock_refinement": "Pericia en la Forja del Potencial",
-  "unlock_shield_reset": "Renovación del escudo de magia de sangre"
+  "unlock_shield_reset": "Renovación del escudo de magia de sangre",
+  "unlock_elemental_accuracy": "Precisión de la magia elemental"
 }

@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Мастерство верстака и кузницы",
   "unlock_station_tier2": "Мастерство чёрной кузницы и стола гальдра",
   "unlock_refinement": "Знание Кузницы потенциала",
-  "unlock_shield_reset": "Обновление щита магии крови"
+  "unlock_shield_reset": "Обновление щита магии крови",
+  "unlock_elemental_accuracy": "Точность магии стихий"
 }

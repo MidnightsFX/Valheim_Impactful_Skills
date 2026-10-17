@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Workbench & Forge Mastery",
   "unlock_station_tier2": "Black Forge & Galdr Table Mastery",
   "unlock_refinement": "Forge of Potential Expertise",
-  "unlock_shield_reset": "Blood Magic Shield Reset"
+  "unlock_shield_reset": "Blood Magic Shield Reset",
+  "unlock_elemental_accuracy": "Elemental Magic Accuracy"
 }

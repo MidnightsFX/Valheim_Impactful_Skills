@@ -63,5 +63,6 @@
   "unlock_station_tier1": "სამუშაო მაგიდისა და სამჭედლოს ოსტატობა",
   "unlock_station_tier2": "შავი სამჭედლოსა და გალდრის მაგიდის ოსტატობა",
   "unlock_refinement": "პოტენციალის სამჭედლოს ცოდნა",
-  "unlock_shield_reset": "სისხლის მაგიის ფარის განახლება"
+  "unlock_shield_reset": "სისხლის მაგიის ფარის განახლება",
+  "unlock_elemental_accuracy": "სტიქიური მაგიის სიზუსტე"
 }

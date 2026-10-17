@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Majstorstvo radnog stola i kovačnice",
   "unlock_station_tier2": "Majstorstvo crne kovačnice i galdr stola",
   "unlock_refinement": "Stručnost u Kovačnici potencijala",
-  "unlock_shield_reset": "Obnova štita krvne magije"
+  "unlock_shield_reset": "Obnova štita krvne magije",
+  "unlock_elemental_accuracy": "Preciznost elementarne magije"
 }

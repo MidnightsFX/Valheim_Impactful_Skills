@@ -173,6 +173,10 @@ Blood magic now gives XP for the shield for damage taken, in addition to 1 xp wh
 
 Once your blood magic reaches BloodMagicShieldResetLevel (50 by default), recasting the shield on someone who already has it also restores how much damage it can absorb, not just its duration. Set EnableBloodMagicShieldReset to false to turn this off.
 
+### Elemental Magic
+
+Once your elemental magic reaches ElementalMagicSpreadReductionLevel (25 by default), projectiles from elemental magic weapons spread less the higher your skill, up to half as much at level 100 (configurable with ElementalMagicProjectileSpreadReduction). This is most noticeable on the Staff of Frost, the one magic weapon that scatters its shots. Set EnableElementalMagicSpreadReduction to false to turn this off.
+
 
 ### Animal Whisper (new skill)
 

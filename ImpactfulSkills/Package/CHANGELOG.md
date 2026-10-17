@@ -1,7 +1,9 @@
-**0.23.1**
+**0.24.0**
 ---
 ```
 - The Forge of Potential rolls each refinement when you attempt it again, rather than using outcomes the game decided in advance, which servers can turn off.
+- Elemental magic weapons fire more accurately as your elemental magic skill grows, once it reaches a set level, with a message when you unlock it.
+- Gathering luck and AOE harvesting now only apply to things that train farming, so stones, treasure and similar pickups are skipped more reliably.
 ```
 
 **0.23.0**

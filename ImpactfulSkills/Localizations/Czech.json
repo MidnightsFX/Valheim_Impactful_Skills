@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Mistrovství ponku a kovárny",
   "unlock_station_tier2": "Mistrovství černé kovárny a galdrového stolu",
   "unlock_refinement": "Odbornost v Kovárně potenciálu",
-  "unlock_shield_reset": "Obnovení štítu krevní magie"
+  "unlock_shield_reset": "Obnovení štítu krevní magie",
+  "unlock_elemental_accuracy": "Přesnost elementální magie"
 }

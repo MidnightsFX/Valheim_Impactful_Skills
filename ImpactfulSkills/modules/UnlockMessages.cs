@@ -192,6 +192,11 @@ namespace ImpactfulSkills.patches
                 () => ValConfig.EnableBloodMagic.Value && ValConfig.EnableBloodMagicShieldReset.Value,
                 (level, _) => level >= ValConfig.BloodMagicShieldResetLevel.Value);
 
+            // ElementalMagic.cs spread reduction
+            Add(Skills.SkillType.ElementalMagic, "$unlock_elemental_accuracy",
+                () => ValConfig.EnableElementalMagic.Value && ValConfig.EnableElementalMagicSpreadReduction.Value,
+                (level, _) => level >= ValConfig.ElementalMagicSpreadReductionLevel.Value);
+
             return all;
         }
 

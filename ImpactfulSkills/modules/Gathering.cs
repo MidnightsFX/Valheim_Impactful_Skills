@@ -85,16 +85,18 @@ namespace ImpactfulSkills.patches
             return levels;
         }
 
+        // Each entry is trimmed on its own, so "Wood, Stone" disallows Stone too.
+        private static void LoadUnallowedPickables(string value) {
+            UnallowedPickables.Clear();
+            foreach (var item in value.Split(',')) {
+                string entry = item.Trim();
+                if (entry.Length > 0) { UnallowedPickables.Add(entry); }
+            }
+        }
+
         private static void UnallowedPickablesChanged(object s, EventArgs e) {
             try {
-                List<String> tunallowed = new List<String>() { };
-                foreach (var item in ValConfig.GatheringDisallowedItems.Value.Trim().Split(',')) {
-                    tunallowed.Add(item);
-                }
-                if (tunallowed.Count > 0) {
-                    UnallowedPickables.Clear();
-                    UnallowedPickables.UnionWith(tunallowed);
-                }
+                LoadUnallowedPickables(ValConfig.GatheringDisallowedItems.Value);
             }
             catch (Exception ex)
             {
@@ -106,9 +108,7 @@ namespace ImpactfulSkills.patches
             luck_levels = ParseLuckLevels(ValConfig.GatheringLuckLevels.Value);
             ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
             try {
-                foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Trim().Split(',')) {
-                    UnallowedPickables.Add(unallowed);
-                }
+                LoadUnallowedPickables(ValConfig.GatheringDisallowedItems.Value);
             } catch (Exception ex) {
                 Logger.LogWarning($"Error parsing GatheringDisallowedItems, defaults will be used.: {ex}");
                 UnallowedPickables.UnionWith(DefaultUnallowedPickables);
@@ -116,12 +116,15 @@ namespace ImpactfulSkills.patches
             ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedPickablesChanged;
         }
 
+        // Only pickables that vanilla would raise Farming for count, the same ones vanilla gives its own bonus yield.
+        // The skill is checked first: reading the prefab name allocates a string, and an AOE sweep checks every
+        // pickable in range.
         public static bool IsAllowedPickable(Pickable pickable)
         {
-            if (UnallowedPickables.Contains(pickable.m_itemPrefab.name)){
+            if (pickable.m_pickRaiseSkill != Skills.SkillType.Farming) {
                 return false;
             }
-            return pickable.m_pickRaiseSkill == Skills.SkillType.Farming;
+            return !UnallowedPickables.Contains(pickable.m_itemPrefab.name);
         }
 
         [HarmonyPatch(typeof(Pickable))]

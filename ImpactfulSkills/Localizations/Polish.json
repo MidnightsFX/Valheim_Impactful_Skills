@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Mistrzostwo warsztatu i kuźni",
   "unlock_station_tier2": "Mistrzostwo czarnej kuźni i stołu galdr",
   "unlock_refinement": "Biegłość w Kuźni Potencjału",
-  "unlock_shield_reset": "Odnowienie tarczy magii krwi"
+  "unlock_shield_reset": "Odnowienie tarczy magii krwi",
+  "unlock_elemental_accuracy": "Celność magii żywiołów"
 }

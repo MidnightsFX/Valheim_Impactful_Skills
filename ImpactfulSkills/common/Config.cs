@@ -205,7 +205,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<int> BloodMagicShieldResetLevel;
 
         public static ConfigEntry<bool> EnableElementalMagic;
-        public static ConfigEntry <bool> EnableElementalMagicSpreadReduction;
+        public static ConfigEntry<bool> EnableElementalMagicSpreadReduction;
+        public static ConfigEntry<int> ElementalMagicSpreadReductionLevel;
         public static ConfigEntry<float> ElementalMagicProjectileSpreadReduction;
 
         public static ConfigEntry<bool> EnableKnowledgeSharing;
@@ -397,8 +398,9 @@ namespace ImpactfulSkills
 
             EnableElementalMagic = BindServerConfig("ElementalMagic", "EnableElementalMagic", true, "Enable elemental magic skill changes.");
             EnableElementalMagicSpreadReduction = BindServerConfig("ElementalMagic", nameof(EnableElementalMagicSpreadReduction), true, "Enable reducing the spread of projectiles fired from weapons that use the elemental magic skill as your skill level increases.");
+            ElementalMagicSpreadReductionLevel = BindServerConfig("ElementalMagic", nameof(ElementalMagicSpreadReductionLevel), 25, "The elemental magic skill level at which projectile spread reduction starts being applied. Below this level elemental magic weapons have their normal spread.", false, 0, 100);
             ElementalMagicProjectileSpreadReduction = BindServerConfig("ElementalMagic", nameof(ElementalMagicProjectileSpreadReduction), 0.5f, "How much the spread of projectiles is reduced based on your elemental magic skill level at level 100. 0.5 will make level 100 elemental magic weapons have 50% less spread. Vanilla is 0.0.", false, 0.0f, 1f);
-      
+
             EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
             SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);

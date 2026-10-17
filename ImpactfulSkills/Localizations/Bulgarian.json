@@ -63,5 +63,6 @@
   "unlock_station_tier1": "Майсторство на работна маса и ковачница",
   "unlock_station_tier2": "Майсторство на черна ковачница и галдр маса",
   "unlock_refinement": "Опит с Ковачницата на потенциала",
-  "unlock_shield_reset": "Подновяване на щита с кръвна магия"
+  "unlock_shield_reset": "Подновяване на щита с кръвна магия",
+  "unlock_elemental_accuracy": "Точност на стихийната магия"
 }
