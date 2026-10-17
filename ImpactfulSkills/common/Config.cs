@@ -204,6 +204,10 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableBloodMagicShieldReset;
         public static ConfigEntry<int> BloodMagicShieldResetLevel;
 
+        public static ConfigEntry<bool> EnableElementalMagic;
+        public static ConfigEntry <bool> EnableElementalMagicSpreadReduction;
+        public static ConfigEntry<float> ElementalMagicProjectileSpreadReduction;
+
         public static ConfigEntry<bool> EnableKnowledgeSharing;
         public static ConfigEntry<float> AnimalTamingSkillGainRate;
         public static ConfigEntry<float> VoyagerSkillGainRate;
@@ -391,6 +395,10 @@ namespace ImpactfulSkills
             EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.");
             BloodMagicShieldResetLevel = BindServerConfig("BloodMagic", "BloodMagicShieldResetLevel", 50, "The minimum blood magic skill level required to be able to reset shield health when reapplying a shield. Has no effect if blood magic skill changes are not enabled or BloodMagicShieldReset is not enabled.", false, 1, 100);
 
+            EnableElementalMagic = BindServerConfig("ElementalMagic", "EnableElementalMagic", true, "Enable elemental magic skill changes.");
+            EnableElementalMagicSpreadReduction = BindServerConfig("ElementalMagic", nameof(EnableElementalMagicSpreadReduction), true, "Enable reducing the spread of projectiles fired from weapons that use the elemental magic skill as your skill level increases.");
+            ElementalMagicProjectileSpreadReduction = BindServerConfig("ElementalMagic", nameof(ElementalMagicProjectileSpreadReduction), 0.5f, "How much the spread of projectiles is reduced based on your elemental magic skill level at level 100. 0.5 will make level 100 elemental magic weapons have 50% less spread. Vanilla is 0.0.", false, 0.0f, 1f);
+      
             EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
             SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
             SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
@@ -424,7 +432,7 @@ namespace ImpactfulSkills
             ScytheHarvestRangeMultiplier = BindServerConfig("Farming", "ScytheHarvestRangeMultiplier", 3f, "How much farther the scythe reaches than AOE gathering by hand. The scythe's harvest radius at level 100 grows by GatheringRangeFactor times this, scaling up with your skill. 3 gives the scythe 17.5m of reach at level 100 with the default GatheringRangeFactor of 5, against 5m by hand. 0 leaves the scythe at its vanilla reach.", false, 0f, 10f);
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 25, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "50,70,90", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop. Leave empty for no extra drops.");
-            GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", "SurtlingCore,Flint,Wood,Branch,Stone,Amber,AmberPearl,Coins,Ruby,CryptRemains,Obsidian,Crystal,Pot_Shard,DragonEgg,DvergrLantern,DvergrMineTreasure,SulfurRock,VoltureEgg,Swordpiece,MoltenCore,Hairstrands,Tar,BlackCore", "Items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked.");
+            GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", Gathering.GetDefaultUnallowedPickablesString(), "Explicit list of items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked. Add things to this if they are getting luck rolls and should not be.");
             EnableFarmingBiomeUnrestricted = BindServerConfig("Farming", "EnableFarmingBiomeUnrestricted", true, "At the specified level, plants you have tended can grow in any biome.");
             FarmingBiomeUnrestrictedLevel = BindServerConfig("Farming", "FarmingBiomeUnrestrictedLevel", 50, "At this level, if enabled, plants you have tended ignore the biome they were planted in, along with the heat of the Ashlands and the cold of the Mountains and Deep North. They still need cultivated ground, sunlight and room to grow.", false, 0, 100);
             // Client sided config, so a player who already gets grow times from another mod can turn this off on any server
