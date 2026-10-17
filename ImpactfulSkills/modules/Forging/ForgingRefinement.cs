@@ -12,7 +12,8 @@ namespace ImpactfulSkills.patches
     /// <summary>
     /// Forging improves the odds at the Forge of Potential.
     ///
-    /// Vanilla makes one roll (InventoryGui.DoCrafting), against values stored on the idol the recipe asks for:
+    /// Vanilla makes one roll (InventoryGui.DoCrafting, drawn from Player.GetItemUpgradeChance - see
+    /// UnseededRollPatch), against values stored on the idol the recipe asks for:
     ///     success  when m_upgradeChance >= roll
     ///     break    when m_breakChance   >= 1 - roll    (the item is destroyed, m_breakReturnIngreientsAmount of
     ///                                                   its materials come back)
@@ -237,6 +238,26 @@ namespace ImpactfulSkills.patches
                 OverriddenIdol.m_breakChance = SavedBreakChance;
                 OverriddenIdol.m_breakReturnIngreientsAmount = SavedRefund;
                 OverriddenIdol = null;
+            }
+        }
+
+        /// <summary>
+        /// Vanilla no longer rolls when the refinement is attempted. GetItemUpgradeChance seeds Unity's Random from a
+        /// seed the player keeps for each item and target level (the first one derived from the player's name), draws
+        /// the roll, and saves the next seed with the character - so every attempt's outcome is settled before it is
+        /// made, and a character's first attempt at a given item and level always lands the same way. Drawing a fresh
+        /// roll instead brings back the old behaviour, and leaves Unity's shared Random unseeded as well.
+        ///
+        /// Not tied to EnableForging: it changes the roll, not the odds. Reforged Potential makes its own roll and
+        /// never calls this, so it is unaffected either way.
+        /// </summary>
+        [HarmonyPatch(typeof(Player), nameof(Player.GetItemUpgradeChance))]
+        private static class UnseededRollPatch
+        {
+            private static bool Prefix(ref float __result) {
+                if (ValConfig.RollRefinementsWhenAttempted.Value == false) { return true; }
+                __result = UnityEngine.Random.value;
+                return false;
             }
         }
 

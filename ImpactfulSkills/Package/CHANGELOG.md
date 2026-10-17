@@ -1,3 +1,9 @@
+**0.23.1**
+---
+```
+- The Forge of Potential rolls each refinement when you attempt it again, rather than using outcomes the game decided in advance, which servers can turn off.
+```
+
 **0.23.0**
 ---
 ```

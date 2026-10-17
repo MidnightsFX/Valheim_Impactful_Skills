@@ -163,6 +163,8 @@ Masterwork and lightweight are part of the item. They show in its tooltip, stay 
 
 Press the AOE toggle key (N by default) in the crafting window to choose whether what you make comes out lightweight. It is back on each time you log in.
 
+The game now decides each refinement's outcome in advance, separately for every character, item and level. This mod rolls each refinement when you attempt it instead, as the game used to. Set RollRefinementsWhenAttempted to false to use the game's own rolls.
+
 With Reforged Potential installed, forging's odds replace its Upgrade Chance and Break Chance settings. Set EnableRefinementBonus to false to use Reforged Potential's odds instead, along with its own level limits rather than forging's refinement decay.
 
 ### Blood Magic
