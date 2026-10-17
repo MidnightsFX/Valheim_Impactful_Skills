@@ -14,11 +14,54 @@ namespace ImpactfulSkills.patches
     public static class Gathering
     {
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
-        static readonly List<String> UnallowedPickables = new List<String>() { };
+        static readonly HashSet<string> UnallowedPickables = new HashSet<string>() { };
+        private static readonly HashSet<String> DefaultUnallowedPickables = new HashSet<string>() {
+            "SurtlingCore",
+            "Flint", 
+            "Wood",
+            "Branch",
+            "Stone",
+            "Amber",
+            "AmberPearl",
+            "Coins",
+            "Ruby",
+            "CryptRemains",
+            "Obsidian",
+            "Crystal",
+            "Pot_Shard",
+            "DragonEgg",
+            "DvergrMineTreasure",
+            "SulfurRock",
+            "VoltureEgg",
+            "Swordpiece",
+            "MoltenCore",
+            "Hairstrands",
+            "Tar",
+            "BlackCore",
+            "GoblinTotem",
+            "Tankard_dvergr",
+            "Lantern",
+            "AncientCoin",
+            "AncientGemstoneGreen",
+            "AncientGemstoneOrange",
+            "AncientGemstoneBlack",
+            "AncientGemstonePurple",
+            "GemstoneRed",
+            "GemstoneGreen",
+            "GemstoneBlue",
+            "DyrnwynBladeFragment",
+            "DyrnwynHiltFragment",
+            "DyrnwynTipFragment",
+            "FishingRod",
+            "FrostCore" 
+        };
         private static List<float> luck_levels = new List<float> { };
         private static bool enabled_aoe_gathering = true;
         private static float aoe_gathering_activated_at = 0;
 
+        public static string GetDefaultUnallowedPickablesString(){
+            return string.Join(",", DefaultUnallowedPickables);
+        }
 
         private static void PickableLuckLevelsChanged(object s, EventArgs e)
         {
@@ -45,12 +88,12 @@ namespace ImpactfulSkills.patches
         private static void UnallowedPickablesChanged(object s, EventArgs e) {
             try {
                 List<String> tunallowed = new List<String>() { };
-                foreach (var item in ValConfig.GatheringDisallowedItems.Value.Split(',')) {
+                foreach (var item in ValConfig.GatheringDisallowedItems.Value.Trim().Split(',')) {
                     tunallowed.Add(item);
                 }
                 if (tunallowed.Count > 0) {
                     UnallowedPickables.Clear();
-                    UnallowedPickables.AddRange(tunallowed);
+                    UnallowedPickables.UnionWith(tunallowed);
                 }
             }
             catch (Exception ex)
@@ -63,37 +106,22 @@ namespace ImpactfulSkills.patches
             luck_levels = ParseLuckLevels(ValConfig.GatheringLuckLevels.Value);
             ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
             try {
-                foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Split(',')) {
+                foreach (var unallowed in ValConfig.GatheringDisallowedItems.Value.Trim().Split(',')) {
                     UnallowedPickables.Add(unallowed);
                 }
             } catch (Exception ex) {
                 Logger.LogWarning($"Error parsing GatheringDisallowedItems, defaults will be used.: {ex}");
-                UnallowedPickables.AddRange(new List<string>() {
-                    "SurtlingCore",
-                    "Flint",
-                    "Wood",
-                    "Branch",
-                    "Stone",
-                    "Amber",
-                    "AmberPearl",
-                    "Coins",
-                    "Ruby",
-                    "CryptRemains",
-                    "Obsidian",
-                    "Crystal",
-                    "Pot_Shard",
-                    "DragonEgg",
-                    "DvergrLantern",
-                    "DvergrMineTreasure",
-                    "SulfurRock",
-                    "VoltureEgg",
-                    "Swordpiece",
-                    "MoltenCore",
-                    "Hairstrands",
-                    "Tar",
-                    "BlackCore" });
+                UnallowedPickables.UnionWith(DefaultUnallowedPickables);
             }
             ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedPickablesChanged;
+        }
+
+        public static bool IsAllowedPickable(Pickable pickable)
+        {
+            if (UnallowedPickables.Contains(pickable.m_itemPrefab.name)){
+                return false;
+            }
+            return pickable.m_pickRaiseSkill == Skills.SkillType.Farming;
         }
 
         [HarmonyPatch(typeof(Pickable))]
@@ -153,7 +181,7 @@ namespace ImpactfulSkills.patches
             static int DetermineExtraDrops(Pickable __instance, Humanoid character)
             {
                 if (Player.m_localPlayer == null || __instance.m_picked == true || __instance.m_itemPrefab == null) { return 0; }
-                if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)) {
+                if (!IsAllowedPickable(__instance)) {
                     Logger.LogDebug($"Pickable is not an allowed gathering item.");
                     RecordHarvest(__instance, character, 0);
                     return 0;
@@ -237,7 +265,7 @@ namespace ImpactfulSkills.patches
             {
                 if (ValConfig.EnableGathering.Value == true && ValConfig.EnableGatheringAOE.Value == true && ValConfig.AOEFeaturesEnabled && Player.m_localPlayer != null && character == Player.m_localPlayer && __instance != null && __instance.m_itemPrefab != null)
                 {
-                    if (UnallowedPickables.Contains(__instance.m_itemPrefab.name)){
+                    if (!IsAllowedPickable(__instance)){
                         Logger.LogDebug($"Pickable is not a gathering item.");
                         return;
                     }
@@ -261,7 +289,7 @@ namespace ImpactfulSkills.patches
                                 // Skip the pickable that triggered this, and invalid ZDOs; see PickAOE.
                                 if (pickable_item != null && pickable_item != __instance) {
                                     Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
-                                    if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
+                                    if (pickable_item.m_itemPrefab != null && IsAllowedPickable(pickable_item)) {
                                         if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
                                             pickable_item.m_nview.ClaimOwnership();
                                             pickable_item.Interact(Player.m_localPlayer, false, false);
@@ -293,7 +321,7 @@ namespace ImpactfulSkills.patches
                     Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
                     if (pickable_item != null && pickable_item != origin) {
                         //Logger.LogDebug($"Async Checking {pickable_item.gameObject.name} in harvest range.");
-                        if (pickable_item.m_itemPrefab != null && !UnallowedPickables.Contains(pickable_item.m_itemPrefab.name)) {
+                        if (pickable_item.m_itemPrefab != null && IsAllowedPickable(pickable_item)) {
                             // ClaimOwnership dereferences the ZDO without checking it; vanilla Interact checks IsValid first.
                             if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
                                 pickable_item.m_nview.ClaimOwnership();
