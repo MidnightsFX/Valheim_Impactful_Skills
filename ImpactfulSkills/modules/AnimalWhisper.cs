@@ -69,22 +69,50 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        private const string TamingXPRPC = "ISKILL_TamingXP";
+
+        [HarmonyPatch(typeof(Game), nameof(Game.Start))]
+        public static class RegisterTamingXPRPC
+        {
+            // ZRoutedRpc is recreated with ZNet every session, and Game.Start is where vanilla registers its own.
+            private static void Postfix() {
+                ZRoutedRpc.instance.Register(TamingXPRPC, RPC_TamingXP);
+            }
+        }
+
+        /// <summary>
+        /// Vanilla only calls DecreaseRemainingTime from TamingUpdate, which runs on the creature's owner, and in
+        /// multiplayer that is often not the player doing the taming. So the owner speeds taming up by the skill of
+        /// the player closest to the creature, read from the level their client publishes, and asks that player's
+        /// client for the XP (TamingXPRPC), since only a player's own client can raise their skill.
+        /// </summary>
         [HarmonyPatch(typeof(Tameable), nameof(Tameable.DecreaseRemainingTime))]
         public static class IncreaseTamingSpeed
         {
             private static void Prefix(Tameable __instance, ref float time)
             {
-                // Check if the player is close enough to the animal
-                if (ValConfig.EnableAnimalWhisper.Value == true && Player.m_localPlayer != null && Vector3.Distance(Player.m_localPlayer.transform.position, __instance.transform.position) <= 30f)
-                {
-                    float player_skill_factor = Player.m_localPlayer.GetBonusSkillFactor(AnimalHandling, ValConfig.AnimalHandlingBonusesPastLevel100);
-                    float modified_time = time * ((player_skill_factor * ValConfig.AnimalTamingSpeedFactor.Value) + 1f);
-                    Logger.LogDebug($"animal taming remaining time {time}, modified: {modified_time}");
-                    time = modified_time;
-                    // Gain a little XP for the skill
-                    Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
-                }
+                if (ValConfig.EnableAnimalWhisper.Value == false) { return; }
+                Player tamer = Player.GetClosestPlayer(__instance.transform.position, AnimalBonusStar.TameRange);
+                if (tamer == null || tamer.m_nview == null || tamer.m_nview.IsValid() == false) { return; }
+
+                // (F - 1) so the factor is the total taming speed at level 100: F = 1 -> vanilla, F = 6 -> 6x.
+                float player_skill_factor = AnimalTaming.PublishedSkillFactor(tamer);
+                float modified_time = time * (1f + player_skill_factor * (ValConfig.AnimalTamingSpeedFactor.Value - 1f));
+                Logger.LogDebug($"animal taming remaining time {time}, modified: {modified_time} by {tamer.GetPlayerName()}");
+                time = modified_time;
+
+                // A player's own ZDO is owned by their client. Handled in place when the owner is the tamer.
+                ZRoutedRpc.instance.InvokeRoutedRPC(tamer.m_nview.GetZDO().GetOwner(), TamingXPRPC);
             }
+        }
+
+        /// <summary>
+        /// On the tamer's client: a little XP for each taming tick. The amount is this client's synced setting, not
+        /// something the owner sends.
+        /// </summary>
+        private static void RPC_TamingXP(long sender) {
+            if (ValConfig.EnableAnimalWhisper.Value == false || Player.m_localPlayer == null) { return; }
+            Player.m_localPlayer.RaiseSkill(AnimalHandling, ValConfig.AnimalTamingSkillGainRate.Value);
         }
 
         // Should we patch the UI to display more precise information on taming time remaining? or leave that to other mods?

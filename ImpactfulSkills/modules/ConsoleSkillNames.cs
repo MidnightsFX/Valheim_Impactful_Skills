@@ -48,6 +48,17 @@ namespace ImpactfulSkills.patches
             return skill.Name.StartsWith(TokenPrefix, StringComparison.OrdinalIgnoreCase) ? skill.Name.Substring(TokenPrefix.Length) : skill.Name;
         }
 
+        /// <summary>
+        /// The token a skill's name is localized from. Vanilla's skills panel builds it from the skill type, which only
+        /// works for vanilla skills, since the ones added here have a hash for a type.
+        /// </summary>
+        internal static string NameToken(Skills.SkillType skillType) {
+            foreach (SkillConfig skill in skills) {
+                if (skill.UID == skillType) { return skill.Name; }
+            }
+            return TokenPrefix + skillType.ToString().ToLower();
+        }
+
         private static string Squash(string name) {
             StringBuilder sb = new StringBuilder(name.Length);
             foreach (char c in name) {

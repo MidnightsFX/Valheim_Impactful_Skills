@@ -65,7 +65,7 @@ namespace ImpactfulSkills.patches {
                     "LeatherScraps",
                     "WitheredBone" });
             }
-            ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedMinablesChanged;
+            ValConfig.SkipNonRockDropPrefabs.SettingChanged += UnallowedMinablesChanged;
         }
 
         public static void ModifyPickaxeDmg(HitData hit, MineRock instance = null, MineRock5 instance5 = null) {

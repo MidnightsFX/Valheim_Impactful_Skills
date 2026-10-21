@@ -15,6 +15,15 @@ namespace ImpactfulSkills.patches
     {
         private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
         static readonly HashSet<string> UnallowedPickables = new HashSet<string>() { };
+        static readonly HashSet<string> AllowedPickables = new HashSet<string>() { };
+        // IsAllowedPickable's answer per pickable prefab, keyed by the ZDO prefab hash. Cleared whenever an item list
+        // or the crop index changes.
+        private static readonly Dictionary<int, bool> allowedByPrefab = new Dictionary<int, bool>();
+        // Everything a Plant grows into, and the items those grown crops drop. Built from ZNetScene the first time a
+        // pickable is checked, so plants other mods register late are in it.
+        private static readonly HashSet<int> grownPrefabs = new HashSet<int>();
+        private static readonly HashSet<string> cropItems = new HashSet<string>();
+        private static ZNetScene indexedScene;
         private static readonly HashSet<String> DefaultUnallowedPickables = new HashSet<string>() {
             "SurtlingCore",
             "Flint", 
@@ -53,7 +62,8 @@ namespace ImpactfulSkills.patches
             "DyrnwynHiltFragment",
             "DyrnwynTipFragment",
             "FishingRod",
-            "FrostCore" 
+            "FrostCore",
+            "RoyalJelly"
         };
         private static List<float> luck_levels = new List<float> { };
         private static bool enabled_aoe_gathering = true;
@@ -85,18 +95,19 @@ namespace ImpactfulSkills.patches
             return levels;
         }
 
-        // Each entry is trimmed on its own, so "Wood, Stone" disallows Stone too.
-        private static void LoadUnallowedPickables(string value) {
-            UnallowedPickables.Clear();
+        // Each entry is trimmed on its own, so "Wood, Stone" lists Stone too.
+        private static void LoadItemList(string value, HashSet<string> items) {
+            items.Clear();
             foreach (var item in value.Split(',')) {
                 string entry = item.Trim();
-                if (entry.Length > 0) { UnallowedPickables.Add(entry); }
+                if (entry.Length > 0) { items.Add(entry); }
             }
+            allowedByPrefab.Clear();
         }
 
         private static void UnallowedPickablesChanged(object s, EventArgs e) {
             try {
-                LoadUnallowedPickables(ValConfig.GatheringDisallowedItems.Value);
+                LoadItemList(ValConfig.GatheringDisallowedItems.Value, UnallowedPickables);
             }
             catch (Exception ex)
             {
@@ -104,27 +115,95 @@ namespace ImpactfulSkills.patches
             }
         }
 
+        private static void AllowedPickablesChanged(object s, EventArgs e) {
+            try {
+                LoadItemList(ValConfig.GatheringAllowedItems.Value, AllowedPickables);
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing GatheringAllowedItems: {ex}");
+            }
+        }
+
         public static void SetupGatherables() {
             luck_levels = ParseLuckLevels(ValConfig.GatheringLuckLevels.Value);
             ValConfig.GatheringLuckLevels.SettingChanged += PickableLuckLevelsChanged;
             try {
-                LoadUnallowedPickables(ValConfig.GatheringDisallowedItems.Value);
+                LoadItemList(ValConfig.GatheringDisallowedItems.Value, UnallowedPickables);
             } catch (Exception ex) {
                 Logger.LogWarning($"Error parsing GatheringDisallowedItems, defaults will be used.: {ex}");
                 UnallowedPickables.UnionWith(DefaultUnallowedPickables);
             }
             ValConfig.GatheringDisallowedItems.SettingChanged += UnallowedPickablesChanged;
+            try {
+                LoadItemList(ValConfig.GatheringAllowedItems.Value, AllowedPickables);
+            } catch (Exception ex) {
+                Logger.LogWarning($"Error parsing GatheringAllowedItems, no extra items will be allowed.: {ex}");
+            }
+            ValConfig.GatheringAllowedItems.SettingChanged += AllowedPickablesChanged;
         }
 
-        // Only pickables that vanilla would raise Farming for count, the same ones vanilla gives its own bonus yield.
-        // The skill is checked first: reading the prefab name allocates a string, and an AOE sweep checks every
+        // Pickables that train Farming count, the same ones vanilla gives its own bonus yield. Many modded plants, and
+        // vanilla's vineberries, train no skill at all, so those count when they look like a plant: grown from a
+        // sapling, dropping what a grown crop drops, or dropping food. That keeps stones and treasure out, which also
+        // train nothing. Pickables that train some other skill belong to it and are left alone. The item lists win
+        // over all of this, the disallowed one first.
+        // The answer is kept per prefab: reading the item's name allocates a string, and an AOE sweep checks every
         // pickable in range.
         public static bool IsAllowedPickable(Pickable pickable)
         {
-            if (pickable.m_pickRaiseSkill != Skills.SkillType.Farming) {
-                return false;
+            EnsureCropIndex();
+            ZDO zdo = pickable.m_nview != null ? pickable.m_nview.GetZDO() : null;
+            if (zdo == null) {
+                return DecideAllowed(pickable, Utils.GetPrefabName(pickable.gameObject).GetStableHashCode());
             }
-            return !UnallowedPickables.Contains(pickable.m_itemPrefab.name);
+            int prefab = zdo.GetPrefab();
+            if (!allowedByPrefab.TryGetValue(prefab, out bool allowed)) {
+                allowed = DecideAllowed(pickable, prefab);
+                allowedByPrefab[prefab] = allowed;
+            }
+            return allowed;
+        }
+
+        private static bool DecideAllowed(Pickable pickable, int prefab)
+        {
+            string item = pickable.m_itemPrefab.name;
+            if (UnallowedPickables.Contains(item)) { return false; }
+            if (AllowedPickables.Contains(item)) { return true; }
+            switch (pickable.m_pickRaiseSkill) {
+                case Skills.SkillType.Farming:
+                    return true;
+                case Skills.SkillType.None:
+                    return grownPrefabs.Contains(prefab) || cropItems.Contains(item) || IsFood(pickable.m_itemPrefab);
+                default:
+                    return false;
+            }
+        }
+
+        private static bool IsFood(GameObject itemPrefab)
+        {
+            ItemDrop.ItemData.SharedData shared = itemPrefab.GetComponent<ItemDrop>()?.m_itemData?.m_shared;
+            return shared != null && (shared.m_food > 0f || shared.m_foodStamina > 0f || shared.m_foodEitr > 0f);
+        }
+
+        // Rebuilt for each ZNetScene, so a world loaded later sees any prefabs added since.
+        private static void EnsureCropIndex()
+        {
+            ZNetScene scene = ZNetScene.instance;
+            if (scene == null || ReferenceEquals(scene, indexedScene)) { return; }
+            indexedScene = scene;
+            grownPrefabs.Clear();
+            cropItems.Clear();
+            allowedByPrefab.Clear();
+            foreach (GameObject obj in scene.m_prefabs) {
+                Plant plant = obj != null ? obj.GetComponent<Plant>() : null;
+                if (plant == null || plant.m_grownPrefabs == null) { continue; }
+                foreach (GameObject grown in plant.m_grownPrefabs) {
+                    if (grown == null) { continue; }
+                    grownPrefabs.Add(grown.name.GetStableHashCode());
+                    Pickable crop = grown.GetComponent<Pickable>();
+                    if (crop != null && crop.m_itemPrefab != null) { cropItems.Add(crop.m_itemPrefab.name); }
+                }
+            }
+            Logger.LogDebug($"Gathering crop index: {grownPrefabs.Count} grown plant prefabs, {cropItems.Count} crop items.");
         }
 
         [HarmonyPatch(typeof(Pickable))]
@@ -163,9 +242,11 @@ namespace ImpactfulSkills.patches
                 }
 
                 // With gathering disabled, fall through into vanilla's block untouched so picking behaves exactly as
-                // it does without the mod: vanilla's own bonus roll, stats and skill XP.
+                // it does without the mod: vanilla's own bonus roll, stats and skill XP. The same goes for pickables
+                // that train a skill other than Farming.
                 codeMatcher.Start().Advance(blockStart + 2).CreateLabel(out Label vanillaBlock);
                 codeMatcher.Insert(
+                    new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
                     Transpilers.EmitDelegate(UseGatheringLuck),
                     new CodeInstruction(OpCodes.Brfalse, vanillaBlock),
                     new CodeInstruction(OpCodes.Ldarg_0), // Load the instance class
@@ -177,8 +258,13 @@ namespace ImpactfulSkills.patches
                 return codeMatcher.Instructions();
             }
 
-            static bool UseGatheringLuck() {
-                return ValConfig.EnableGathering.Value;
+            // A pickable that trains another skill, say from a mod that adds one, keeps that skill's XP and vanilla's
+            // bonus roll for it, unless GatheringAllowedItems hands it to Farming.
+            static bool UseGatheringLuck(Pickable pickable) {
+                if (!ValConfig.EnableGathering.Value) { return false; }
+                Skills.SkillType skill = pickable.m_pickRaiseSkill;
+                if (skill == Skills.SkillType.None || skill == Skills.SkillType.Farming) { return true; }
+                return pickable.m_itemPrefab != null && IsAllowedPickable(pickable);
             }
 
             static int DetermineExtraDrops(Pickable __instance, Humanoid character)

@@ -30,7 +30,7 @@ namespace ImpactfulSkills.patches
         // Internal level 3 is two stars, the most a vanilla creature can have.
         private const int MaxVanillaLevel = 3;
         // How far vanilla looks for the player to tell about a tame (Tameable.Tame), and the range taming speed uses.
-        private const float TameRange = 30f;
+        internal const float TameRange = 30f;
 
         private const string RollRPC = "ISKILL_BonusStarRoll";
         private const string GrantRPC = "ISKILL_BonusStarGrant";

@@ -1,3 +1,22 @@
+**0.25.0**
+---
+```
+- Bow hits now give more XP for long-range shots
+- Holding a bow drawn now drains as little stamina as its tooltip shows
+- Skilled blocking now gives back a share of the stamina each block actually cost, so blocking weak hits no longer refills stamina.
+- Taming Improvements:
+	- Shows the taming progress of a creature you're taming on your HUD, from much further away.
+	- Creatures being tamed stay calm around players with enough Animal Handling while they have food, unless they're attacked.
+	- You can hand-feed a creature you're taming to speed it up, with bigger boosts at higher skill.
+	- In multiplayer, taming speed and taming XP now follow the player taming the creature
+- Gathering luck and AOE harvesting work again for crops and wild food added by other mods, and server admins can add anything still missed.
+- Pickables from other mods that train their own skill keep that skill's XP and bonus.
+- Changing which drops mining leaves alone now takes effect without a restart.
+- Adds a Vietnamese translation (Thanks Zono)
+- Adds a Skill Perks page to the compendium that shows every skill's perks, what they do and when they unlock.
+- A few perk names in some translations now use the game's own words.
+```
+
 **0.24.0**
 ---
 ```

@@ -36,8 +36,10 @@ namespace ImpactfulSkills.patches
                     }
                     if (entry_lines[i].Contains("item_staminahold"))
                     {
-                        float player_skill = Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Bows); // drawStaminaDrain - drawStaminaDrain * 0.33f * skillFactor;
-                        result_lines[i] = "$item_staminahold: <color=orange>" + item.m_shared.m_attack.m_drawStaminaDrain + "</color> <color=yellow>(" + Mathf.RoundToInt(item.m_shared.m_attack.m_drawStaminaDrain - item.m_shared.m_attack.m_drawStaminaDrain *  ValConfig.WeaponSkillBowDrawStaminaCostReduction.Value * player_skill) + ")</color>/s";
+                        // Vanilla reads the item's own skill for the draw drain, not always Bows.
+                        float player_skill = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType);
+                        float draw_drain = item.m_shared.m_attack.m_drawStaminaDrain;
+                        result_lines[i] = "$item_staminahold: <color=orange>" + draw_drain + "</color> <color=yellow>(" + Mathf.RoundToInt(draw_drain * (1f - BowDrawStaminaReduction(0.33f, player_skill))) + ")</color>/s";
                         continue;
                     }
                 }
@@ -55,11 +57,14 @@ namespace ImpactfulSkills.patches
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions /*, ILGenerator generator*/)
             {
                 var codeMatcher = new CodeMatcher(instructions);
+                // Vanilla: drain - drain * 0.33 * skillFactor. The 0.33 stays on the stack and is handed to us, so a mod
+                // that changes it still sets the floor, and we hand back what to multiply skillFactor by in its place.
                 if (codeMatcher.TryMatchStartForward("Unable to patch Stamina reduction for bows compatibility.",
                     new CodeMatch(OpCodes.Dup),
                     new CodeMatch(OpCodes.Ldc_R4)
                 )) {
-                    codeMatcher.Advance(1).RemoveInstructions(1).InsertAndAdvance(
+                    codeMatcher.Advance(2).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
                         Transpilers.EmitDelegate(ModifyStaminaDrainCostForBow)
                     );
                 }
@@ -123,22 +128,37 @@ namespace ImpactfulSkills.patches
             }
         }
 
-        private static float ModifyStaminaDrainCostForBow() {
-            if (ValConfig.EnableWeaponSkill.Value != true || Player.m_localPlayer == null) { return 0.33f; }
-            // Never capped, whatever WeaponSkillBonusesPastLevel100 says (see SkillCaps): this stands in for vanilla's
-            // 0.33, which vanilla then multiplies by its own uncapped factor. A factor past 1 only lowers this towards
-            // the 0.01 floor, capping it would raise it.
-            float skilled_cost = 0.33f - (ValConfig.WeaponSkillBowDrawStaminaCostReduction.Value * 0.33f * Player.m_localPlayer.GetSkillFactor(Skills.SkillType.Bows));
-            if (skilled_cost <0.01f) { skilled_cost = 0.01f; }
-            return skilled_cost;
+        /// <summary>
+        /// Stands in for vanilla's 0.33 in drain - drain * 0.33 * skillFactor. That constant is the share taken off per
+        /// point of skill factor, so what we return is our share divided by the factor vanilla multiplies it by next.
+        /// It used to return 0.33 minus our reduction, which shrank the share as the skill grew, so a higher setting
+        /// made bows drain more than vanilla, and 1 removed the skill's reduction entirely.
+        /// </summary>
+        private static float ModifyStaminaDrainCostForBow(float reduce_factor, ItemDrop.ItemData item) {
+            if (ValConfig.EnableWeaponSkill.Value != true || Player.m_localPlayer == null) { return reduce_factor; }
+            // The same read vanilla makes, so dividing by it exactly cancels vanilla's multiply.
+            float skillfactor = Player.m_localPlayer.GetSkillFactor(item.m_shared.m_skillType);
+            if (skillfactor <= 0f) { return reduce_factor; }
+            return BowDrawStaminaReduction(reduce_factor, skillfactor) / skillfactor;
+        }
+
+        /// <summary>
+        /// Share of the draw drain taken off. Ours stops at its level 100 value unless WeaponSkillBonusesPastLevel100 is
+        /// on (see SkillCaps), but is never less than vanilla's own, which a low setting or a skill boosted past 100 can
+        /// beat. Stops at all of it, so drawing can become free but never pays stamina back.
+        /// </summary>
+        private static float BowDrawStaminaReduction(float reduce_factor, float skillfactor) {
+            float vanilla_reduction = reduce_factor * skillfactor;
+            float skilled_reduction = ValConfig.WeaponSkillBowDrawStaminaCostReduction.Value * SkillCaps.BonusFactor(skillfactor, ValConfig.WeaponSkillBonusesPastLevel100);
+            return Mathf.Clamp01(Mathf.Max(vanilla_reduction, skilled_reduction));
         }
 
         private static float ModifyWeaponStaminaCostBySkillLevelInheritFactor(float stam_cost, float reduce_factor, float skillfactor) {
+            float vanilla_stam_cost = stam_cost - stam_cost * reduce_factor * skillfactor;
             // Note even when disabled the stamina cost will be reduced because this is the vanilla formula
             if (ValConfig.EnableWeaponSkill.Value != true) {
-                float vanilla_stam_reduction = stam_cost * reduce_factor * skillfactor;
-                //  Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} r:{vanilla_stam_reduction}");
-                return (stam_cost - vanilla_stam_reduction);
+                //  Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} r:{stam_cost - vanilla_stam_cost}");
+                return vanilla_stam_cost;
             }
 
             // skillfactor is vanilla's own, which other mods can push past 1, so ours stops at its level 100 value
@@ -147,8 +167,9 @@ namespace ImpactfulSkills.patches
             float stam_cost_reduction = stam_cost * ValConfig.WeaponSkillStaminaReduction.Value * SkillCaps.BonusFactor(skillfactor, ValConfig.WeaponSkillBonusesPastLevel100);
             stam_cost_reduction *= (1 + reduce_factor); // Inherit vanilla/other mod reduction factor into the new reduction calculation
             //Logger.LogDebug($"Weapon stamina reduction o:{stam_cost} - r:{stam_cost_reduction} = {(stam_cost - stam_cost_reduction)} s:{skillfactor}");
-            // An attack can become free, but never pay stamina back.
-            return Mathf.Max(0f, stam_cost - stam_cost_reduction);
+            // Never dearer than vanilla, which a low WeaponSkillStaminaReduction or a skill boosted past 100 would
+            // otherwise make it. An attack can become free, but never pay stamina back.
+            return Mathf.Max(0f, Mathf.Min(vanilla_stam_cost, stam_cost - stam_cost_reduction));
         }
 
 
@@ -316,38 +337,62 @@ namespace ImpactfulSkills.patches
         }
 
         /// <summary>
-        /// Crossbow hits on a creature grant more XP the further the target is from the shooter. Projectile.OnHit runs
-        /// on the shooters client, so m_owner is the local player.
+        /// Crossbow and bow hits on a creature grant more XP the further the target is from the shooter. Projectile.OnHit
+        /// runs on the shooters client, so m_owner is the local player.
         /// </summary>
         [HarmonyPatch(typeof(Projectile), nameof(Projectile.OnHit))]
-        public static class CrossbowDistanceXP
+        public static class RangedDistanceXP
         {
             [HarmonyTranspiler]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 var codeMatcher = new CodeMatcher(instructions);
                 // m_raiseSkillAmount is also copied into the HitData earlier on, only the load feeding RaiseSkill is ours.
-                if (codeMatcher.TryMatchStartForward("Unable to patch crossbow distance XP.",
+                if (codeMatcher.TryMatchStartForward("Unable to patch ranged distance XP.",
                     new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Projectile), nameof(Projectile.m_raiseSkillAmount))),
                     new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Character), nameof(Character.RaiseSkill)))
                 )) {
                     codeMatcher.Advance(1).InsertAndAdvance(
                         new CodeInstruction(OpCodes.Ldarg_0),
                         new CodeInstruction(OpCodes.Ldarg_2),
-                        Transpilers.EmitDelegate(ScaleCrossbowXPByDistance)
+                        Transpilers.EmitDelegate(ScaleRangedXPByDistance)
                     );
                 }
                 return codeMatcher.Instructions();
             }
 
-            private static float ScaleCrossbowXPByDistance(float xp, Projectile projectile, Vector3 hitPoint) {
-                if (ValConfig.EnableWeaponSkill.Value == false || ValConfig.EnableCrossbowDistanceXP.Value == false) { return xp; }
-                if (projectile.m_skill != Skills.SkillType.Crossbows || !(projectile.m_owner is Player player)) { return xp; }
+            private static float ScaleRangedXPByDistance(float xp, Projectile projectile, Vector3 hitPoint) {
+                if (ValConfig.EnableWeaponSkill.Value == false || !(projectile.m_owner is Player player)) { return xp; }
 
-                float distance = Vector3.Distance(player.transform.position, hitPoint);
-                float bonus = ValConfig.CrossbowDistanceXPMaxBonus.Value * Mathf.Clamp01(distance / ValConfig.CrossbowDistanceXPMaxDistance.Value);
-                Logger.LogDebug($"Crossbow hit at {distance:0.0}m, XP bonus {bonus:0.00} ({xp} -> {xp * (1f + bonus)})");
-                return xp * (1f + bonus);
+                if (projectile.m_skill == Skills.SkillType.Crossbows && ValConfig.EnableCrossbowDistanceXP.Value) {
+                    float distance = Vector3.Distance(player.transform.position, hitPoint);
+                    float bonus = DistanceXPBonus(distance, 0f, ValConfig.CrossbowDistanceXPMaxDistance.Value, ValConfig.CrossbowDistanceXPMaxBonus.Value, 1f);
+                    Logger.LogDebug($"Crossbow hit at {distance:0.0}m, XP bonus {bonus:0.00} ({xp} -> {xp * (1f + bonus)})");
+                    return xp * (1f + bonus);
+                }
+
+                if (projectile.m_skill == Skills.SkillType.Bows && ValConfig.EnableBowDistanceXP.Value) {
+                    // Arrows fly slower and for longer than bolts, so this measures from where the arrow was loosed
+                    // rather than where the player is now, or backing off while it is in the air would add distance.
+                    // m_startPoint is set once in Setup and never moves.
+                    float distance = Vector3.Distance(projectile.m_startPoint, hitPoint);
+                    float bonus = DistanceXPBonus(distance, ValConfig.BowDistanceXPMinDistance.Value, ValConfig.BowDistanceXPMaxDistance.Value, ValConfig.BowDistanceXPMaxBonus.Value, ValConfig.BowDistanceXPCurve.Value);
+                    Logger.LogDebug($"Bow hit at {distance:0.0}m, XP bonus {bonus:0.00} ({xp} -> {xp * (1f + bonus)})");
+                    return xp * (1f + bonus);
+                }
+
+                return xp;
+            }
+
+            /// <summary>
+            /// No bonus up to minDistance, the full maxBonus from maxDistance on, and in between the share of the way
+            /// there raised to curve. A curve of 1 grows evenly, higher keeps more of the bonus for the longest hits.
+            /// A max at or inside the min (a misconfigured server) gives the full bonus past the max and none before it.
+            /// </summary>
+            private static float DistanceXPBonus(float distance, float minDistance, float maxDistance, float maxBonus, float curve) {
+                float range = maxDistance - minDistance;
+                float progress = range > 0f ? Mathf.Clamp01((distance - minDistance) / range) : (distance >= maxDistance ? 1f : 0f);
+                return maxBonus * Mathf.Pow(progress, Mathf.Max(curve, 1f));
             }
         }
 

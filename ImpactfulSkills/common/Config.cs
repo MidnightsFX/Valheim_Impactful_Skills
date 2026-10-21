@@ -102,6 +102,16 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableAnimalBonusStar;
         public static ConfigEntry<int> AnimalBonusStarRequiredLevel;
         public static ConfigEntry<float> AnimalBonusStarChance;
+        public static ConfigEntry<bool> EnableTamingProgressDisplay;
+        public static ConfigEntry<float> TamingProgressDisplayRange;
+        public static ConfigEntry<bool> EnableTamingCalm;
+        public static ConfigEntry<int> TamingCalmLevel;
+        public static ConfigEntry<float> TamingCalmAttackedCooldown;
+        public static ConfigEntry<bool> EnableTamingHandFeeding;
+        public static ConfigEntry<float> TamingHandFeedCooldown;
+        public static ConfigEntry<float> TamingHandFeedMinPercent;
+        public static ConfigEntry<float> TamingHandFeedMaxPercent;
+        public static ConfigEntry<float> TamingHandFeedXP;
         public static ConfigEntry<bool> AnimalHandlingBonusesPastLevel100;
 
         public static ConfigEntry<bool> EnableGathering;
@@ -111,6 +121,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<int>  FarmingRangeRequiredLevel;
         public static ConfigEntry<string> GatheringLuckLevels;
         public static ConfigEntry<string> GatheringDisallowedItems;
+        public static ConfigEntry<string> GatheringAllowedItems;
         public static ConfigEntry<bool> EnableFarmingBiomeUnrestricted;
         public static ConfigEntry<int> FarmingBiomeUnrestrictedLevel;
         public static ConfigEntry<bool> EnableFarmingGrowthTimeDisplay;
@@ -166,6 +177,11 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableCrossbowDistanceXP;
         public static ConfigEntry<float> CrossbowDistanceXPMaxBonus;
         public static ConfigEntry<float> CrossbowDistanceXPMaxDistance;
+        public static ConfigEntry<bool> EnableBowDistanceXP;
+        public static ConfigEntry<float> BowDistanceXPMaxBonus;
+        public static ConfigEntry<float> BowDistanceXPMinDistance;
+        public static ConfigEntry<float> BowDistanceXPMaxDistance;
+        public static ConfigEntry<float> BowDistanceXPCurve;
         public static ConfigEntry<bool> WeaponSkillBonusesPastLevel100;
 
         public static ConfigEntry<bool> EnableCooking;
@@ -411,7 +427,7 @@ namespace ImpactfulSkills
             SneakBonusesPastLevel100 = BindServerConfig("Sneak", "SneakBonusesPastLevel100", false, PastLevel100Description("Sneak"));
 
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
-            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill impacts taming speed. 6 is 6x taming speed at level 100 (5 minutes vs 30 minutes default)", false, 1f, 10f);
+            AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill speeds up taming. This is the taming speed at level 100: 1 is vanilla (no bonus), 6 is 6x, so a creature that takes 30 minutes to tame takes 5. In multiplayer the skill of the player closest to the creature counts.", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. This multiplies the loot the creature would actually have dropped, so it includes its star level, the world resource rate and anything other loot mods change. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
             AnimalHandlingLootRange = BindServerConfig("AnimalHandling", "AnimalHandlingLootRange", 20f, "How close you must be to a tamed creature when it dies to gain the slaughter XP and the bonus loot.", false, 1f, 100f);
             AnimalHandlingFractionalDropsAsChance = BindServerConfig("AnimalHandling", "AnimalHandlingFractionalDropsAsChance", true, "When enabled, a bonus that works out to less than one item becomes a chance at one item. When disabled it is rounded to the nearest whole item, so small drops give nothing at low skill.");
@@ -426,6 +442,17 @@ namespace ImpactfulSkills
             EnableAnimalBonusStar = BindServerConfig("AnimalHandling", "EnableAnimalBonusStar", true, "At high Animal Handling, a creature you tame or breed has a chance to gain an extra star. The player closest to the creature rolls with their own skill. Creatures never go past 2 stars this way unless Star Level System is installed.");
             AnimalBonusStarRequiredLevel = BindServerConfig("AnimalHandling", "AnimalBonusStarRequiredLevel", 75, "The Animal Handling level needed before tamed and bred creatures can gain a bonus star.", false, 0, 100);
             AnimalBonusStarChance = BindServerConfig("AnimalHandling", "AnimalBonusStarChance", 0.25f, "The chance a creature you tame or breed gains a bonus star, at Animal Handling 100. Scales with your skill, so at level 75 it is three quarters of this.", false, 0f, 1f);
+            // Client sided config, so a player who already gets taming progress from another mod can turn this off on any server
+            EnableTamingProgressDisplay = BindClientConfig("AnimalHandling", "EnableTamingProgressDisplay", true, "Shows the taming progress of the creature you are taming above your stamina bar, so you can follow it from a distance. Shows the creature you are looking at, or else the closest one being tamed. This is a per player setting.");
+            TamingProgressDisplayRange = BindClientConfig("AnimalHandling", "TamingProgressDisplayRange", 40f, "How far away, in meters, a creature being tamed can be and still have its taming progress shown. This is a per player setting.", false, 5f, 100f);
+            EnableTamingCalm = BindServerConfig("AnimalHandling", "EnableTamingCalm", true, "Once you reach TamingCalmLevel, a creature being tamed is not frightened by you as long as it has food nearby or is still fed, and has not been attacked recently.");
+            TamingCalmLevel = BindServerConfig("AnimalHandling", "TamingCalmLevel", 15, "The Animal Handling level at which creatures being tamed stay calm around you.", false, 0, 100);
+            TamingCalmAttackedCooldown = BindServerConfig("AnimalHandling", "TamingCalmAttackedCooldown", 60f, "How many seconds after being attacked a creature being tamed ignores TamingCalmLevel and reacts to players normally. Near misses from arrows and other projectiles count as attacks.", false, 0f, 600f);
+            EnableTamingHandFeeding = BindServerConfig("AnimalHandling", "EnableTamingHandFeeding", true, "Using a food a creature eats on it from your hotbar, while looking at it, feeds it by hand. This feeds it and adds to its taming progress. A frightened creature refuses the food.");
+            TamingHandFeedCooldown = BindServerConfig("AnimalHandling", "TamingHandFeedCooldown", 30f, "How many seconds a creature must wait after being hand fed, by anyone, before it can be hand fed again. This does not change with skill level.", false, 5f, 300f);
+            TamingHandFeedMinPercent = BindServerConfig("AnimalHandling", "TamingHandFeedMinPercent", 2f, "The taming progress, in percent of the full taming time, that a hand feeding gives at Animal Handling 0.", false, 0f, 50f);
+            TamingHandFeedMaxPercent = BindServerConfig("AnimalHandling", "TamingHandFeedMaxPercent", 25f, "The taming progress, in percent of the full taming time, that a hand feeding gives at Animal Handling 100. It grows evenly from TamingHandFeedMinPercent as your skill rises.", false, 0f, 50f);
+            TamingHandFeedXP = BindServerConfig("AnimalHandling", "TamingHandFeedXP", 3f, "The Animal Handling XP gained for each hand feeding.", false, 0f, 50f);
             AnimalHandlingBonusesPastLevel100 = BindServerConfig("AnimalHandling", "AnimalHandlingBonusesPastLevel100", false, PastLevel100Description("Animal Handling"));
 
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
@@ -435,6 +462,7 @@ namespace ImpactfulSkills
             FarmingRangeRequiredLevel = BindServerConfig("Farming", "GatheringRangeRequiredLevel", 25, "The level that AOE gathering requires to activate.", false, 0, 100);
             GatheringLuckLevels = BindServerConfig("Farming", "GatheringLuckLevels", "50,70,90", "Higher values have a lower chance of dropping. Each comma seperated number entry (0-100) is a chance at an additional drop. Leave empty for no extra drops.");
             GatheringDisallowedItems = BindServerConfig("Farming", "GatheringDisallowedItems", Gathering.GetDefaultUnallowedPickablesString(), "Explicit list of items which can be picked, but do not get a luck roll for multiple loot and will not be auto-picked. Add things to this if they are getting luck rolls and should not be.");
+            GatheringAllowedItems = BindServerConfig("Farming", "GatheringAllowedItems", "", "Comma separated list of items which always get a luck roll for multiple loot and can be auto-picked, for modded plants that are not detected on their own. Plants grown from a sapling, wild pickables that drop the same item, and pickables that drop food are detected automatically. GatheringDisallowedItems wins if an item is on both lists.");
             EnableFarmingBiomeUnrestricted = BindServerConfig("Farming", "EnableFarmingBiomeUnrestricted", true, "At the specified level, plants you have tended can grow in any biome.");
             FarmingBiomeUnrestrictedLevel = BindServerConfig("Farming", "FarmingBiomeUnrestrictedLevel", 50, "At this level, if enabled, plants you have tended ignore the biome they were planted in, along with the heat of the Ashlands and the cold of the Mountains and Deep North. They still need cultivated ground, sunlight and room to grow.", false, 0, 100);
             // Client sided config, so a player who already gets grow times from another mod can turn this off on any server
@@ -488,7 +516,7 @@ namespace ImpactfulSkills
             EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);
             WeaponSkillParryBonus = BindServerConfig("WeaponSkills", "WeaponSkillParryBonus", 1f, "How much extra XP you get for parrying an attack", false, 0f, 10f);
-            WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost. Vanilla is .33", false, 0f, 1f);
+            WeaponSkillBowDrawStaminaCostReduction = BindServerConfig("WeaponSkills", "WeaponSkillBowDrawStaminaCostReduction", 0.5f, "How much the stamina drained while holding a bow drawn is reduced, at skill level 100. 0.5 will make level 100 bows drain 50% less stamina while drawn. Vanilla is .33, so lower values leave the game's own reduction in place.", false, 0f, 1f);
             WeaponSkillEquipRequiredLevel = BindServerConfig("WeaponSkills", "WeaponSkillEquipRequiredLevel", 45, "The level that equip speed bonuses start being applied based on your skill", true, 0, 100);
             WeaponSkillEquipSpeedFactor = BindServerConfig("WeaponSkills", "WeaponSkillEquipSpeedFactor", 2f, "How much faster your equipment is equipped based on your weapon skill.", true, 0f, 20f);
             EnableCrossbowReloadPause = BindServerConfig("WeaponSkills", "EnableCrossbowReloadPause", true, "Sprinting, jumping and dodging pause your crossbow reload instead of restarting it, once your crossbow skill reaches CrossbowReloadPauseLevel.");
@@ -498,13 +526,18 @@ namespace ImpactfulSkills
             EnableCrossbowDistanceXP = BindServerConfig("WeaponSkills", "EnableCrossbowDistanceXP", true, "Crossbow hits grant bonus XP based on how far away the target is.");
             CrossbowDistanceXPMaxBonus = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxBonus", 5f, "The bonus crossbow XP for a hit at CrossbowDistanceXPMaxDistance or further, growing evenly from nothing at point blank. 5 is a 500% bonus (6x the XP).", false, 0f, 20f);
             CrossbowDistanceXPMaxDistance = BindServerConfig("WeaponSkills", "CrossbowDistanceXPMaxDistance", 150f, "The distance in meters from you to the hit at which the full CrossbowDistanceXPMaxBonus is reached.", false, 10f, 500f);
+            EnableBowDistanceXP = BindServerConfig("WeaponSkills", "EnableBowDistanceXP", true, "Bow hits grant bonus XP based on how far the arrow travelled. Close shots gain little or nothing, long shots gain much more.");
+            BowDistanceXPMaxBonus = BindServerConfig("WeaponSkills", "BowDistanceXPMaxBonus", 8f, "The bonus bow XP for a hit at BowDistanceXPMaxDistance or further. 8 is an 800% bonus (9x the XP).", false, 0f, 20f);
+            BowDistanceXPMinDistance = BindServerConfig("WeaponSkills", "BowDistanceXPMinDistance", 15f, "Bow hits closer than this many meters gain no bonus XP. The bonus starts growing from here.", false, 0f, 100f);
+            BowDistanceXPMaxDistance = BindServerConfig("WeaponSkills", "BowDistanceXPMaxDistance", 100f, "The distance in meters at which the full BowDistanceXPMaxBonus is reached. Should be further than BowDistanceXPMinDistance.", false, 10f, 500f);
+            BowDistanceXPCurve = BindServerConfig("WeaponSkills", "BowDistanceXPCurve", 2f, "How sharply the bow bonus grows between the min and max distance. 1 grows evenly like crossbows, 2 keeps most of the bonus for the longest shots (halfway gives a quarter of it), higher is sharper still.", false, 1f, 5f);
             WeaponSkillBonusesPastLevel100 = BindServerConfig("WeaponSkills", "WeaponSkillBonusesPastLevel100", false, PastLevel100Description("weapon skill"));
 
             EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
             BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
             BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
             BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
-            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much block stamina is returned based on your blocking level. This is modified by your characters blocking level. At level 100 you gain twice your block stamina use's stamina", true, .5f, 2f);
+            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much of the stamina each block cost is given back, at blocking level 100. This is scaled by your blocking level. 0.5 gives back half of what a block cost at level 100, 2 gives back twice what it cost.", true, .5f, 2f);
             EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
             BlockingBonusesPastLevel100 = BindServerConfig("Blocking", "BlockingBonusesPastLevel100", false, PastLevel100Description("Blocking"));
 
