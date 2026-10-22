@@ -312,6 +312,22 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> QualityIngredientOutputMultiplier;
         public static ConfigEntry<bool> RestrictQualityScalingToFish;
         public static ConfigEntry<bool> ScaleNonStackingCraftOutputs;
+        public static ConfigEntry<bool> FishingBonusesPastLevel100;
+
+        public static ConfigEntry<bool> EnableDodge;
+        public static ConfigEntry<bool> DodgeBonusesPastLevel100;
+
+        public static ConfigEntry<bool> EnableRide;
+        public static ConfigEntry<bool> RideBonusesPastLevel100;
+
+
+        public static ConfigEntry<bool> EnableExtraStamina;
+        public static ConfigEntry<float> ExtraStaminaPerSkill;
+        public static ConfigEntry<StatGains.BonusStaminaSkills> EnableExtraStaminaSkills;
+
+        public static ConfigEntry<bool> EnableExtraEitr;
+        public static ConfigEntry<float> ExtraEitrPerSkill;
+        public static ConfigEntry<StatGains.BonusEitrSkills> EnableExtraEitrSkills;
 
         // Custom ZRPCs for network state
         internal static CustomRPC SkillIncreaseXP;
