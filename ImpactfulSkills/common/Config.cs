@@ -348,10 +348,9 @@ namespace ImpactfulSkills
         private void CreateConfigValues(ConfigFile Config)
         {
             // Debugmode
-            EnableDebugMode = Config.Bind("Client config", "EnableDebugMode", false,
-                new ConfigDescription("Enables Debug logging.",
-                null,
-                new ConfigurationManagerAttributes { IsAdvanced = true }));
+            EnableDebugMode = Config.BindConfigInOrder(
+                "Client config", "EnableDebugMode", false, "Enables Debug logging.", synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = true }
+            );
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
                 new KeyboardShortcut(UnityEngine.KeyCode.N),
@@ -817,19 +816,39 @@ namespace ImpactfulSkills
         /// Helper to bind configs for strings
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<string> BindClientConfig(string catagory, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(
-                    description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<string> BindClientConfig(string category, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
+        }
+
+        /// <summary>
+        /// Helper to bind configs that should not be synced for all types of Enum
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="category"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="acceptableValues"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<T> BindClientConfig<T>(
+            string category, string key, T value, string description, 
+            AcceptableValueBase acceptableValues = null, bool advanced = false
+        ) where T: Enum
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
@@ -852,6 +871,28 @@ namespace ImpactfulSkills
             );
         }
 
+
+        /// <summary>
+        /// Helper to bind configs that should be synced for all other types
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="category"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="acceptableValues"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<T> BindServerConfig<T>(
+            string category, string key, T value, string description, 
+            AcceptableValueBase acceptableValues = null, bool advanced = false
+        ) where T: Enum
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
+        }
 
 
         /// <summary>
