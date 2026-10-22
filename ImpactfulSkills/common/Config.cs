@@ -17,6 +17,8 @@ namespace ImpactfulSkills
 {
     internal class ValConfig
     {
+        private const bool UseNumberedSections = false;
+
         public static ConfigFile cfg;
         public static ConfigEntry<bool> EnableDebugMode;
 
@@ -349,7 +351,7 @@ namespace ImpactfulSkills
         {
             // Debugmode
             EnableDebugMode = Config.BindConfigInOrder(
-                "Client config", "EnableDebugMode", false, "Enables Debug logging.", synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = true }
+                "Client config", "EnableDebugMode", false, "Enables Debug logging.", synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = true }, sectionOrder: UseNumberedSections
             );
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
@@ -828,7 +830,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<KeyboardShortcut> BindClientConfig(string category, string key, KeyboardShortcut value, string description, bool advanced = false)
         {
             return cfg.BindConfigInOrder(
-                category, key, value, description, synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                category, key, value, description, synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -847,7 +850,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: false, acceptableValues: acceptableValues,
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -866,7 +870,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> BindClientConfig(string category, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: false, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -883,7 +888,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<string> BindClientConfig(string category, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: false, acceptableValues: acceptableValues,
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -905,7 +911,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: false, acceptableValues: acceptableValues,
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -925,7 +932,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
-                configAttributes: new ConfigurationManagerAttributes {IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes {IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -948,7 +956,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: true, acceptableValues: acceptableValues,
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -967,7 +976,8 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> BindServerConfig(string category, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
         {
             return cfg.BindConfigInOrder(category, key, value, description, synced: true,
-                acceptableValues: acceptableValues, configAttributes:new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                acceptableValues: acceptableValues, configAttributes:new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -987,7 +997,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<int>(valmin, valmax), 
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -1007,7 +1018,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
 
@@ -1025,7 +1037,8 @@ namespace ImpactfulSkills
         {
             return cfg.BindConfigInOrder(
                 category, key, value, description, synced: true, acceptableValues: acceptableValues,
-                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
             );
         }
     }
