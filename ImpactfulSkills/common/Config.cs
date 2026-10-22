@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Jotunn.Extensions;
 using static ImpactfulSkills.common.DataObjects;
 
 namespace ImpactfulSkills
@@ -753,36 +754,35 @@ namespace ImpactfulSkills
         /// <returns></returns>
         public static ConfigEntry<KeyboardShortcut> BindClientConfig(string category, string key, KeyboardShortcut value, string description, bool advanced = false)
         {
-            return cfg.Bind(category, key, value,
-                new ConfigDescription(description, null,
-                    new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
         ///  Helper to bind configs for bool types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="acceptableValues"></param>>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<bool> BindClientConfig(string catagory, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<bool> BindClientConfig(string category, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -790,12 +790,11 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float> BindClientConfig(string catagory, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<float> BindClientConfig(string category, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
@@ -821,7 +820,7 @@ namespace ImpactfulSkills
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -829,13 +828,12 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float[]> BindServerConfig(string catagory, string key, float[] value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
+        public static ConfigEntry<float[]> BindServerConfig(string category, string key, float[] value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes {IsAdvanced = advanced }
+            );
         }
 
 
@@ -844,27 +842,25 @@ namespace ImpactfulSkills
         ///  Helper to bind configs for bool types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="acceptableValues"></param>>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<bool> BindServerConfig(string catagory, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
+        public static ConfigEntry<bool> BindServerConfig(string category, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(category, key, value, description, synced: true,
+                acceptableValues: acceptableValues, configAttributes:new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for int types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -872,20 +868,19 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<int> BindServerConfig(string catagory, string key, int value, string description, bool advanced = false, int valmin = 0, int valmax = 150)
+        public static ConfigEntry<int> BindServerConfig(string category, string key, int value, string description, bool advanced = false, int valmin = 0, int valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<int>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<int>(valmin, valmax), 
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -893,13 +888,12 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float> BindServerConfig(string catagory, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
+        public static ConfigEntry<float> BindServerConfig(string category, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
 
         /// <summary>
@@ -912,14 +906,12 @@ namespace ImpactfulSkills
         /// <param name="description"></param>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<string> BindServerConfig(string catagory, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false)
+        public static ConfigEntry<string> BindServerConfig(string category, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(
-                    description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced }
+            );
         }
     }
 }
