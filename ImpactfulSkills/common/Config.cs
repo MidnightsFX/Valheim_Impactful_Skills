@@ -10,12 +10,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Jotunn.Extensions;
 using static ImpactfulSkills.common.DataObjects;
 
 namespace ImpactfulSkills
 {
     internal class ValConfig
     {
+        private const bool UseNumberedSections = false;
+
         public static ConfigFile cfg;
         public static ConfigEntry<bool> EnableDebugMode;
 
@@ -311,6 +314,22 @@ namespace ImpactfulSkills
         public static ConfigEntry<float> QualityIngredientOutputMultiplier;
         public static ConfigEntry<bool> RestrictQualityScalingToFish;
         public static ConfigEntry<bool> ScaleNonStackingCraftOutputs;
+        public static ConfigEntry<bool> FishingBonusesPastLevel100;
+
+        public static ConfigEntry<bool> EnableDodge;
+        public static ConfigEntry<bool> DodgeBonusesPastLevel100;
+
+        public static ConfigEntry<bool> EnableRide;
+        public static ConfigEntry<bool> RideBonusesPastLevel100;
+
+
+        public static ConfigEntry<bool> EnableExtraStamina;
+        public static ConfigEntry<float> ExtraStaminaPerSkill;
+        public static ConfigEntry<StatGains.BonusStaminaSkills> EnableExtraStaminaSkills;
+
+        public static ConfigEntry<bool> EnableExtraEitr;
+        public static ConfigEntry<float> ExtraEitrPerSkill;
+        public static ConfigEntry<StatGains.BonusEitrSkills> EnableExtraEitrSkills;
 
         // Custom ZRPCs for network state
         internal static CustomRPC SkillIncreaseXP;
@@ -331,101 +350,18 @@ namespace ImpactfulSkills
         private void CreateConfigValues(ConfigFile Config)
         {
             // Debugmode
-            EnableDebugMode = Config.Bind("Client config", "EnableDebugMode", false,
-                new ConfigDescription("Enables Debug logging.",
-                null,
-                new ConfigurationManagerAttributes { IsAdvanced = true }));
+            EnableDebugMode = Config.BindConfigInOrder(
+                "Client config", "EnableDebugMode", false, "Enables Debug logging.", synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = true }, sectionOrder: UseNumberedSections
+            );
             EnableDebugMode.SettingChanged += Logger.enableDebugLogging;
             AOEToggleHotkey = BindClientConfig("Client config", "AOEToggleHotkey",
                 new KeyboardShortcut(UnityEngine.KeyCode.N),
                 "Hotkey to toggle AOE harvesting, AOE mining and AOE planting on/off. In the crafting window it instead toggles whether what you craft is made lightweight, once your forging is high enough.");
             ShowUnlockMessages = BindClientConfig("Client config", "ShowUnlockMessages", true, "Shows a message in the middle of the screen when one of your skill level-ups unlocks one of this mod's features, if the server allows it with EnableUnlockMessages.");
+           
             EnableUnlockMessages = BindServerConfig("Notifications", "EnableUnlockMessages", true, "Shows each player a message in the middle of the screen when a skill level-up unlocks one of this mod's features. Turning this off hides them for everyone; each player can also turn them off for themselves with ShowUnlockMessages.");
-            EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
-            WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
-            WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
-            WoodcuttingBonusesPastLevel100 = BindServerConfig("Woodcutting", "WoodcuttingBonusesPastLevel100", false, PastLevel100Description("Woodcutting"));
 
-            EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
-            MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
-            EnableMiningCritHit = BindServerConfig("Mining", "EnableMiningCritHit", true, "Enables mining critial hit strikes, must hit the required level for it to be active.");
-            RequiredLevelForMiningCrit = BindServerConfig("Mining", "RequiredLevelForMiningCrit", 25, "Level the player must be for critical mining hits to activate", false, 0, 100);
-            ChanceForMiningCritHit = BindServerConfig("Mining", "ChanceForMiningCritHit", 0.1f, "Chance for a critical hit when mining", valmax: 1f);
-            CriticalHitDmgMult = BindServerConfig("Mining", "CriticalHitDmgMult", 3f, "Multipler for damage from a critical hit", valmin: 1f, valmax: 20f);
-            MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
-            EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
-            ChanceForAOEOnHit = BindServerConfig("Mining", "ChanceForAOEOnHit", 0.3f, "Once AOE Mining is enabled, this is the chance for it to activate on any hit", valmax: 1f);
-            ChanceForAOEOnHitScalesWithSkill = BindServerConfig("Mining", "ChanceForAOEOnHitScalesWithSkill", true, "Increases your chance for an AOE strike based on player skill");
-            MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", valmin: 0.5f, valmax: 10f);
-            MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", valmax: 100f);
-            EnableMiningRockBreaker = BindServerConfig("Mining", "EnableMiningRockBreaker", true, "Enable mining whole veins, by a (small) chance.");
-            ProtectLeviathansWhenMined = BindServerConfig("Mining", "ProtectLeviathansWhenMined", true, "Keeps mined Leviathans (and LeviathanLava) from vanishing out from under you. Mining out the last ore node normally deletes the whole creature instantly, dropping you into the ocean or lava; with this enabled it starts its dive and sinks away instead. Rock breaker and AOE mining also stop rolling the dive reaction once per node.");
-            RockBreakerMaxChance = BindServerConfig("Mining", "RockBreakerMaxChance", 0.05f, "The maximum chance to break a whole vein. 0.05 is 5% chance to break a whole vein at level 100. This is checked on each hit.", valmax: 1f);
-            RockBreakerRequiredLevel = BindServerConfig("Mining", "RockBreakerRequiredLevel", 75, "The level that vein breaking requires to activate. What skill level whole rocks breaking is enabled at.", false, 0, 100);
-            RockBreakerDamage = BindServerConfig("Mining", "RockBreakerDamage", 300f, "Veinbreakers damage, small damage numbers will mean triggering this will not destroy a whole vein, but massively weaken it. Large numbers will ensure the whole vein is destroyed.", valmax: 10000f);
-            MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1, 100);
-            SkillLevelBonusEnabledForMiningDropChance = BindServerConfig("Mining", "SkillLevelBonusEnabledForMiningDropChance", false, "Pickaxes skill level provides a bonus to drop chance for drops that are not gaurenteed (This can significantly increase muddy scrap-pile drops).");
-            SkipNonRockDropIncreases = BindServerConfig("Mining", "SkipNonRockDropIncreases", true, "When enabled, only ores/rocks will get the increased drops, this primarily impacts muddy scrap piles in vanilla.");
-            SkipNonRockDropPrefabs = BindServerConfig("Mining", "SkipNonRockDropPrefabs", "LeatherScraps,WitheredBone", "List of prefabs which will not recieve increased mining drops. Should be comma seperated without spaces.");
-            ReducedChanceDropsForLowAmountDrops = BindServerConfig("Mining", "ReducedChanceDropsForLowAmountDrops", false, "When Enabled, drops that have an amount increase below 1 will only have a chance to happen instead of being rounded up to 1, and always happening.");
-            FractionalDropsAsChance = BindServerConfig("Mining", "FractionalDropsAsChance", true, "When enabled, drops that are less than 1 become a chance to drop one. When disabled drops below 1 will never result in drops.");
-            DistanceMiningDropMultiplierChecks = BindServerConfig("Mining", "DistanceMiningDropMultiplierChecks", 20f, "How far away the loot multiplier will check when rocks are destroyed. Increasing this significantly can cause a performance impact.", true, 10, 100);
-            RockbreakerSafetyResetTimeout = BindServerConfig("Mining", "RockbreakerSafetyResetTimeout", 30f, "How long to wait before re-enabling rock breaker after its last activation.", true, 10f, 120f);
-            MiningBonusesPastLevel100 = BindServerConfig("Mining", "MiningBonusesPastLevel100", false, PastLevel100Description("Pickaxes"));
-
-            EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
-            RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
-            RunBonusesPastLevel100 = BindServerConfig("Run", "RunBonusesPastLevel100", false, PastLevel100Description("Run"));
-
-            EnableJump = BindServerConfig("Jump", "EnableJump", true, "Enable jump skill changes.");
-            JumpHeightFactor = BindServerConfig("Jump", "JumpHeightFactor", 125f, "Percentage of original jump height at skill level 100. 100 = no change, 50 = half height, 200 = double height.", false, 50f, 300f);
-            JumpHeightRequiredLevel = BindServerConfig("Jump", "JumpHeightRequiredLevel", 10f, "Minimum jump skill level required to gain jump height bonuses.", false, 0f, 100f);
-            EnableFallDamageReduction = BindServerConfig("Jump", "EnableFallDamageReduction", true, "Enable fall damage reduction based on jump skill.");
-            FallDamageReductionFactor = BindServerConfig("Jump", "FallDamageReductionFactor", 0.5f, "How much fall damage is reduced at skill level 100. 0.5 means 50% reduction at max level.", false, 0f, 1f);
-            FallDamageReductionRequiredLevel = BindServerConfig("Jump", "FallDamageReductionRequiredLevel", 15f, "Minimum jump skill level required to gain fall damage reduction.", false, 0f, 100f);
-            EnableFallDamageHeightBonus = BindServerConfig("Jump", "EnableFallDamageHeightBonus", true, "Enables Jump skill impacting the distance you can fall without recieving any fall damage.");
-            FallDamageHeightRequiredLevel = BindServerConfig("Jump", "FallDamageHeightRequiredLevel", 25f, "The required level to start getting an increase to the height at which you will not recieve any fall damage.", false, 0, 100f);
-            FallDamageHeightBonus = BindServerConfig("Jump", "FallDamageHeightBonus", 3f, "Bonus to max fall height before taking damage at skill level 100 (meters). Scales with skill level (default is 4, and this is added to that).", false, 0f, 50f);
-            JumpBonusesPastLevel100 = BindServerConfig("Jump", "JumpBonusesPastLevel100", false, PastLevel100Description("Jump"));
-
-            EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
-            CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", false, 0.1f, 1f);
-
-            EnableHauling = BindServerConfig("Hauling", "EnableHauling", true, "Enables the hauling skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
-            EnableCarryWeightBonus = BindServerConfig("Hauling", "EnableCarryWeightBonus", true, "Enables the carry weight bonus from the hauling skill.");
-            HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
-            EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
-            HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
-            HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.2f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
-            HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 3, "How many seconds between checks for hauling XP while moving goods, both by cart and by carrying them.", false, 1, 60);
-            HaulingXPCheckInterval.SettingChanged += HaulingXPTracker.OnIntervalChanged;
-            HaulingXPMinDistance = BindServerConfig("Hauling", "HaulingXPMinDistance", 1f, "How far you must travel within the check interval to gain hauling XP. Set to 0 to gain hauling XP without moving.", false, 0f, 50f);
-            EnableHaulingCarryWeightXP = BindServerConfig("Hauling", "EnableHaulingCarryWeightXP", true, "Enables gaining hauling XP while moving around with a heavily loaded inventory.");
-            HaulingCarryWeightXPMinWeight = BindServerConfig("Hauling", "HaulingCarryWeightXPMinWeight", 275f, "The minimum total inventory weight you must be carrying to gain hauling XP from your load.", false, 0f, 2000f);
-            HaulingCarryWeightXPRate = BindServerConfig("Hauling", "HaulingCarryWeightXPRate", 3f, "The amount of XP that is gained each interval while heavily loaded. This is scaled by how loaded you are.", false, 0.01f, 10f);
-            HaulingMaxLoadRatio = BindServerConfig("Hauling", "HaulingMaxLoadRatio", 1.5f, "The maximum load ratio that hauling XP will scale with. Being over your carry weight grants bonus XP, this caps how much.", true, 1f, 5f);
-            HaulingBonusesPastLevel100 = BindServerConfig("Hauling", "HaulingBonusesPastLevel100", false, PastLevel100Description("Hauling"));
-
-            EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
-            BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
-            BloodMagicXP = BindServerConfig("BloodMagic", "BloodMagicXP", 1f, "How much XP is gained, used by other blood magic skill settings.", false, 0.1f, 10f);
-            EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.");
-            BloodMagicShieldResetLevel = BindServerConfig("BloodMagic", "BloodMagicShieldResetLevel", 50, "The minimum blood magic skill level required to be able to reset shield health when reapplying a shield. Has no effect if blood magic skill changes are not enabled or BloodMagicShieldReset is not enabled.", false, 1, 100);
-
-            EnableElementalMagic = BindServerConfig("ElementalMagic", "EnableElementalMagic", true, "Enable elemental magic skill changes.");
-            EnableElementalMagicSpreadReduction = BindServerConfig("ElementalMagic", nameof(EnableElementalMagicSpreadReduction), true, "Enable reducing the spread of projectiles fired from weapons that use the elemental magic skill as your skill level increases.");
-            ElementalMagicSpreadReductionLevel = BindServerConfig("ElementalMagic", nameof(ElementalMagicSpreadReductionLevel), 25, "The elemental magic skill level at which projectile spread reduction starts being applied. Below this level elemental magic weapons have their normal spread.", false, 0, 100);
-            ElementalMagicProjectileSpreadReduction = BindServerConfig("ElementalMagic", nameof(ElementalMagicProjectileSpreadReduction), 0.5f, "How much the spread of projectiles is reduced based on your elemental magic skill level at level 100. 0.5 will make level 100 elemental magic weapons have 50% less spread. Vanilla is 0.0.", false, 0.0f, 1f);
-
-            EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
-            SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
-            SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
-            SneakNoiseReductionFactor = BindServerConfig("Sneak", "SneakNoiseReductionFactor", 0.5f, "How much noise is reduced based on your sneak level. Amount applied per level, 0.5 will make level 100 sneak give 50% less noise.", false, 0.1f, 1f);
-            EnableSneakBonusDamage = BindServerConfig("Sneak", "EnableSneakBonusDamage", true, "Enable sneak bonus damage changes.");
-            SneakBackstabBonusLevel = BindServerConfig("Sneak", "SneakBackstabBonusLevel", 25, "The level at which backstab damage starts being applied based on your skill", false, 0, 100);
-            SneakBackstabBonusFactor = BindServerConfig("Sneak", "SneakBackstabBonusFactor", 2f, "How much backstab damage is increased based on your sneak level. 1 is a 100% bonus backstab damage at skill level 100.", valmin: 0.1f, valmax: 10f);
-            SneakBonusesPastLevel100 = BindServerConfig("Sneak", "SneakBonusesPastLevel100", false, PastLevel100Description("Sneak"));
-
+            // Animal Handling
             EnableAnimalWhisper = BindServerConfig("AnimalHandling", "EnableAnimalWhisper", true, "Enable animal handling skill changes. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             AnimalTamingSpeedFactor = BindServerConfig("AnimalHandling", "AnimalTamingSpeedFactor", 6f, "How much your animal handling skill speeds up taming. This is the taming speed at level 100: 1 is vanilla (no bonus), 6 is 6x, so a creature that takes 30 minutes to tame takes 5. In multiplayer the skill of the player closest to the creature counts.", false, 1f, 10f);
             TamedAnimalLootIncreaseFactor = BindServerConfig("AnimalHandling", "TamedAnimalLootIncreaseFactor", 3f, "How much the animal handling skill improves your loot from tamed creatures. This multiplies the loot the creature would actually have dropped, so it includes its star level, the world resource rate and anything other loot mods change. 1 is vanilla (no bonus), 3 is 3x the loot at level 100", false, 1f, 10f);
@@ -455,6 +391,125 @@ namespace ImpactfulSkills
             TamingHandFeedXP = BindServerConfig("AnimalHandling", "TamingHandFeedXP", 3f, "The Animal Handling XP gained for each hand feeding.", false, 0f, 50f);
             AnimalHandlingBonusesPastLevel100 = BindServerConfig("AnimalHandling", "AnimalHandlingBonusesPastLevel100", false, PastLevel100Description("Animal Handling"));
 
+
+            // Blocking
+            EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
+            BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
+            BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
+            BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
+            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much of the stamina each block cost is given back, at blocking level 100. This is scaled by your blocking level. 0.5 gives back half of what a block cost at level 100, 2 gives back twice what it cost.", true, .5f, 2f);
+            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
+            BlockingBonusesPastLevel100 = BindServerConfig("Blocking", "BlockingBonusesPastLevel100", false, PastLevel100Description("Blocking"));
+
+
+            // Blood Magic
+            EnableBloodMagic = BindServerConfig("BloodMagic", "EnableBloodMagic", true, "Enable blood magic skill changes.");
+            BloodMagicXPForShieldDamageRatio = BindServerConfig("BloodMagic", "BloodMagicXPForShieldDamageRatio", 50f, "How much XP is gained for shield damage. 50 is once every 50 damage.", false, 1f, 200f);
+            BloodMagicXP = BindServerConfig("BloodMagic", "BloodMagicXP", 1f, "How much XP is gained, used by other blood magic skill settings.", false, 0.1f, 10f);
+            EnableBloodMagicShieldReset = BindServerConfig("BloodMagic", "EnableBloodMagicShieldReset", true, "Whether applying a new shield to someone who already has a shield will reset the total damage that the shield can absorb. In vanilla, refreshing a shield only extends the duration and does not reset total damage that it can absorb.");
+            BloodMagicShieldResetLevel = BindServerConfig("BloodMagic", "BloodMagicShieldResetLevel", 50, "The minimum blood magic skill level required to be able to reset shield health when reapplying a shield. Has no effect if blood magic skill changes are not enabled or BloodMagicShieldReset is not enabled.", false, 1, 100);
+
+            // Elemental Magic
+            EnableElementalMagic = BindServerConfig("ElementalMagic", "EnableElementalMagic", true, "Enable elemental magic skill changes.");
+            EnableElementalMagicSpreadReduction = BindServerConfig("ElementalMagic", nameof(EnableElementalMagicSpreadReduction), true, "Enable reducing the spread of projectiles fired from weapons that use the elemental magic skill as your skill level increases.");
+            ElementalMagicSpreadReductionLevel = BindServerConfig("ElementalMagic", nameof(ElementalMagicSpreadReductionLevel), 25, "The elemental magic skill level at which projectile spread reduction starts being applied. Below this level elemental magic weapons have their normal spread.", false, 0, 100);
+            ElementalMagicProjectileSpreadReduction = BindServerConfig("ElementalMagic", nameof(ElementalMagicProjectileSpreadReduction), 0.5f, "How much the spread of projectiles is reduced based on your elemental magic skill level at level 100. 0.5 will make level 100 elemental magic weapons have 50% less spread. Vanilla is 0.0.", false, 0.0f, 1f);
+            
+            
+            // Cooking
+            EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
+            EnableCookingDegradeReduction = BindServerConfig("Cooking", "EnableCookingDegradeReduction", true, "When enabled, cooking contributes to preventing food from degrading over time.");
+            EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");
+            RequiredLevelForBonusCookingItems = BindServerConfig("Cooking", "RequiredLevelForBonusCookingItems", 10, "Minimum level to start crafting bonus food items.", false, 0, 100);
+            ChanceForCookingBonusItems = BindServerConfig("Cooking", "ChanceForCookingBonusItems", 0.4f, "The chance to craft bonus food items at level 100. 0.4 is a 40% chance.", valmax: 1f);
+            CookingBonusItemMaxAmount = BindServerConfig("Cooking", "CookingBonusItemMaxAmount", 3, "The maximum number of cooked items you can recieve as a bonus, each item is an additional chance roll", true, 0, 10);
+            CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
+            EnableCookingStreak = BindServerConfig("Cooking", "EnableCookingStreak", true, "Enables the cooking streak. Cooking several foods in a row grants bonus cooking XP that ramps up with each food cooked. Crafting at the cauldron and taking cooked food off a cooking station or oven both count.");
+            CookingStreakBonusPerFood = BindServerConfig("Cooking", "CookingStreakBonusPerFood", 0.1f, "How much bonus cooking XP each consecutive food adds to the next one cooked. 0.1 is 10% more XP per food in the streak.", false, 0f, 1f);
+            CookingStreakMaxBonus = BindServerConfig("Cooking", "CookingStreakMaxBonus", 1f, "The largest bonus a cooking streak can reach. 1 is double XP.", false, 0f, 10f);
+            CookingStreakTimeout = BindServerConfig("Cooking", "CookingStreakTimeout", 120f, "How many seconds you can go without cooking before the streak ends. Crafting other things or placing raw food on a station does not end it. 0 means the streak never ends.", false, 0f, 600f);
+            CookingStreakShowText = BindClientConfig("Cooking", "CookingStreakShowText", true, "Shows a popup with the current cooking streak bonus as it climbs. This is a per player setting.");
+            EnableCookingEatXP = BindServerConfig("Cooking", "EnableCookingEatXP", true, "Grants cooking XP when you eat food, scaled by the total health, stamina and eitr the food provides.");
+            CookingEatXPPerFoodStat = BindServerConfig("Cooking", "CookingEatXPPerFoodStat", 0.01f, "Cooking XP gained per point of food stats (health + stamina + eitr) when eating. At 0.01 a 40 health 30 stamina food gives 0.7 XP, about the same as taking one item off a cooking station.", valmax: 1f);
+            CookingBonusesPastLevel100 = BindServerConfig("Cooking", "CookingBonusesPastLevel100", false, PastLevel100Description("Cooking"));
+
+
+            // Crafting
+            EnableCrafting = BindServerConfig("Crafting", "EnableCrafting", true, "Enable crafting skill changes.");
+            EnableDurabilityLossPrevention = BindServerConfig("Crafting", "EnableDurabilityLossPrevention", true, "Enables durability reduction prevention that can scale with player skill.");
+            EnableDurabilitySaves = BindServerConfig("Crafting", "EnableDurabilitySaves", true, "Enables reducing how often you use durability for your items.");
+            DurabilitySaveLevel = BindServerConfig("Crafting", "DurabilitySaveLevel", 25, "Level requirement to enable durability saves.", false, 0, 150);
+            ChanceForDurabilityLossPrevention = BindServerConfig("Crafting", "ChanceForDurabilityLossPrevention", 0.25f, "Chance that you will not use durability on use.", valmax: 1f);
+            ScaleDurabilitySaveBySkillLevel = BindServerConfig("Crafting", "ScaleDurabilitySaveBySkillLevel", true, "Reduces MaxChanceForDurabilityPreserveOnUse based on level, at lvl 50 crafting MaxChanceForDurabilityPreserveOnUse is 50% of its value.");
+            EnableBonusItemCrafting = BindServerConfig("Crafting", "EnableBonusItemCrafting", true, "Enables crafting bonus items.");
+            CraftingBonusCraftsLevel = BindServerConfig("Crafting", "CraftingBonusCraftsLevel", 50, "The level at which you can start getting bonus crafts.", false, 0, 100);
+            CraftingMaxBonus = BindServerConfig("Crafting", "CraftingMaxBonus", 3, "The maximum number of additional bonus crafts you can get from crafting an item", false, 0, 150);
+            CraftingBonusChance = BindServerConfig("Crafting", "CraftingBonusChance", 0.3f, "The chance to get a bonus craft when crafting an item. 0.5 is a 50% chance to get a bonus craft at level 100. Bonus crafting success can stack up to the CraftingMaxBonus times.", false, 0, 1f);
+            EnableCraftBonusAsFraction = BindServerConfig("Crafting", "EnableCraftBonusAsFraction", true, "Enable crafting bonus as a fraction of the number crafted (for recipes where the result is more than 1). If disabled, the bonus is always 1 item.");
+            CraftBonusFractionOfCraftNumber = BindServerConfig("Crafting", "CraftBonusFractionOfCraftNumber", 0.25f, "If the number of items crafted by the recipe is greater than 1, a percentage of the number crafted is used for the bonus. This determines that percentage. Eg: craft 20 arrows (1 craft) a .25 value would give you 5 arrows for 1 bonus craft.");
+            EnableMaterialReturns = BindServerConfig("Crafting", "EnableMaterialReturns", true, "Enable material returns from crafting.");
+            CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
+            MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
+            ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
+            RefundIdolsFromCrafting = BindServerConfig("Crafting", "RefundIdolsFromCrafting", false, "Material returns from crafting a new item can also hand back the Forge of Potential idol its recipe lists. Crafting at a regular station never uses the idol up, so this hands out idols that were not spent. Upgrades never return the idol, they only return materials the upgrade cost.");
+            RefundForgeOfPotentialIdols = BindServerConfig("Crafting", "RefundForgeOfPotentialIdols", false, "Refining an item at the Forge of Potential can trigger a material return, which only ever hands back the idol the refinement used. While disabled the Forge of Potential never triggers material returns.");
+            ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
+            CraftingBonusesPastLevel100 = BindServerConfig("Crafting", "CraftingBonusesPastLevel100", false, PastLevel100Description("Crafting", "Can make crafting refunds hand back more materials than a craft costs."));
+
+
+            // Dodge
+            EnableDodge = BindServerConfig("Dodge", nameof(EnableDodge), true, "Enable dodge skill changes.");
+            DodgeBonusesPastLevel100 = BindServerConfig("Dodge", nameof(DodgeBonusesPastLevel100), false, PastLevel100Description("Dodge"));
+
+
+            // Fishing
+            EnableQualityIngredientScaling = BindServerConfig("Fishing", "EnableQualityIngredientScaling", true, "Recipes that take a whole fish now produce more when a higher quality fish is used, and always spend the lowest quality fish that can cover the recipe. Vanilla only pays out for fish quality when turning a fish into raw fish, and will otherwise happily consume your best catch for the same result a quality 1 fish gives.");
+            QualityIngredientOutputMultiplier = BindServerConfig("Fishing", "QualityIngredientOutputMultiplier", 1f, "How strongly fish quality increases the crafted amount. 1 is one extra result per quality level above 1, so a quality 5 anglerfish makes 5 fish wraps instead of 1. Multiplies the recipes own quality result multiplier, so recipes tuned by other mods keep their own scaling.", false, 0f, 10f);
+            RestrictQualityScalingToFish = BindServerConfig("Fishing", "RestrictQualityScalingToFish", true, "Only let fish earn extra output. This gates the bonus amount only - always spending the lowest quality ingredient that covers a recipe, and carrying ingredient quality into crafted equipment (ScaleCraftedEquipmentQuality), apply to everything regardless. Turning this off matters for the Ashlands weapons, which also carry a quality level, and for mods that give quality levels to other materials - in which case those recipes would start producing more as well.");
+            ScaleNonStackingCraftOutputs = BindServerConfig("Fishing", "ScaleNonStackingCraftOutputs", true, "Also scale recipes whose result does not stack, such as the fish based mead bases. Vanilla skips its own bonus craft rolls for these. Crafting more than will fit is safe - the craft is refused with an inventory full message rather than losing items.");
+            FishingBonusesPastLevel100 = BindServerConfig("Fishing", nameof(FishingBonusesPastLevel100), false, PastLevel100Description("Fishing"));
+
+
+            //  Forging
+            EnableForging = BindServerConfig("Forging", "EnableForging", true, "Enables the forging skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
+            EnableStationBonusTier1 = BindServerConfig("Forging", "EnableStationBonusTier1", true, "Enables the first crafting station level bonus.");
+            StationBonusTier1Level = BindServerConfig("Forging", "StationBonusTier1Level", 25, "The forging level at which the first station bonus applies.", false, 0, 100);
+            StationBonusTier1Stations = BindServerConfig("Forging", "StationBonusTier1Stations", "$piece_workbench,$piece_forge", "Comma separated list of crafting station names (eg: $piece_workbench) that get the first station bonus.");
+            StationBonusTier1Amount = BindServerConfig("Forging", "StationBonusTier1Amount", 1, "How many levels the first station bonus adds to its stations.", false, 0, 10);
+            EnableStationBonusTier2 = BindServerConfig("Forging", "EnableStationBonusTier2", true, "Enables the second crafting station level bonus.");
+            StationBonusTier2Level = BindServerConfig("Forging", "StationBonusTier2Level", 50, "The forging level at which the second station bonus applies.", false, 0, 100);
+            StationBonusTier2Stations = BindServerConfig("Forging", "StationBonusTier2Stations", "$piece_blackforge,$piece_magetable", "Comma separated list of crafting station names (eg: $piece_blackforge) that get the second station bonus. A station listed in both tiers gets both bonuses.");
+            StationBonusTier2Amount = BindServerConfig("Forging", "StationBonusTier2Amount", 1, "How many levels the second station bonus adds to its stations.", false, 0, 10);
+            EnableRefinementBonus = BindServerConfig("Forging", "EnableRefinementBonus", true, "Enables forging improving your odds at the Forge of Potential. The bonuses scale with your forging level, the full value applies at level 100.");
+            RefinementBonusLevel = BindServerConfig("Forging", "RefinementBonusLevel", 0, "The forging level at which Forge of Potential bonuses start applying.", false, 0, 100);
+            RefineSuccessChanceBonus = BindServerConfig("Forging", "RefineSuccessChanceBonus", 0.2f, "Added to the chance that a refinement succeeds, at forging level 100. Vanilla idols have a 0.65 chance, so 0.2 makes it 0.85.", false, 0f, 1f);
+            RefineBreakChanceReduction = BindServerConfig("Forging", "RefineBreakChanceReduction", 1f, "How much of the chance that a failed refinement destroys the item is removed, at forging level 100. 1 means failures never destroy the item at level 100, they lower its level instead.", false, 0f, 1f);
+            RefineBreakRefundBonus = BindServerConfig("Forging", "RefineBreakRefundBonus", 0.35f, "Added to the share of ingredients returned when a refinement destroys the item, at forging level 100. Vanilla idols return 0.35, so 0.35 makes it 0.7.", false, 0f, 1f);
+            EnableRefinementDecay = BindServerConfig("Forging", "EnableRefinementDecay", true, "Refinements past RefineDecayStartLevel get harder with every level: a lower chance to succeed, fewer materials back when the item breaks, and forging's protection against breaking fades. Keeps items from being refined to absurd levels.");
+            RefineDecayStartLevel = BindServerConfig("Forging", "RefineDecayStartLevel", 10, "Refining an item up to this level has the normal odds, every level beyond it is penalized by RefineDecayRate.", false, 1, 200);
+            RefineDecayRate = BindServerConfig("Forging", "RefineDecayRate", 0.05f, "How much of the refinement odds is lost for each level past RefineDecayStartLevel, compounding. 0.05 leaves 95% one level past, 77% five levels past and 60% ten levels past. Applies to the success chance, the materials returned on a break and forging's protection against breaking.", false, 0f, 1f);
+            RollRefinementsWhenAttempted = BindServerConfig("Forging", "RollRefinementsWhenAttempted", true, "The Forge of Potential decides each refinement with a fresh roll at the moment you attempt it. While disabled the game's own rolls are used, which are decided ahead of time for each character, item and level. Applies even while forging is disabled.");
+            EnableMasterwork = BindServerConfig("Forging", "EnableMasterwork", true, "Enables masterwork equipment. Weapons, armor and shields crafted or upgraded by a skilled smith are improved.");
+            MasterworkLevel = BindServerConfig("Forging", "MasterworkLevel", 75, "The forging level required to craft masterwork equipment.", false, 0, 100);
+            MasterworkStatBonus = BindServerConfig("Forging", "MasterworkStatBonus", 0.1f, "How much masterwork improves damage (weapons), armor (armor) and block power (shields). 0.1 is 10%.", false, 0f, 2f);
+            EnableLightweight = BindServerConfig("Forging", "EnableLightweight", true, "Enables lightweight equipment. Weapons, armor and shields crafted or upgraded by a skilled smith weigh less and slow you down less.");
+            LightweightLevel = BindServerConfig("Forging", "LightweightLevel", 90, "The forging level required to craft lightweight equipment.", false, 0, 100);
+            LightweightWeightReduction = BindServerConfig("Forging", "LightweightWeightReduction", 0.9f, "How much lightweight equipment reduces the item's weight. 0.9 makes it weigh 10% of normal.", false, 0f, 1f);
+            LightweightMovementPenaltyReduction = BindServerConfig("Forging", "LightweightMovementPenaltyReduction", 0.5f, "How much lightweight equipment reduces the item's movement speed penalty while equipped. 0.5 halves it.", false, 0f, 1f);
+            LightweightNoPenaltyStatBonus = BindServerConfig("Forging", "LightweightNoPenaltyStatBonus", 0.05f, "Lightweight equipment that has no movement speed penalty gets this much more damage, armor or block power instead. 0.05 is 5%.", false, 0f, 2f);
+            ForgingStationXPWeights = BindServerConfig("Forging", "ForgingStationXPWeights", "$piece_workbench:1,$piece_forge:1.5,$piece_blackforge:2,$piece_magetable:2", "Comma separated list of crafting station names and XP multipliers (name:multiplier). Anything crafted at these stations gives forging XP, and equipment crafted or upgraded at them gives XP scaled by the multiplier. Equipment from other stations uses a multiplier of 1.");
+            ForgingStationCraftXP = BindServerConfig("Forging", "ForgingStationCraftXP", 0.5f, "Forging XP for crafting anything at a station in ForgingStationXPWeights.", false, 0f, 20f);
+            ForgingEquipmentCraftXP = BindServerConfig("Forging", "ForgingEquipmentCraftXP", 1f, "Forging XP for crafting a weapon, armor piece or shield. Scaled by the station multiplier and the recipe's minimum station level.", false, 0f, 20f);
+            ForgingUpgradeXP = BindServerConfig("Forging", "ForgingUpgradeXP", 1f, "Forging XP for upgrading a weapon, armor piece or shield. Scaled by the station multiplier and the new quality level.", false, 0f, 20f);
+            ForgingRefineAttemptXP = BindServerConfig("Forging", "ForgingRefineAttemptXP", 2f, "Forging XP for each refinement attempt at the Forge of Potential. Scaled by the quality level being attempted.", false, 0f, 20f);
+            ForgingRefineSuccessXPMultiplier = BindServerConfig("Forging", "ForgingRefineSuccessXPMultiplier", 2f, "Multiplies the refinement XP when the attempt succeeds.", false, 1f, 10f);
+            ForgingNoXPItems = BindServerConfig("Forging", "ForgingNoXPItems", "SwordWood,THSwordWood,AxeWood,BattleaxeWood,MaceWood,SledgeWood,SpearWood,AtgeirWood,KnifeWood,Club,AxeStone,AxeFlint,KnifeFlint,SpearFlint,Bow,PickaxeAntler,Hammer,Hoe,Torch,ShieldWood,ShieldWoodTower,ArmorRagsChest,ArmorRagsLegs,ArmorLeatherChest,ArmorLeatherLegs,HelmetLeather,CapeDeerHide,ArrowWood,ArrowFlint,ArrowFire", "Comma separated list of item prefab names that give no forging XP when crafted, upgraded or refined. End an entry with * to match every prefab starting with it.");
+            ForgingMetalIngredients = BindServerConfig("Forging", "ForgingMetalIngredients", "Copper,CopperOre,CopperScrap,Tin,TinOre,Bronze,BronzeScrap,BronzeNails,Iron,IronOre,IronScrap,IronNails,Chain,Silver,SilverOre,BlackMetal,BlackMetalScrap,MechanicalSpring,Flametal,FlametalOre,FlametalNew,FlametalOreNew,Gold,GoldOre,AxeHead1,AxeHead2,Mold*", "Comma separated list of ingredient prefab names that count as metal. Items whose recipe uses none of them give ForgingNonMetalXPMultiplier of the usual forging XP. End an entry with * to match every prefab starting with it.");
+            ForgingNonMetalXPMultiplier = BindServerConfig("Forging", "ForgingNonMetalXPMultiplier", 0.5f, "Multiplies the forging XP for items made without metal (see ForgingMetalIngredients).", false, 0f, 1f);
+            ForgingBonusesPastLevel100 = BindServerConfig("Forging", "ForgingBonusesPastLevel100", false, PastLevel100Description("Forging", "Can keep forging's protection against breaking ahead of the refinement decay for many levels."));
+
+
+            // Gathering/Farming
             EnableGathering = BindServerConfig("Farming", "EnableGathering", true, "Enable gathering skill changes.");
             EnableGatheringAOE = BindServerConfig("Farming", "EnableGatheringAOE", true, "Enable AOE gathering skill changes.");
             GatheringRangeFactor = BindServerConfig("Farming", "GatheringRangeFactor", 5f, "AOE gathering range you have at level 100.", false, 3f, 25f);
@@ -496,6 +551,99 @@ namespace ImpactfulSkills
             FarmingMultiPlantCenterColumns = BindClientConfig("Farming", "FarmingMultiPlantCenterColumns", true, "Center the planting grid on your cursor along the column (sideways) axis. Disable to grow the grid sideways from your cursor instead.");
             FarmingBonusesPastLevel100 = BindServerConfig("Farming", "FarmingBonusesPastLevel100", false, PastLevel100Description("Farming", "Can make multiplant grids larger than FarmingMultiplantMaxPlantedAtOnce."));
 
+
+            // Hauling
+            EnableHauling = BindServerConfig("Hauling", "EnableHauling", true, "Enables the hauling skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
+            EnableCarryWeightBonus = BindServerConfig("Hauling", "EnableCarryWeightBonus", true, "Enables the carry weight bonus from the hauling skill.");
+            HaulingMaxWeightBonus = BindServerConfig("Hauling", "HaulingMaxWeightBonus", 50f, "The maximum carry weight bonus from the hauling skill (the value you get at skill level 100).", false, 0f, 300f);
+            EnableHaulingCartMassReduction = BindServerConfig("Hauling", "EnableHaulingCartMassReduction", true, "Enables mass reduction for the cart (this makes the cart easier to move when heavily loaded).");
+            HaulingCartMassReduction = BindServerConfig("Hauling", "HaulingCartMassReduction", 0.8f, "The maximum reduction that a carts weight will recieve based on your hauling skill.", false, 0.01f, 1);
+            HaulingXPRate = BindServerConfig("Hauling", "HaulingXPRate", 0.2f, "The amount of XP that is gained each time with Hauling", false, 0.01f, 10f);
+            HaulingXPCheckInterval = BindServerConfig("Hauling", "HaulingXPCheckInterval", 3, "How many seconds between checks for hauling XP while moving goods, both by cart and by carrying them.", false, 1, 60);
+            HaulingXPCheckInterval.SettingChanged += HaulingXPTracker.OnIntervalChanged;
+            HaulingXPMinDistance = BindServerConfig("Hauling", "HaulingXPMinDistance", 1f, "How far you must travel within the check interval to gain hauling XP. Set to 0 to gain hauling XP without moving.", false, 0f, 50f);
+            EnableHaulingCarryWeightXP = BindServerConfig("Hauling", "EnableHaulingCarryWeightXP", true, "Enables gaining hauling XP while moving around with a heavily loaded inventory.");
+            HaulingCarryWeightXPMinWeight = BindServerConfig("Hauling", "HaulingCarryWeightXPMinWeight", 275f, "The minimum total inventory weight you must be carrying to gain hauling XP from your load.", false, 0f, 2000f);
+            HaulingCarryWeightXPRate = BindServerConfig("Hauling", "HaulingCarryWeightXPRate", 3f, "The amount of XP that is gained each interval while heavily loaded. This is scaled by how loaded you are.", false, 0.01f, 10f);
+            HaulingMaxLoadRatio = BindServerConfig("Hauling", "HaulingMaxLoadRatio", 1.5f, "The maximum load ratio that hauling XP will scale with. Being over your carry weight grants bonus XP, this caps how much.", true, 1f, 5f);
+            HaulingBonusesPastLevel100 = BindServerConfig("Hauling", "HaulingBonusesPastLevel100", false, PastLevel100Description("Hauling"));
+
+
+            // Jump
+            EnableJump = BindServerConfig("Jump", "EnableJump", true, "Enable jump skill changes.");
+            JumpHeightFactor = BindServerConfig("Jump", "JumpHeightFactor", 125f, "Percentage of original jump height at skill level 100. 100 = no change, 50 = half height, 200 = double height.", false, 50f, 300f);
+            JumpHeightRequiredLevel = BindServerConfig("Jump", "JumpHeightRequiredLevel", 10f, "Minimum jump skill level required to gain jump height bonuses.", false, 0f, 100f);
+            EnableFallDamageReduction = BindServerConfig("Jump", "EnableFallDamageReduction", true, "Enable fall damage reduction based on jump skill.");
+            FallDamageReductionFactor = BindServerConfig("Jump", "FallDamageReductionFactor", 0.5f, "How much fall damage is reduced at skill level 100. 0.5 means 50% reduction at max level.", false, 0f, 1f);
+            FallDamageReductionRequiredLevel = BindServerConfig("Jump", "FallDamageReductionRequiredLevel", 15f, "Minimum jump skill level required to gain fall damage reduction.", false, 0f, 100f);
+            EnableFallDamageHeightBonus = BindServerConfig("Jump", "EnableFallDamageHeightBonus", true, "Enables Jump skill impacting the distance you can fall without recieving any fall damage.");
+            FallDamageHeightRequiredLevel = BindServerConfig("Jump", "FallDamageHeightRequiredLevel", 25f, "The required level to start getting an increase to the height at which you will not recieve any fall damage.", false, 0, 100f);
+            FallDamageHeightBonus = BindServerConfig("Jump", "FallDamageHeightBonus", 3f, "Bonus to max fall height before taking damage at skill level 100 (meters). Scales with skill level (default is 4, and this is added to that).", false, 0f, 50f);
+            JumpBonusesPastLevel100 = BindServerConfig("Jump", "JumpBonusesPastLevel100", false, PastLevel100Description("Jump"));
+
+
+            // Mining
+            EnableMining = BindServerConfig("Mining", "EnableMining", true, "Enable mining skill changes.");
+            MiningDmgMod = BindServerConfig("Mining", "MiningDmgMod", 1.2f, "How much your skill levels impact mining damage.");
+            EnableMiningCritHit = BindServerConfig("Mining", "EnableMiningCritHit", true, "Enables mining critial hit strikes, must hit the required level for it to be active.");
+            RequiredLevelForMiningCrit = BindServerConfig("Mining", "RequiredLevelForMiningCrit", 25, "Level the player must be for critical mining hits to activate", false, 0, 100);
+            ChanceForMiningCritHit = BindServerConfig("Mining", "ChanceForMiningCritHit", 0.1f, "Chance for a critical hit when mining", valmax: 1f);
+            CriticalHitDmgMult = BindServerConfig("Mining", "CriticalHitDmgMult", 3f, "Multipler for damage from a critical hit", valmin: 1f, valmax: 20f);
+            MiningLootFactor = BindServerConfig("Mining", "MiningLootFactor", 2f, "How much the mining skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
+            EnableMiningAOE = BindServerConfig("Mining", "EnableMiningAOE", true, "Enable AOE mining skill changes.");
+            ChanceForAOEOnHit = BindServerConfig("Mining", "ChanceForAOEOnHit", 0.3f, "Once AOE Mining is enabled, this is the chance for it to activate on any hit", valmax: 1f);
+            ChanceForAOEOnHitScalesWithSkill = BindServerConfig("Mining", "ChanceForAOEOnHitScalesWithSkill", true, "Increases your chance for an AOE strike based on player skill");
+            MiningAOERange = BindServerConfig("Mining", "MiningAOERange", 2f, "How far away the mining AOE is applied. How far away an AOE hit is applied.", valmin: 0.5f, valmax: 10f);
+            MiningAOELevel = BindServerConfig("Mining", "MiningAOELevel", 50f, "The level that AOE mining requires to activate. What skill level Mining AOE is enabled at.", valmax: 100f);
+            EnableMiningRockBreaker = BindServerConfig("Mining", "EnableMiningRockBreaker", true, "Enable mining whole veins, by a (small) chance.");
+            ProtectLeviathansWhenMined = BindServerConfig("Mining", "ProtectLeviathansWhenMined", true, "Keeps mined Leviathans (and LeviathanLava) from vanishing out from under you. Mining out the last ore node normally deletes the whole creature instantly, dropping you into the ocean or lava; with this enabled it starts its dive and sinks away instead. Rock breaker and AOE mining also stop rolling the dive reaction once per node.");
+            RockBreakerMaxChance = BindServerConfig("Mining", "RockBreakerMaxChance", 0.05f, "The maximum chance to break a whole vein. 0.05 is 5% chance to break a whole vein at level 100. This is checked on each hit.", valmax: 1f);
+            RockBreakerRequiredLevel = BindServerConfig("Mining", "RockBreakerRequiredLevel", 75, "The level that vein breaking requires to activate. What skill level whole rocks breaking is enabled at.", false, 0, 100);
+            RockBreakerDamage = BindServerConfig("Mining", "RockBreakerDamage", 300f, "Veinbreakers damage, small damage numbers will mean triggering this will not destroy a whole vein, but massively weaken it. Large numbers will ensure the whole vein is destroyed.", valmax: 10000f);
+            MinehitsPerInterval = BindServerConfig("Mining", "MinehitsPerInterval", 2, "The number of pieces per interval to break when mining large rocks.", true, 1, 100);
+            SkillLevelBonusEnabledForMiningDropChance = BindServerConfig("Mining", "SkillLevelBonusEnabledForMiningDropChance", false, "Pickaxes skill level provides a bonus to drop chance for drops that are not gaurenteed (This can significantly increase muddy scrap-pile drops).");
+            SkipNonRockDropIncreases = BindServerConfig("Mining", "SkipNonRockDropIncreases", true, "When enabled, only ores/rocks will get the increased drops, this primarily impacts muddy scrap piles in vanilla.");
+            SkipNonRockDropPrefabs = BindServerConfig("Mining", "SkipNonRockDropPrefabs", "LeatherScraps,WitheredBone", "List of prefabs which will not recieve increased mining drops. Should be comma seperated without spaces.");
+            ReducedChanceDropsForLowAmountDrops = BindServerConfig("Mining", "ReducedChanceDropsForLowAmountDrops", false, "When Enabled, drops that have an amount increase below 1 will only have a chance to happen instead of being rounded up to 1, and always happening.");
+            FractionalDropsAsChance = BindServerConfig("Mining", "FractionalDropsAsChance", true, "When enabled, drops that are less than 1 become a chance to drop one. When disabled drops below 1 will never result in drops.");
+            DistanceMiningDropMultiplierChecks = BindServerConfig("Mining", "DistanceMiningDropMultiplierChecks", 20f, "How far away the loot multiplier will check when rocks are destroyed. Increasing this significantly can cause a performance impact.", true, 10, 100);
+            RockbreakerSafetyResetTimeout = BindServerConfig("Mining", "RockbreakerSafetyResetTimeout", 30f, "How long to wait before re-enabling rock breaker after its last activation.", true, 10f, 120f);
+            MiningBonusesPastLevel100 = BindServerConfig("Mining", "MiningBonusesPastLevel100", false, PastLevel100Description("Pickaxes"));
+
+
+            // Ride
+            EnableRide = BindServerConfig("Ride", nameof(EnableRide), true, "Enable ride skill changes.");
+            RideBonusesPastLevel100 = BindServerConfig("Ride", nameof(RideBonusesPastLevel100), false, PastLevel100Description("Ride"));
+
+
+            // Run
+            EnableRun = BindServerConfig("Run", "EnableRun", true, "Enable run skill changes.");
+            RunSpeedFactor = BindServerConfig("Run", "RunSpeedFactor", 0.005f, "How much the run speed is increased based on your run level. Amount applied per level, 0.005 will make level 100 run give 50% faster running.", false, 0.001f, 0.06f);
+            RunBonusesPastLevel100 = BindServerConfig("Run", "RunBonusesPastLevel100", false, PastLevel100Description("Run"));
+
+
+            // Stealth
+            EnableStealth = BindServerConfig("Sneak", "EnableStealth", true, "Enable sneak skill changes.");
+            SneakSpeedFactor = BindServerConfig("Sneak", "SneakSpeedFactor", 0.03f, "How much sneak speed is increased based on your sneak level. Amount applied per level, 0.03 will make level 100 sneak give normal walkspeed while sneaking.", false, 0.001f, 0.06f);
+            SneakNoiseReductionLevel = BindServerConfig("Sneak", "SneakNoiseReductionLevel", 50f, "The level at which noise reduction starts being applied based on your skill", false, 0f, 100f);
+            SneakNoiseReductionFactor = BindServerConfig("Sneak", "SneakNoiseReductionFactor", 0.5f, "How much noise is reduced based on your sneak level. Amount applied per level, 0.5 will make level 100 sneak give 50% less noise.", false, 0.1f, 1f);
+            EnableSneakBonusDamage = BindServerConfig("Sneak", "EnableSneakBonusDamage", true, "Enable sneak bonus damage changes.");
+            SneakBackstabBonusLevel = BindServerConfig("Sneak", "SneakBackstabBonusLevel", 25, "The level at which backstab damage starts being applied based on your skill", false, 0, 100);
+            SneakBackstabBonusFactor = BindServerConfig("Sneak", "SneakBackstabBonusFactor", 2f, "How much backstab damage is increased based on your sneak level. 1 is a 100% bonus backstab damage at skill level 100.", valmin: 0.1f, valmax: 10f);
+            SneakBonusesPastLevel100 = BindServerConfig("Sneak", "SneakBonusesPastLevel100", false, PastLevel100Description("Sneak"));
+
+
+            // Swimming
+            EnableSwimming = BindServerConfig("Swimming", "EnableSwimming", true, "Enable swimming skill changes.");
+            EnableSwimStaminaCostReduction = BindServerConfig("Swimming", "EnableSwimStaminaCostReduction", true, "Enables swim stamina cost reduction, at the level specified by SwimStaminaReductionLevel.");
+            SwimSpeedRequiredLevel = BindServerConfig("Swimming", "SwimSpeedRequiredLevel", 25, "The level that swimming speed increases start being applied based on your skill", false, 0, 100);
+            SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
+            SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
+            SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
+            SwimmingBonusesPastLevel100 = BindServerConfig("Swimming", "SwimmingBonusesPastLevel100", false, PastLevel100Description("Swim"));
+
+
+            // Voyager
             EnableVoyager = BindServerConfig("Voyager", "EnableVoyager", true, "Enable voyager skill changes. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
             VoyagerSkillXPCheckFrequency = BindServerConfig("Voyager", "VoyagerSkillXPCheckFrequency", 5, "How often Voyager skill can be increased while sailing. Rate varies based on your game physics engine speed.", false, 5, 200);
             VoyagerReduceCuttingStart = BindServerConfig("Voyager", "VoyagerReduceCuttingStart", 50f, "The level where your sails start catching wind closer to head-on, and the sailing penalty for other wind angles starts to shrink. Both improve gradually up to level 100.", false, 0f, 100f);
@@ -513,6 +661,15 @@ namespace ImpactfulSkills
             VoyagerImpactResistanceLevel = BindServerConfig("Voyager", "VoyagerImpactResistanceLevel", 75, "The level at which impact resistance is enabled. This prevents the ship you are aboard from taking damage when it bumps into something.");
             VoyagerBonusesPastLevel100 = BindServerConfig("Voyager", "VoyagerBonusesPastLevel100", false, PastLevel100Description("Voyager"));
 
+
+            // Woodcutting
+            EnableWoodcutting = BindServerConfig("Woodcutting", "EnableWoodcutting", true, "Enable woodcutting skill changes.");
+            WoodCuttingDmgMod = BindServerConfig("Woodcutting", "WoodCuttingDmgMod", 1.2f, "How much skill levels impact your chop damage.");
+            WoodCuttingLootFactor = BindServerConfig("Woodcutting", "WoodCuttingLootFactor", 3f, "How much the woodcutting skill provides additional loot. 1 is vanilla (no bonus), 2 is 2x the loot at level 100.", false, 1f, 10f);
+            WoodcuttingBonusesPastLevel100 = BindServerConfig("Woodcutting", "WoodcuttingBonusesPastLevel100", false, PastLevel100Description("Woodcutting"));
+
+            
+            // Weapon Skills
             EnableWeaponSkill = BindServerConfig("WeaponSkills", "EnableWeaponSkill", true, "Enable weapon skill changes.");
             WeaponSkillStaminaReduction = BindServerConfig("WeaponSkills", "WeaponSkillStaminaReduction", 0.5f, "How much stamina is reduced based on your weapon skill level at level 100. 0.5 will make level 100 weapon skill give 50% less stamina cost.", false, 0f, 1f);
             WeaponSkillParryBonus = BindServerConfig("WeaponSkills", "WeaponSkillParryBonus", 1f, "How much extra XP you get for parrying an attack", false, 0f, 10f);
@@ -533,88 +690,8 @@ namespace ImpactfulSkills
             BowDistanceXPCurve = BindServerConfig("WeaponSkills", "BowDistanceXPCurve", 2f, "How sharply the bow bonus grows between the min and max distance. 1 grows evenly like crossbows, 2 keeps most of the bonus for the longest shots (halfway gives a quarter of it), higher is sharper still.", false, 1f, 5f);
             WeaponSkillBonusesPastLevel100 = BindServerConfig("WeaponSkills", "WeaponSkillBonusesPastLevel100", false, PastLevel100Description("weapon skill"));
 
-            EnableBlocking = BindServerConfig("Blocking", "EnableBlocking", true, "Enable blocking skill changes.");
-            BlockPowerRequiredLevel = BindServerConfig("Blocking", "BlockPowerRequiredLevel", 25, "The level that BlockPowerFactor start being applied based on your skill", true, 0, 100);
-            BlockPowerFactor = BindServerConfig("Blocking", "BlockPowerFactor", .75f, "The factor that blocking power increases after reaching the BlockRequiredLevel. Vanilla is .5f", true, 0.5f, 2f);
-            BlockStaminaGainRequiredLevel = BindServerConfig("Blocking", "BlockStaminaGainRequiredLevel", 40, "The level that BlockStaminaGainFactor starts being applied base on your skill", true, 0, 100);
-            BlockStaminaGainFactor = BindServerConfig("Blocking", "BlockStaminaGainFactor", .5f, "How much of the stamina each block cost is given back, at blocking level 100. This is scaled by your blocking level. 0.5 gives back half of what a block cost at level 100, 2 gives back twice what it cost.", true, .5f, 2f);
-            EnableParryStaminaGain = BindServerConfig("Blocking", "EnableParryStaminaGain", false, "Enable stamina gain on parry. Value based off BlockStaminaGainFactor");
-            BlockingBonusesPastLevel100 = BindServerConfig("Blocking", "BlockingBonusesPastLevel100", false, PastLevel100Description("Blocking"));
-
-            EnableCrafting = BindServerConfig("Crafting", "EnableCrafting", true, "Enable crafting skill changes.");
-            EnableDurabilityLossPrevention = BindServerConfig("Crafting", "EnableDurabilityLossPrevention", true, "Enables durability reduction prevention that can scale with player skill.");
-            EnableDurabilitySaves = BindServerConfig("Crafting", "EnableDurabilitySaves", true, "Enables reducing how often you use durability for your items.");
-            DurabilitySaveLevel = BindServerConfig("Crafting", "DurabilitySaveLevel", 25, "Level requirement to enable durability saves.", false, 0, 150);
-            ChanceForDurabilityLossPrevention = BindServerConfig("Crafting", "ChanceForDurabilityLossPrevention", 0.25f, "Chance that you will not use durability on use.", valmax: 1f);
-            ScaleDurabilitySaveBySkillLevel = BindServerConfig("Crafting", "ScaleDurabilitySaveBySkillLevel", true, "Reduces MaxChanceForDurabilityPreserveOnUse based on level, at lvl 50 crafting MaxChanceForDurabilityPreserveOnUse is 50% of its value.");
-            EnableBonusItemCrafting = BindServerConfig("Crafting", "EnableBonusItemCrafting", true, "Enables crafting bonus items.");
-            CraftingBonusCraftsLevel = BindServerConfig("Crafting", "CraftingBonusCraftsLevel", 50, "The level at which you can start getting bonus crafts.", false, 0, 100);
-            CraftingMaxBonus = BindServerConfig("Crafting", "CraftingMaxBonus", 3, "The maximum number of additional bonus crafts you can get from crafting an item", false, 0, 150);
-            CraftingBonusChance = BindServerConfig("Crafting", "CraftingBonusChance", 0.3f, "The chance to get a bonus craft when crafting an item. 0.5 is a 50% chance to get a bonus craft at level 100. Bonus crafting success can stack up to the CraftingMaxBonus times.", false, 0, 1f);
-            EnableCraftBonusAsFraction = BindServerConfig("Crafting", "EnableCraftBonusAsFraction", true, "Enable crafting bonus as a fraction of the number crafted (for recipes where the result is more than 1). If disabled, the bonus is always 1 item.");
-            CraftBonusFractionOfCraftNumber = BindServerConfig("Crafting", "CraftBonusFractionOfCraftNumber", 0.25f, "If the number of items crafted by the recipe is greater than 1, a percentage of the number crafted is used for the bonus. This determines that percentage. Eg: craft 20 arrows (1 craft) a .25 value would give you 5 arrows for 1 bonus craft.");
-            EnableMaterialReturns = BindServerConfig("Crafting", "EnableMaterialReturns", true, "Enable material returns from crafting.");
-            CraftingMaterialReturnsLevel = BindServerConfig("Crafting", "CraftingMaterialReturnsLevel", 75, "The level at which material returns start being applied based on your skill", false, 0, 100);
-            MaxCraftingMaterialReturnPercent = BindServerConfig("Crafting", "MaxCraftingMaterialReturnPercent", 0.3f, "The maximum percentage of materials that can be returned from crafting. 0.5 is 50% at level 100.", valmax: 1f);
-            ChanceForMaterialReturn = BindServerConfig("Crafting", "ChanceForMaterialReturn", 0.15f, "The chance to return materials when crafting an item. 0.25 is a 25% chance to return materials at level 100.", valmax: 1f);
-            RefundIdolsFromCrafting = BindServerConfig("Crafting", "RefundIdolsFromCrafting", false, "Material returns from crafting a new item can also hand back the Forge of Potential idol its recipe lists. Crafting at a regular station never uses the idol up, so this hands out idols that were not spent. Upgrades never return the idol, they only return materials the upgrade cost.");
-            RefundForgeOfPotentialIdols = BindServerConfig("Crafting", "RefundForgeOfPotentialIdols", false, "Refining an item at the Forge of Potential can trigger a material return, which only ever hands back the idol the refinement used. While disabled the Forge of Potential never triggers material returns.");
-            ScaleCraftedEquipmentQuality = BindServerConfig("Crafting", "ScaleCraftedEquipmentQuality", true, "Recipes that consume an item carrying a quality level and produce equipment now craft that equipment at a higher quality instead of producing more of it. The quality granted is the average quality of the ingredients spent, rounded down, and is still capped by what your crafting station could normally build. The fishing hat made from twelve good fish comes out upgraded, and infusing an Ashlands weapon carries its star level over instead of resetting it to one. Crafting always spends the lowest quality ingredient that covers the recipe, so this never eats your best one when a worse one would do.");
-            CraftingBonusesPastLevel100 = BindServerConfig("Crafting", "CraftingBonusesPastLevel100", false, PastLevel100Description("Crafting", "Can make crafting refunds hand back more materials than a craft costs."));
-
-            EnableForging = BindServerConfig("Forging", "EnableForging", true, "Enables the forging skill. While disabled the skill is hidden from the skills panel, and players keep their level for when it is enabled again.");
-            EnableStationBonusTier1 = BindServerConfig("Forging", "EnableStationBonusTier1", true, "Enables the first crafting station level bonus.");
-            StationBonusTier1Level = BindServerConfig("Forging", "StationBonusTier1Level", 25, "The forging level at which the first station bonus applies.", false, 0, 100);
-            StationBonusTier1Stations = BindServerConfig("Forging", "StationBonusTier1Stations", "$piece_workbench,$piece_forge", "Comma separated list of crafting station names (eg: $piece_workbench) that get the first station bonus.");
-            StationBonusTier1Amount = BindServerConfig("Forging", "StationBonusTier1Amount", 1, "How many levels the first station bonus adds to its stations.", false, 0, 10);
-            EnableStationBonusTier2 = BindServerConfig("Forging", "EnableStationBonusTier2", true, "Enables the second crafting station level bonus.");
-            StationBonusTier2Level = BindServerConfig("Forging", "StationBonusTier2Level", 50, "The forging level at which the second station bonus applies.", false, 0, 100);
-            StationBonusTier2Stations = BindServerConfig("Forging", "StationBonusTier2Stations", "$piece_blackforge,$piece_magetable", "Comma separated list of crafting station names (eg: $piece_blackforge) that get the second station bonus. A station listed in both tiers gets both bonuses.");
-            StationBonusTier2Amount = BindServerConfig("Forging", "StationBonusTier2Amount", 1, "How many levels the second station bonus adds to its stations.", false, 0, 10);
-            EnableRefinementBonus = BindServerConfig("Forging", "EnableRefinementBonus", true, "Enables forging improving your odds at the Forge of Potential. The bonuses scale with your forging level, the full value applies at level 100.");
-            RefinementBonusLevel = BindServerConfig("Forging", "RefinementBonusLevel", 0, "The forging level at which Forge of Potential bonuses start applying.", false, 0, 100);
-            RefineSuccessChanceBonus = BindServerConfig("Forging", "RefineSuccessChanceBonus", 0.2f, "Added to the chance that a refinement succeeds, at forging level 100. Vanilla idols have a 0.65 chance, so 0.2 makes it 0.85.", false, 0f, 1f);
-            RefineBreakChanceReduction = BindServerConfig("Forging", "RefineBreakChanceReduction", 1f, "How much of the chance that a failed refinement destroys the item is removed, at forging level 100. 1 means failures never destroy the item at level 100, they lower its level instead.", false, 0f, 1f);
-            RefineBreakRefundBonus = BindServerConfig("Forging", "RefineBreakRefundBonus", 0.35f, "Added to the share of ingredients returned when a refinement destroys the item, at forging level 100. Vanilla idols return 0.35, so 0.35 makes it 0.7.", false, 0f, 1f);
-            EnableRefinementDecay = BindServerConfig("Forging", "EnableRefinementDecay", true, "Refinements past RefineDecayStartLevel get harder with every level: a lower chance to succeed, fewer materials back when the item breaks, and forging's protection against breaking fades. Keeps items from being refined to absurd levels.");
-            RefineDecayStartLevel = BindServerConfig("Forging", "RefineDecayStartLevel", 10, "Refining an item up to this level has the normal odds, every level beyond it is penalized by RefineDecayRate.", false, 1, 200);
-            RefineDecayRate = BindServerConfig("Forging", "RefineDecayRate", 0.05f, "How much of the refinement odds is lost for each level past RefineDecayStartLevel, compounding. 0.05 leaves 95% one level past, 77% five levels past and 60% ten levels past. Applies to the success chance, the materials returned on a break and forging's protection against breaking.", false, 0f, 1f);
-            RollRefinementsWhenAttempted = BindServerConfig("Forging", "RollRefinementsWhenAttempted", true, "The Forge of Potential decides each refinement with a fresh roll at the moment you attempt it. While disabled the game's own rolls are used, which are decided ahead of time for each character, item and level. Applies even while forging is disabled.");
-            EnableMasterwork = BindServerConfig("Forging", "EnableMasterwork", true, "Enables masterwork equipment. Weapons, armor and shields crafted or upgraded by a skilled smith are improved.");
-            MasterworkLevel = BindServerConfig("Forging", "MasterworkLevel", 75, "The forging level required to craft masterwork equipment.", false, 0, 100);
-            MasterworkStatBonus = BindServerConfig("Forging", "MasterworkStatBonus", 0.1f, "How much masterwork improves damage (weapons), armor (armor) and block power (shields). 0.1 is 10%.", false, 0f, 2f);
-            EnableLightweight = BindServerConfig("Forging", "EnableLightweight", true, "Enables lightweight equipment. Weapons, armor and shields crafted or upgraded by a skilled smith weigh less and slow you down less.");
-            LightweightLevel = BindServerConfig("Forging", "LightweightLevel", 90, "The forging level required to craft lightweight equipment.", false, 0, 100);
-            LightweightWeightReduction = BindServerConfig("Forging", "LightweightWeightReduction", 0.9f, "How much lightweight equipment reduces the item's weight. 0.9 makes it weigh 10% of normal.", false, 0f, 1f);
-            LightweightMovementPenaltyReduction = BindServerConfig("Forging", "LightweightMovementPenaltyReduction", 0.5f, "How much lightweight equipment reduces the item's movement speed penalty while equipped. 0.5 halves it.", false, 0f, 1f);
-            LightweightNoPenaltyStatBonus = BindServerConfig("Forging", "LightweightNoPenaltyStatBonus", 0.05f, "Lightweight equipment that has no movement speed penalty gets this much more damage, armor or block power instead. 0.05 is 5%.", false, 0f, 2f);
-            ForgingStationXPWeights = BindServerConfig("Forging", "ForgingStationXPWeights", "$piece_workbench:1,$piece_forge:1.5,$piece_blackforge:2,$piece_magetable:2", "Comma separated list of crafting station names and XP multipliers (name:multiplier). Anything crafted at these stations gives forging XP, and equipment crafted or upgraded at them gives XP scaled by the multiplier. Equipment from other stations uses a multiplier of 1.");
-            ForgingStationCraftXP = BindServerConfig("Forging", "ForgingStationCraftXP", 0.5f, "Forging XP for crafting anything at a station in ForgingStationXPWeights.", false, 0f, 20f);
-            ForgingEquipmentCraftXP = BindServerConfig("Forging", "ForgingEquipmentCraftXP", 1f, "Forging XP for crafting a weapon, armor piece or shield. Scaled by the station multiplier and the recipe's minimum station level.", false, 0f, 20f);
-            ForgingUpgradeXP = BindServerConfig("Forging", "ForgingUpgradeXP", 1f, "Forging XP for upgrading a weapon, armor piece or shield. Scaled by the station multiplier and the new quality level.", false, 0f, 20f);
-            ForgingRefineAttemptXP = BindServerConfig("Forging", "ForgingRefineAttemptXP", 2f, "Forging XP for each refinement attempt at the Forge of Potential. Scaled by the quality level being attempted.", false, 0f, 20f);
-            ForgingRefineSuccessXPMultiplier = BindServerConfig("Forging", "ForgingRefineSuccessXPMultiplier", 2f, "Multiplies the refinement XP when the attempt succeeds.", false, 1f, 10f);
-            ForgingNoXPItems = BindServerConfig("Forging", "ForgingNoXPItems", "SwordWood,THSwordWood,AxeWood,BattleaxeWood,MaceWood,SledgeWood,SpearWood,AtgeirWood,KnifeWood,Club,AxeStone,AxeFlint,KnifeFlint,SpearFlint,Bow,PickaxeAntler,Hammer,Hoe,Torch,ShieldWood,ShieldWoodTower,ArmorRagsChest,ArmorRagsLegs,ArmorLeatherChest,ArmorLeatherLegs,HelmetLeather,CapeDeerHide,ArrowWood,ArrowFlint,ArrowFire", "Comma separated list of item prefab names that give no forging XP when crafted, upgraded or refined. End an entry with * to match every prefab starting with it.");
-            ForgingMetalIngredients = BindServerConfig("Forging", "ForgingMetalIngredients", "Copper,CopperOre,CopperScrap,Tin,TinOre,Bronze,BronzeScrap,BronzeNails,Iron,IronOre,IronScrap,IronNails,Chain,Silver,SilverOre,BlackMetal,BlackMetalScrap,MechanicalSpring,Flametal,FlametalOre,FlametalNew,FlametalOreNew,Gold,GoldOre,AxeHead1,AxeHead2,Mold*", "Comma separated list of ingredient prefab names that count as metal. Items whose recipe uses none of them give ForgingNonMetalXPMultiplier of the usual forging XP. End an entry with * to match every prefab starting with it.");
-            ForgingNonMetalXPMultiplier = BindServerConfig("Forging", "ForgingNonMetalXPMultiplier", 0.5f, "Multiplies the forging XP for items made without metal (see ForgingMetalIngredients).", false, 0f, 1f);
-            ForgingBonusesPastLevel100 = BindServerConfig("Forging", "ForgingBonusesPastLevel100", false, PastLevel100Description("Forging", "Can keep forging's protection against breaking ahead of the refinement decay for many levels."));
-
-            EnableCooking = BindServerConfig("Cooking", "EnableCooking", true, "Enable cooking skill changes.");
-            EnableCookingDegradeReduction = BindServerConfig("Cooking", "EnableCookingDegradeReduction", true, "When enabled, cooking contributes to preventing food from degrading over time.");
-            EnableCookingBonusItems = BindServerConfig("Cooking", "EnableCookingBonusItems", true, "Enables or disables getting bonuse food items.");
-            RequiredLevelForBonusCookingItems = BindServerConfig("Cooking", "RequiredLevelForBonusCookingItems", 10, "Minimum level to start crafting bonus food items.", false, 0, 100);
-            ChanceForCookingBonusItems = BindServerConfig("Cooking", "ChanceForCookingBonusItems", 0.4f, "The chance to craft bonus food items at level 100. 0.4 is a 40% chance.", valmax: 1f);
-            CookingBonusItemMaxAmount = BindServerConfig("Cooking", "CookingBonusItemMaxAmount", 3, "The maximum number of cooked items you can recieve as a bonus, each item is an additional chance roll", true, 0, 10);
-            CookingBurnReduction = BindServerConfig("Cooking", "CookingBurnReduction", 0.5f, "How much offset is applied to diminishing returns for food, scaled by the players cooking skill. At 1 and cooking 100 food never degrades.", valmin: 0.1f, valmax: 1f);
-            EnableCookingStreak = BindServerConfig("Cooking", "EnableCookingStreak", true, "Enables the cooking streak. Cooking several foods in a row grants bonus cooking XP that ramps up with each food cooked. Crafting at the cauldron and taking cooked food off a cooking station or oven both count.");
-            CookingStreakBonusPerFood = BindServerConfig("Cooking", "CookingStreakBonusPerFood", 0.1f, "How much bonus cooking XP each consecutive food adds to the next one cooked. 0.1 is 10% more XP per food in the streak.", false, 0f, 1f);
-            CookingStreakMaxBonus = BindServerConfig("Cooking", "CookingStreakMaxBonus", 1f, "The largest bonus a cooking streak can reach. 1 is double XP.", false, 0f, 10f);
-            CookingStreakTimeout = BindServerConfig("Cooking", "CookingStreakTimeout", 120f, "How many seconds you can go without cooking before the streak ends. Crafting other things or placing raw food on a station does not end it. 0 means the streak never ends.", false, 0f, 600f);
-            CookingStreakShowText = BindClientConfig("Cooking", "CookingStreakShowText", true, "Shows a popup with the current cooking streak bonus as it climbs. This is a per player setting.");
-            EnableCookingEatXP = BindServerConfig("Cooking", "EnableCookingEatXP", true, "Grants cooking XP when you eat food, scaled by the total health, stamina and eitr the food provides.");
-            CookingEatXPPerFoodStat = BindServerConfig("Cooking", "CookingEatXPPerFoodStat", 0.01f, "Cooking XP gained per point of food stats (health + stamina + eitr) when eating. At 0.01 a 40 health 30 stamina food gives 0.7 XP, about the same as taking one item off a cooking station.", valmax: 1f);
-            CookingBonusesPastLevel100 = BindServerConfig("Cooking", "CookingBonusesPastLevel100", false, PastLevel100Description("Cooking"));
-
+            
+            // Knowledge Sharing
             EnableKnowledgeSharing = BindServerConfig("SkillRates", "EnableKnowledgeSharing", true, "Enable shared knowledge, this allows you to gain faster experiance in low skills if you already have other high skills (eg switching primary weapon skill).");
             AnimalTamingSkillGainRate = BindServerConfig("SkillRates", "AnimalTamingSkillGainRate", 1f, "How fast the skill is gained.", false, 0f, 50f);
             VoyagerSkillGainRate = BindServerConfig("SkillRates", "VoyagerSkillGainRate", 4f, "How fast the skill is gained.", false, 0f, 50f);
@@ -625,19 +702,18 @@ namespace ImpactfulSkills
             AdditionalSkillNames = BindServerConfig("SkillRates", "AdditionalSkillNames", "", "Comma separated list of extra skill names to create gain rate entries for. Skills added by other mods are detected automatically, so this is only needed when one is missed. Use the skill name (SkillManager) or the skill identifier (Jotunn) exactly as the other mod defines it. New entries appear after the next game start.");
             AdditionalSkillNames.SettingChanged += SkillRates.AdditionalSkillNamesChanged;
 
-            EnableSwimming = BindServerConfig("Swimming", "EnableSwimming", true, "Enable swimming skill changes.");
-            EnableSwimStaminaCostReduction = BindServerConfig("Swimming", "EnableSwimStaminaCostReduction", true, "Enables swim stamina cost reduction, at the level specified by SwimStaminaReductionLevel.");
-            SwimSpeedRequiredLevel = BindServerConfig("Swimming", "SwimSpeedRequiredLevel", 25, "The level that swimming speed increases start being applied based on your skill", false, 0, 100);
-            SwimmingSpeedFactor = BindServerConfig("Swimming", "SwimmingSpeedFactor", 3.0f, "How much swimming speed is increased based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 10f);
-            SwimStaminaReductionLevel = BindServerConfig("Swimming", "SwimStaminaReductionLevel", 50, "The level that swim stamina cost reductions start being applied based on your skill", false, 0, 100);
-            SwimStaminaCostReductionFactor = BindServerConfig("Swimming", "SwimStaminaCostReductionFactor", 0.5f, "How much swim stamina cost is reduced based on your swimming level. This is modified by your characters swimming level. At skill level 100 the full value is in effect.", false, 0.1f, 1f);
-            SwimmingBonusesPastLevel100 = BindServerConfig("Swimming", "SwimmingBonusesPastLevel100", false, PastLevel100Description("Swim"));
+            // Extra Stamina
+            EnableExtraStamina = BindServerConfig("Extra Stamina", nameof(EnableExtraStamina), true, "Enable gaining extra base stamina as your non-combat physical skills level up.");
+            ExtraStaminaPerSkill = BindServerConfig("Extra Stamina", nameof(ExtraStaminaPerSkill), 10f, "The amount of extra base stamina provided by each skill when it is at level 100, the bonus scales linearly up to level 100.", valmin: 0f, valmax: 100f);
+            EnableExtraStaminaSkills = BindServerConfig("Extra Stamina", nameof(EnableExtraStaminaSkills), StatGains.BonusStaminaSkills.All, "Which skills provide extra base stamina as they increase.");
 
-            EnableQualityIngredientScaling = BindServerConfig("Fishing", "EnableQualityIngredientScaling", true, "Recipes that take a whole fish now produce more when a higher quality fish is used, and always spend the lowest quality fish that can cover the recipe. Vanilla only pays out for fish quality when turning a fish into raw fish, and will otherwise happily consume your best catch for the same result a quality 1 fish gives.");
-            QualityIngredientOutputMultiplier = BindServerConfig("Fishing", "QualityIngredientOutputMultiplier", 1f, "How strongly fish quality increases the crafted amount. 1 is one extra result per quality level above 1, so a quality 5 anglerfish makes 5 fish wraps instead of 1. Multiplies the recipes own quality result multiplier, so recipes tuned by other mods keep their own scaling.", false, 0f, 10f);
-            RestrictQualityScalingToFish = BindServerConfig("Fishing", "RestrictQualityScalingToFish", true, "Only let fish earn extra output. This gates the bonus amount only - always spending the lowest quality ingredient that covers a recipe, and carrying ingredient quality into crafted equipment (ScaleCraftedEquipmentQuality), apply to everything regardless. Turning this off matters for the Ashlands weapons, which also carry a quality level, and for mods that give quality levels to other materials - in which case those recipes would start producing more as well.");
-            ScaleNonStackingCraftOutputs = BindServerConfig("Fishing", "ScaleNonStackingCraftOutputs", true, "Also scale recipes whose result does not stack, such as the fish based mead bases. Vanilla skips its own bonus craft rolls for these. Crafting more than will fit is safe - the craft is refused with an inventory full message rather than losing items.");
+            // Extra Eitr
+            EnableExtraEitr = BindServerConfig("Extra Eitr", nameof(EnableExtraEitr), true, "Enable gaining extra base eitr as your magic skills level up.");
+            ExtraEitrPerSkill = BindServerConfig("Extra Eitr", nameof(ExtraEitrPerSkill), 40f, "The amount of extra base eitr provided by each skill when it is at level 100, the bonus scales linearly up to level 100.", valmin: 0f, valmax: 100f);
+            EnableExtraEitrSkills = BindServerConfig("Extra Eitr", nameof(EnableExtraEitrSkills), StatGains.BonusEitrSkills.All, "Which skills provide extra base eitr as they increase.");
 
+
+            // Mod Compatibility
             PreferOtherPlantGrid = BindServerConfig("Mod Compatibility", "PreferOtherPlantGrid", true, "When enabled, and an other planting grid mod is enabled (), Impactful skills planting grid will be disabled.");
         }
 
@@ -753,36 +829,37 @@ namespace ImpactfulSkills
         /// <returns></returns>
         public static ConfigEntry<KeyboardShortcut> BindClientConfig(string category, string key, KeyboardShortcut value, string description, bool advanced = false)
         {
-            return cfg.Bind(category, key, value,
-                new ConfigDescription(description, null,
-                    new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         ///  Helper to bind configs for bool types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="acceptableValues"></param>>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<bool> BindClientConfig(string catagory, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<bool> BindClientConfig(string category, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -790,38 +867,60 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float> BindClientConfig(string catagory, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<float> BindClientConfig(string category, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150) {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for strings
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<string> BindClientConfig(string catagory, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(
-                    description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = false, IsAdvanced = advanced })
-                );
+        public static ConfigEntry<string> BindClientConfig(string category, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false) {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
+        }
+
+        /// <summary>
+        /// Helper to bind configs that should not be synced for all types of Enum
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="category"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="acceptableValues"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<T> BindClientConfig<T>(
+            string category, string key, T value, string description, 
+            AcceptableValueBase acceptableValues = null, bool advanced = false
+        ) where T: Enum
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: false, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -829,42 +928,64 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float[]> BindServerConfig(string catagory, string key, float[] value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
+        public static ConfigEntry<float[]> BindServerConfig(string category, string key, float[] value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes {IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
+
+        /// <summary>
+        /// Helper to bind configs that should be synced for all other types
+        /// </summary>
+        /// <param name="config_file"></param>
+        /// <param name="category"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="description"></param>
+        /// <param name="acceptableValues"></param>
+        /// <param name="advanced"></param>
+        /// <returns></returns>
+        public static ConfigEntry<T> BindServerConfig<T>(
+            string category, string key, T value, string description, 
+            AcceptableValueBase acceptableValues = null, bool advanced = false
+        ) where T: Enum
+        {
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
+        }
 
 
         /// <summary>
         ///  Helper to bind configs for bool types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="acceptableValues"></param>>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<bool> BindServerConfig(string catagory, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
+        public static ConfigEntry<bool> BindServerConfig(string category, string key, bool value, string description, AcceptableValueBase acceptableValues = null, bool advanced = false)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(category, key, value, description, synced: true,
+                acceptableValues: acceptableValues, configAttributes:new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for int types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -872,20 +993,20 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<int> BindServerConfig(string catagory, string key, int value, string description, bool advanced = false, int valmin = 0, int valmax = 150)
+        public static ConfigEntry<int> BindServerConfig(string category, string key, int value, string description, bool advanced = false, int valmin = 0, int valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<int>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<int>(valmin, valmax), 
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for float types
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
@@ -893,33 +1014,32 @@ namespace ImpactfulSkills
         /// <param name="valmin"></param>
         /// <param name="valmax"></param>
         /// <returns></returns>
-        public static ConfigEntry<float> BindServerConfig(string catagory, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
+        public static ConfigEntry<float> BindServerConfig(string category, string key, float value, string description, bool advanced = false, float valmin = 0, float valmax = 150)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(description,
-                new AcceptableValueRange<float>(valmin, valmax),
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: new AcceptableValueRange<float>(valmin, valmax),
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
 
         /// <summary>
         /// Helper to bind configs for strings
         /// </summary>
         /// <param name="config_file"></param>
-        /// <param name="catagory"></param>
+        /// <param name="category"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <param name="description"></param>
         /// <param name="advanced"></param>
         /// <returns></returns>
-        public static ConfigEntry<string> BindServerConfig(string catagory, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false)
+        public static ConfigEntry<string> BindServerConfig(string category, string key, string value, string description, AcceptableValueList<string> acceptableValues = null, bool advanced = false)
         {
-            return cfg.Bind(catagory, key, value,
-                new ConfigDescription(
-                    description,
-                    acceptableValues,
-                new ConfigurationManagerAttributes { IsAdminOnly = true, IsAdvanced = advanced })
-                );
+            return cfg.BindConfigInOrder(
+                category, key, value, description, synced: true, acceptableValues: acceptableValues,
+                configAttributes: new ConfigurationManagerAttributes { IsAdvanced = advanced },
+                sectionOrder: UseNumberedSections
+            );
         }
     }
 }
