@@ -23,44 +23,58 @@ namespace ImpactfulSkills
     /// </summary>
     internal static class SkillCaps
     {
+        /// <summary>
+        /// The *BonusesPastLevel100 setting each skill uses when a caller does not pass one. Built by SetupSkillCapMap
+        /// rather than a field initialiser: this mod's own skills only get their SkillType in the plugin's Awake, and
+        /// an initialiser that ran before that would key them all as SkillType.None for the rest of the session.
+        /// </summary>
+        private static Dictionary<Skills.SkillType, ConfigEntry<bool>> SkillToLevelCapConfigMap = new();
 
-        private static readonly Dictionary<Skills.SkillType, ConfigEntry<bool>> SkillToLevelCapConfigMap = new()
-        {
-            {Skills.SkillType.Swords, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Knives, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Clubs, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Polearms, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Spears, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Axes, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Bows, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.ElementalMagic, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.BloodMagic, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Crossbows, ValConfig.WeaponSkillBonusesPastLevel100 },
-            {Skills.SkillType.Unarmed, ValConfig.WeaponSkillBonusesPastLevel100 },
+        /// <summary>Call once ValConfig is bound and every one of this mod's skills is registered.</summary>
+        internal static void SetupSkillCapMap() {
+            SkillToLevelCapConfigMap = new()
+            {
+                {Skills.SkillType.Swords, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Knives, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Clubs, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Polearms, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Spears, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Axes, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Bows, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.ElementalMagic, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.BloodMagic, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Crossbows, ValConfig.WeaponSkillBonusesPastLevel100 },
+                {Skills.SkillType.Unarmed, ValConfig.WeaponSkillBonusesPastLevel100 },
 
-            {Skills.SkillType.Blocking, ValConfig.BlockingBonusesPastLevel100 },
-            {Skills.SkillType.Pickaxes, ValConfig.MiningBonusesPastLevel100 },
-            {Skills.SkillType.WoodCutting, ValConfig.WoodcuttingBonusesPastLevel100 },
-            {Skills.SkillType.Jump, ValConfig.JumpBonusesPastLevel100 },
-            {Skills.SkillType.Sneak, ValConfig.SneakBonusesPastLevel100 },
-            {Skills.SkillType.Run, ValConfig.RunBonusesPastLevel100 },
-            {Skills.SkillType.Swim, ValConfig.SwimmingBonusesPastLevel100 },
-            {Skills.SkillType.Fishing, ValConfig.FishingBonusesPastLevel100 },
-            {Skills.SkillType.Cooking, ValConfig.CookingBonusesPastLevel100 },
-            {Skills.SkillType.Farming, ValConfig.FarmingBonusesPastLevel100 },
-            {Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100 },
-            {Skills.SkillType.Dodge, ValConfig.DodgeBonusesPastLevel100},
-            {Skills.SkillType.Ride, ValConfig.RideBonusesPastLevel100 },
+                {Skills.SkillType.Blocking, ValConfig.BlockingBonusesPastLevel100 },
+                {Skills.SkillType.Pickaxes, ValConfig.MiningBonusesPastLevel100 },
+                {Skills.SkillType.WoodCutting, ValConfig.WoodcuttingBonusesPastLevel100 },
+                {Skills.SkillType.Jump, ValConfig.JumpBonusesPastLevel100 },
+                {Skills.SkillType.Sneak, ValConfig.SneakBonusesPastLevel100 },
+                {Skills.SkillType.Run, ValConfig.RunBonusesPastLevel100 },
+                {Skills.SkillType.Swim, ValConfig.SwimmingBonusesPastLevel100 },
+                {Skills.SkillType.Fishing, ValConfig.FishingBonusesPastLevel100 },
+                {Skills.SkillType.Cooking, ValConfig.CookingBonusesPastLevel100 },
+                {Skills.SkillType.Farming, ValConfig.FarmingBonusesPastLevel100 },
+                {Skills.SkillType.Crafting, ValConfig.CraftingBonusesPastLevel100 },
+                {Skills.SkillType.Dodge, ValConfig.DodgeBonusesPastLevel100},
+                {Skills.SkillType.Ride, ValConfig.RideBonusesPastLevel100 },
 
-            {Hauling.HaulingSkill, ValConfig.HaulingBonusesPastLevel100 }
-        };
+                {Hauling.HaulingSkill, ValConfig.HaulingBonusesPastLevel100 },
+                {AnimalWhisper.AnimalHandling, ValConfig.AnimalHandlingBonusesPastLevel100 },
+                {Voyaging.VoyagingSkill, ValConfig.VoyagerBonusesPastLevel100 },
+                {Forging.ForgingSkill, ValConfig.ForgingBonusesPastLevel100 }
+            };
+        }
 
         /// <summary>GetSkillFactor, held to 0 - 1 unless pastLevel100 is on.</summary>
         public static float GetBonusSkillFactor(this Character character, Skills.SkillType skill, ConfigEntry<bool> pastLevel100 = null) {
             if (pastLevel100 == null && !SkillToLevelCapConfigMap.TryGetValue(skill, out pastLevel100))
             {
                 Logger.LogWarning($"Could not get skill cap config setting for {skill.ToString()}, will clamp skill factor to 0 - 1");
-                return character.GetSkillFactor(skill); // this method called Skills.GetSkillFactor which clamps to range 0-1 on it's own
+                // Clamped here even though vanilla's Skills.GetSkillFactor already clamps: mods such as EpicLoot add
+                // their bonus after that clamp, so the factor can still come back above 1.
+                return Mathf.Clamp01(character.GetSkillFactor(skill));
             }
             return BonusFactor(character.GetSkillFactor(skill), pastLevel100);
         }

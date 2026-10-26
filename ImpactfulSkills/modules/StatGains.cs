@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Collections.Generic;
 using System;
 using HaulingModule = ImpactfulSkills.patches.Hauling;
 
@@ -21,7 +20,6 @@ namespace ImpactfulSkills.modules
             Mining = 1 << 7,
             Run = 1 << 8,
             Hauling = 1 << 9,
-            All = ~(-1 << 10),
         }
 
         [Flags]
@@ -29,27 +27,53 @@ namespace ImpactfulSkills.modules
         {
             BloodMagic = 1 << 0,
             ElementalMagic = 1 << 1,
-            All = ~(-1 << 2),
         }
 
-        private static readonly Dictionary<BonusStaminaSkills, Skills.SkillType> StaminaSkillMap = new()
+        /// <summary>
+        ///     Every skill in each enum, counted from the enum itself so a skill added to it is
+        ///     included without updating a bit count by hand. These are the setting defaults.
+        /// </summary>
+        internal static readonly BonusStaminaSkills AllStaminaSkills = AllFlags<BonusStaminaSkills>();
+        internal static readonly BonusEitrSkills AllEitrSkills = AllFlags<BonusEitrSkills>();
+
+        /// <summary>
+        ///     A skill that adds to a base stat. The skill and its own on/off setting are read each time
+        ///     the bonus is worked out instead of being stored here: this mod's own skills only get their
+        ///     SkillType in the plugin's Awake, and ValConfig builds this table while it is still binding.
+        /// </summary>
+        private sealed class BonusSkill
         {
-            {BonusStaminaSkills.Swim, Skills.SkillType.Swim},
-            {BonusStaminaSkills.Fishing, Skills.SkillType.Fishing},
-            {BonusStaminaSkills.Sneak, Skills.SkillType.Sneak},
-            {BonusStaminaSkills.Jump, Skills.SkillType.Jump},
-            {BonusStaminaSkills.Dodge, Skills.SkillType.Dodge},
-            {BonusStaminaSkills.Ride, Skills.SkillType.Ride},
-            {BonusStaminaSkills.Woodcutting, Skills.SkillType.WoodCutting},
-            {BonusStaminaSkills.Mining, Skills.SkillType.Pickaxes},
-            {BonusStaminaSkills.Run, Skills.SkillType.Run},
-            {BonusStaminaSkills.Hauling, HaulingModule.HaulingSkill},
+            public readonly int Flag;
+            public readonly Func<Skills.SkillType> Skill;
+            public readonly Func<bool> Enabled;
+
+            public BonusSkill(Enum flag, Func<Skills.SkillType> skill, Func<bool> enabled)
+            {
+                Flag = Convert.ToInt32(flag);
+                Skill = skill;
+                Enabled = enabled;
+            }
+        }
+
+        private static readonly BonusSkill[] StaminaSkills =
+        {
+            new(BonusStaminaSkills.Swim, () => Skills.SkillType.Swim, () => ValConfig.EnableSwimming.Value),
+            // Fishing has no setting of its own that turns it off.
+            new(BonusStaminaSkills.Fishing, () => Skills.SkillType.Fishing, () => true),
+            new(BonusStaminaSkills.Sneak, () => Skills.SkillType.Sneak, () => ValConfig.EnableStealth.Value),
+            new(BonusStaminaSkills.Jump, () => Skills.SkillType.Jump, () => ValConfig.EnableJump.Value),
+            new(BonusStaminaSkills.Dodge, () => Skills.SkillType.Dodge, () => ValConfig.EnableDodge.Value),
+            new(BonusStaminaSkills.Ride, () => Skills.SkillType.Ride, () => ValConfig.EnableRide.Value),
+            new(BonusStaminaSkills.Woodcutting, () => Skills.SkillType.WoodCutting, () => ValConfig.EnableWoodcutting.Value),
+            new(BonusStaminaSkills.Mining, () => Skills.SkillType.Pickaxes, () => ValConfig.EnableMining.Value),
+            new(BonusStaminaSkills.Run, () => Skills.SkillType.Run, () => ValConfig.EnableRun.Value),
+            new(BonusStaminaSkills.Hauling, () => HaulingModule.HaulingSkill, () => ValConfig.EnableHauling.Value),
         };
 
-        private static readonly Dictionary<BonusEitrSkills, Skills.SkillType> EitrSkillMap = new()
+        private static readonly BonusSkill[] EitrSkills =
         {
-            {BonusEitrSkills.BloodMagic, Skills.SkillType.BloodMagic},
-            {BonusEitrSkills.ElementalMagic, Skills.SkillType.ElementalMagic},
+            new(BonusEitrSkills.BloodMagic, () => Skills.SkillType.BloodMagic, () => ValConfig.EnableBloodMagic.Value),
+            new(BonusEitrSkills.ElementalMagic, () => Skills.SkillType.ElementalMagic, () => ValConfig.EnableElementalMagic.Value),
         };
 
 
@@ -59,18 +83,18 @@ namespace ImpactfulSkills.modules
         
         /// <summary>
         ///     Cache base stamina value the first time a local player is created, just in
-        ///     case they ever change it. 
+        ///     case they ever change it. Not on Player.Awake: that runs inside Instantiate,
+        ///     before Game.SpawnPlayer makes the new player the local one.
         /// </summary>
         /// <param name="__instance"></param>
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
+        [HarmonyPatch(typeof(Player), nameof(Player.SetLocalPlayer))]
         private static void CacheBaseStats(Player __instance)
         {
-            if (!__instance || !Player.m_localPlayerExists || __instance != Player.m_localPlayer)
+            if (!__instance || __instance != Player.m_localPlayer)
             {
                 return;
             }
-
 
             if (float.IsNaN(BaseStamina))
             {
@@ -78,9 +102,13 @@ namespace ImpactfulSkills.modules
             }
         }
 
-        [HarmonyFinalizer]
+        /// <summary>
+        ///     Low priority, so the bonus goes on after other mods' postfixes have adjusted the food totals.
+        /// </summary>
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Low)]
         [HarmonyPatch(typeof(Player), nameof(Player.GetTotalFoodValue))]
-        private static void UpdateMaxStats(Player __instance, ref float stamina, ref float eitr) 
+        private static void UpdateMaxStats(Player __instance, ref float stamina, ref float eitr)
         {
             if (!__instance || !Player.m_localPlayerExists || __instance != Player.m_localPlayer)
             {
@@ -89,41 +117,40 @@ namespace ImpactfulSkills.modules
 
             if (ValConfig.EnableExtraStamina.Value)
             {
-                stamina += GetExtraBaseStamina(__instance);
+                stamina += GetExtraBaseStat(__instance, StaminaSkills, (int)ValConfig.EnableExtraStaminaSkills.Value, ValConfig.ExtraStaminaPerSkill.Value);
             }
 
             if (ValConfig.EnableExtraEitr.Value)
             {
-                eitr += GetExtraBaseEitr(__instance);
+                eitr += GetExtraBaseStat(__instance, EitrSkills, (int)ValConfig.EnableExtraEitrSkills.Value, ValConfig.ExtraEitrPerSkill.Value);
             }
         }
 
-        private static float GetExtraBaseStamina(Player __instance) 
+        /// <summary>
+        ///     Adds up the bonus from each selected skill that its own setting has not turned off.
+        /// </summary>
+        private static float GetExtraBaseStat(Player __instance, BonusSkill[] bonusSkills, int selectedSkills, float bonusPerSkill)
         {
-            float bonusStamina = 0f;
-            foreach(KeyValuePair<BonusStaminaSkills, Skills.SkillType> kvp in StaminaSkillMap)
+            float bonus = 0f;
+            foreach (BonusSkill bonusSkill in bonusSkills)
             {
-                if (!ValConfig.EnableExtraStaminaSkills.Value.HasFlag(kvp.Key))
+                if ((selectedSkills & bonusSkill.Flag) == 0 || !bonusSkill.Enabled())
                 {
                     continue;
                 }
-                bonusStamina += ValConfig.ExtraStaminaPerSkill.Value * SkillCaps.GetBonusSkillFactor(__instance, kvp.Value);
+                bonus += bonusPerSkill * SkillCaps.GetBonusSkillFactor(__instance, bonusSkill.Skill());
             }
-            return bonusStamina;
+            return bonus;
         }
 
-        private static float GetExtraBaseEitr(Player __instance)
+        private static T AllFlags<T>() where T : Enum
         {
-            float bonusEitr = 0f;
-            foreach (KeyValuePair<BonusEitrSkills, Skills.SkillType> kvp in EitrSkillMap)
+            int all = 0;
+            foreach (object flag in Enum.GetValues(typeof(T)))
             {
-                if (!ValConfig.EnableExtraEitrSkills.Value.HasFlag(kvp.Key))
-                {
-                    continue;
-                }
-                bonusEitr += ValConfig.ExtraEitrPerSkill.Value * SkillCaps.GetBonusSkillFactor(__instance, kvp.Value);
+                all |= Convert.ToInt32(flag);
             }
-            return bonusEitr;
+            return (T)Enum.ToObject(typeof(T), all);
         }
     }
 }

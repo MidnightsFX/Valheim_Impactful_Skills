@@ -226,7 +226,7 @@ namespace ImpactfulSkills.patches
                 () => ValConfig.SwimStaminaReductionLevel.Value,
                 (_, factor) => factor * 100 >= ValConfig.SwimStaminaReductionLevel.Value);
 
-            // Crafting.cs durability saves, CraftableBonus and material returns, Cooking.cs food decay and streak
+            // Crafting.cs durability saves, CraftableBonus and material returns, Cooking.cs food decay, streak and stamina regen
             Add(Skills.SkillType.Crafting, "$unlock_durability_saves",
                 () => ValConfig.EnableDurabilityLossPrevention.Value,
                 () => ValConfig.DurabilitySaveLevel.Value,
@@ -245,6 +245,10 @@ namespace ImpactfulSkills.patches
                 () => ValConfig.EnableCrafting.Value && ValConfig.EnableCookingBonusItems.Value,
                 () => ValConfig.RequiredLevelForBonusCookingItems.Value,
                 (level, _) => level >= ValConfig.RequiredLevelForBonusCookingItems.Value);
+            Add(Skills.SkillType.Cooking, "$unlock_food_stamina_regen",
+                () => ValConfig.EnableCooking.Value && ValConfig.EnableCookingStaminaRegen.Value,
+                () => ValConfig.CookingStaminaRegenRequiredLevel.Value,
+                (level, _) => level >= ValConfig.CookingStaminaRegenRequiredLevel.Value);
 
             // Forging.cs station bonuses, ForgingRefinement.cs, ForgedItems.cs
             Add(Forging.ForgingSkill, "$unlock_station_tier1",

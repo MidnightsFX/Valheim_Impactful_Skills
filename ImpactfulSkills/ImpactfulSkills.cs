@@ -32,7 +32,7 @@ namespace ImpactfulSkills
     {
         public const string PluginGUID = "MidnightsFX.ImpactfulSkills";
         public const string PluginName = "ImpactfulSkills";
-        public const string PluginVersion = "0.25.0";
+        public const string PluginVersion = "0.26.0";
 
         public ValConfig cfg;
         // Use this class to add your own localization to the game
@@ -56,6 +56,8 @@ namespace ImpactfulSkills
             Voyaging.SetupSailingSkill();
             Hauling.SetupHaulingSkill();
             Forging.SetupForgingSkill();
+            // After the skill setups above, so it maps their registered SkillTypes.
+            SkillCaps.SetupSkillCapMap();
             HaulingXPTracker.Create();
             SkillRates.SetupSkillRateConfigs();
             // Skills added by other mods can only be found once every plugin has registered its own, which is one

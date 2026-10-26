@@ -52,6 +52,48 @@ namespace ImpactfulSkills.patches
         }
 
         /// <summary>
+        /// Food that heals over time also regenerates stamina once cooking is high enough, a share of its health regen
+        /// that grows with the skill. Vanilla heals the food's m_foodRegen in one go every 10 seconds, but the share is
+        /// taken of that number as stamina per second, so it is added to the base stamina regen as is. That sum is still
+        /// multiplied by vanilla's own factors afterwards, so the bonus stops while attacking, dodging or encumbered,
+        /// waits out the regen delay, and is boosted by meads and the world's stamina regen rate like normal regen.
+        /// </summary>
+        [HarmonyPatch(typeof(Player), nameof(Player.UpdateStats), new System.Type[] { typeof(float) })]
+        public static class CookingFoodStaminaRegenPatch
+        {
+            [HarmonyTranspiler]
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+                var codeMatcher = new CodeMatcher(instructions);
+                // The end of the base regen sum, m_staminaRegen + (1 - stamina / max) * m_staminaRegen * m_staminaRegenTimeMultiplier.
+                if (codeMatcher.TryMatchEndForward("Unable to patch Cooking food stamina regen.",
+                    new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Player), nameof(Player.m_staminaRegenTimeMultiplier))),
+                    new CodeMatch(OpCodes.Mul),
+                    new CodeMatch(OpCodes.Add)
+                )) {
+                    codeMatcher.Advance(1).InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        Transpilers.EmitDelegate(AddFoodStaminaRegen)
+                    );
+                }
+                return codeMatcher.Instructions();
+            }
+
+            public static float AddFoodStaminaRegen(float stamina_regen, Player player) {
+                if (ValConfig.EnableCooking.Value == false || ValConfig.EnableCookingStaminaRegen.Value == false || player == null) { return stamina_regen; }
+                if (ValConfig.CookingStaminaRegenRequiredLevel.Value > player.GetSkillLevel(Skills.SkillType.Cooking)) { return stamina_regen; }
+
+                float food_regen = 0f;
+                foreach (Food food in player.m_foods) {
+                    food_regen += food.m_item.m_shared.m_foodRegen;
+                }
+                if (food_regen <= 0f) { return stamina_regen; }
+
+                float share = ValConfig.CookingStaminaRegenFactor.Value * player.GetBonusSkillFactor(Skills.SkillType.Cooking, ValConfig.CookingBonusesPastLevel100);
+                return stamina_regen + food_regen * share;
+            }
+        }
+
+        /// <summary>
         /// Arms the streak for cauldron style crafts. Vanilla only raises cooking inside DoCrafting once the item
         /// has actually been added to the inventory, so leaning on that grant rather than counting crafts here means
         /// a craft that failed - a full inventory, a missing dlc - never builds a streak. This is the same

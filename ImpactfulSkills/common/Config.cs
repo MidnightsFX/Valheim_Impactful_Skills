@@ -201,6 +201,9 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> CookingStreakShowText;
         public static ConfigEntry<bool> EnableCookingEatXP;
         public static ConfigEntry<float> CookingEatXPPerFoodStat;
+        public static ConfigEntry<bool> EnableCookingStaminaRegen;
+        public static ConfigEntry<int> CookingStaminaRegenRequiredLevel;
+        public static ConfigEntry<float> CookingStaminaRegenFactor;
         public static ConfigEntry<bool> CookingBonusesPastLevel100;
 
         public static ConfigEntry<bool> EnableHauling;
@@ -339,8 +342,10 @@ namespace ImpactfulSkills
         {
             // ensure all the config values are created
             cfg = cf;
-            cfg.SaveOnConfigSet = true;
+            // Each Bind would otherwise rewrite the whole file, so bind everything and write it once.
+            BeginBatchBind();
             CreateConfigValues(cf);
+            EndBatchBind(true);
             Logger.setDebugLogging(EnableDebugMode.Value);
             SetupMainFileWatcher();
 
@@ -431,6 +436,9 @@ namespace ImpactfulSkills
             CookingStreakShowText = BindClientConfig("Cooking", "CookingStreakShowText", true, "Shows a popup with the current cooking streak bonus as it climbs. This is a per player setting.");
             EnableCookingEatXP = BindServerConfig("Cooking", "EnableCookingEatXP", true, "Grants cooking XP when you eat food, scaled by the total health, stamina and eitr the food provides.");
             CookingEatXPPerFoodStat = BindServerConfig("Cooking", "CookingEatXPPerFoodStat", 0.01f, "Cooking XP gained per point of food stats (health + stamina + eitr) when eating. At 0.01 a 40 health 30 stamina food gives 0.7 XP, about the same as taking one item off a cooking station.", valmax: 1f);
+            EnableCookingStaminaRegen = BindServerConfig("Cooking", "EnableCookingStaminaRegen", true, "Food that regenerates health also regenerates stamina once your cooking reaches CookingStaminaRegenRequiredLevel. This adds to your normal stamina regen, so it pauses and is boosted by the same things.");
+            CookingStaminaRegenRequiredLevel = BindServerConfig("Cooking", "CookingStaminaRegenRequiredLevel", 25, "The cooking level at which food starts regenerating stamina.", false, 0, 100);
+            CookingStaminaRegenFactor = BindServerConfig("Cooking", "CookingStaminaRegenFactor", 0.25f, "How much stamina per second the food you have eaten regenerates, as a share of its healing, at cooking level 100. Scales with your cooking level. 0.25 is a quarter, so food that heals 4 health every 10 seconds also regenerates 1 stamina every second.", false, 0f, 2f);
             CookingBonusesPastLevel100 = BindServerConfig("Cooking", "CookingBonusesPastLevel100", false, PastLevel100Description("Cooking"));
 
 
@@ -703,14 +711,14 @@ namespace ImpactfulSkills
             AdditionalSkillNames.SettingChanged += SkillRates.AdditionalSkillNamesChanged;
 
             // Extra Stamina
-            EnableExtraStamina = BindServerConfig("Extra Stamina", nameof(EnableExtraStamina), true, "Enable gaining extra base stamina as your non-combat physical skills level up.");
+            EnableExtraStamina = BindServerConfig("Extra Stamina", nameof(EnableExtraStamina), false, "Enable gaining extra base stamina as your non-combat physical skills level up.");
             ExtraStaminaPerSkill = BindServerConfig("Extra Stamina", nameof(ExtraStaminaPerSkill), 10f, "The amount of extra base stamina provided by each skill when it is at level 100, the bonus scales linearly up to level 100.", valmin: 0f, valmax: 100f);
-            EnableExtraStaminaSkills = BindServerConfig("Extra Stamina", nameof(EnableExtraStaminaSkills), StatGains.BonusStaminaSkills.All, "Which skills provide extra base stamina as they increase.");
+            EnableExtraStaminaSkills = BindServerConfig("Extra Stamina", nameof(EnableExtraStaminaSkills), StatGains.AllStaminaSkills, "Which skills provide extra base stamina as they increase. A skill turned off by its own Enable setting gives none.");
 
             // Extra Eitr
-            EnableExtraEitr = BindServerConfig("Extra Eitr", nameof(EnableExtraEitr), true, "Enable gaining extra base eitr as your magic skills level up.");
+            EnableExtraEitr = BindServerConfig("Extra Eitr", nameof(EnableExtraEitr), false, "Enable gaining extra base eitr as your magic skills level up.");
             ExtraEitrPerSkill = BindServerConfig("Extra Eitr", nameof(ExtraEitrPerSkill), 40f, "The amount of extra base eitr provided by each skill when it is at level 100, the bonus scales linearly up to level 100.", valmin: 0f, valmax: 100f);
-            EnableExtraEitrSkills = BindServerConfig("Extra Eitr", nameof(EnableExtraEitrSkills), StatGains.BonusEitrSkills.All, "Which skills provide extra base eitr as they increase.");
+            EnableExtraEitrSkills = BindServerConfig("Extra Eitr", nameof(EnableExtraEitrSkills), StatGains.AllEitrSkills, "Which skills provide extra base eitr as they increase. A skill turned off by its own Enable setting gives none.");
 
 
             // Mod Compatibility

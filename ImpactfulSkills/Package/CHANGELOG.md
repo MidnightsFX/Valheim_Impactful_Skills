@@ -1,3 +1,11 @@
+**0.26.0**
+---
+```
+- Skilled cooks now regain stamina regen based on their eaten foods health regen
+- Servers can now give players extra base stamina and eitr that grow with their skills, off by default.
+- Settings in the configuration manager are now listed in a set order and say whether they are synced with the server.
+```
+
 **0.25.0**
 ---
 ```

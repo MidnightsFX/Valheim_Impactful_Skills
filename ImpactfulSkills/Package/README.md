@@ -163,6 +163,7 @@ Cooking several foods in a row builds a streak. Every food you cook adds 10% mor
 Eating trains cooking as well. Every meal grants a little cooking XP based on the health, stamina and eitr it provides, so a hearty meal teaches more than a handful of berries.
 
 - 10 - Cooking at the cauldron has a chance to make extra food, up to 40% at level 100, with up to 3 bonus items from a single craft (configurable with RequiredLevelForBonusCookingItems, ChanceForCookingBonusItems and CookingBonusItemMaxAmount).
+- 25 - The healing from food you have eaten also regenerates stamina every second, growing to a quarter of the food's healing at level 100. Food that heals 4 health every 10 seconds then adds 1 stamina every second on top of your normal stamina regen. It pauses while attacking, dodging or encumbered and is boosted by meads like normal stamina regen (configurable with CookingStaminaRegenRequiredLevel and CookingStaminaRegenFactor).
 
 ### Fishing
 
