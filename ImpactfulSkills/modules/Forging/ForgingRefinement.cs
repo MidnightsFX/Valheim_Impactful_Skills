@@ -16,7 +16,7 @@ namespace ImpactfulSkills.patches
     /// UnseededRollPatch), against values stored on the idol the recipe asks for:
     ///     success  when m_upgradeChance >= roll
     ///     break    when m_breakChance   >= 1 - roll    (the item is destroyed, m_breakReturnIngreientsAmount of
-    ///                                                   its materials come back)
+    ///                                                   the materials of every level it has come back)
     ///     otherwise the item drops a level
     /// so the real chance of a break is min(1 - success, m_breakChance). The shipped idols use 0.65 and 1.0, so
     /// every failure destroys the item.
@@ -116,68 +116,82 @@ namespace ImpactfulSkills.patches
         }
 
         /// <summary>
-        /// A broken item hands back (GetAmount(1) + GetAmount(level)) * m_breakReturnIngreientsAmount of each
-        /// recoverable ingredient, and Piece.Requirement.GetAmount keeps climbing past the item's max quality. That
-        /// never mattered while every failure destroyed the item, but forging makes far higher levels reachable - a
-        /// level 105 black metal pickaxe broke for hundreds of black metal. An item above its normal max level is
-        /// priced as if it were at that level instead.
+        /// Piece.Requirement.GetAmount keeps climbing past the item's max quality, and a broken item is refunded off
+        /// it. That never mattered while every failure destroyed the item, but forging makes far higher levels
+        /// reachable - a level 105 black metal pickaxe broke for hundreds of black metal. An item above its normal max
+        /// level is priced as if it were at that level instead, unless CapRefinedBreakRefund is off.
         ///
         /// The cap is the item's own m_maxQuality rather than a fixed 4, so an item another mod gives more levels is
-        /// still priced up to its own maximum. Same stack shape as the instance call it stands in for, so
-        /// CapBreakRefund only has to swap the call.
+        /// still priced up to its own maximum.
         /// </summary>
-        internal static int BreakRefundAmount(Piece.Requirement requirement, int quality) {
-            if (ValConfig.EnableForging.Value) {
-                Recipe recipe = InventoryGui.instance != null ? InventoryGui.instance.m_craftRecipe : null;
-                if (recipe != null && recipe.m_item != null) {
-                    quality = Mathf.Min(quality, Mathf.Max(1, recipe.m_item.m_itemData.m_shared.m_maxQuality));
-                }
-            }
-            return requirement.GetAmount(quality);
+        private static int RefinedMaxQuality(int fallback) {
+            if (ValConfig.EnableForging.Value == false || ValConfig.CapRefinedBreakRefund.Value == false) { return fallback; }
+            Recipe recipe = InventoryGui.instance != null ? InventoryGui.instance.m_craftRecipe : null;
+            if (recipe == null || recipe.m_item == null) { return fallback; }
+            return Mathf.Max(1, recipe.m_item.m_itemData.m_shared.m_maxQuality);
+        }
+
+        /// <summary>
+        /// Vanilla adds up GetAmount for every level from 1 to the broken item's own, so a level past the max adds
+        /// nothing and the sum stops where an item at max level would.
+        /// </summary>
+        internal static int BreakRefundLevelAmount(Piece.Requirement requirement, int level) {
+            return level > RefinedMaxQuality(int.MaxValue) ? 0 : requirement.GetAmount(level);
+        }
+
+        /// <summary>
+        /// Reforged Potential still refunds GetAmount(1) + GetAmount(level), so its level is clamped to the max.
+        /// </summary>
+        internal static int BreakRefundClampedAmount(Piece.Requirement requirement, int level) {
+            return requirement.GetAmount(Mathf.Min(level, RefinedMaxQuality(level)));
         }
 
         private static readonly FieldInfo BreakRefundField = AccessTools.Field(typeof(ItemDrop.ItemData.SharedData), nameof(ItemDrop.ItemData.SharedData.m_breakReturnIngreientsAmount));
         private static readonly MethodInfo RequirementGetAmount = AccessTools.Method(typeof(Piece.Requirement), nameof(Piece.Requirement.GetAmount), new Type[] { typeof(int) });
-        private static readonly MethodInfo BreakRefundAmountMethod = AccessTools.Method(typeof(ForgingRefinement), nameof(BreakRefundAmount));
+        private static readonly MethodInfo BreakRefundLevelAmountMethod = AccessTools.Method(typeof(ForgingRefinement), nameof(BreakRefundLevelAmount));
+        internal static readonly MethodInfo BreakRefundClampedAmountMethod = AccessTools.Method(typeof(ForgingRefinement), nameof(BreakRefundClampedAmount));
 
         /// <summary>
-        /// Sends the break refund's GetAmount calls through BreakRefundAmount. Vanilla and Reforged Potential both
-        /// guard the refund with "m_breakReturnIngreientsAmount > 0" and then multiply by that same field, so only the
-        /// calls between those two reads are swapped - nothing else DoCrafting prices, or another mod's transpiler
-        /// adds, is touched.
+        /// Sends the break refund's GetAmount calls through replacement, which takes the same stack as the instance
+        /// call. Vanilla and Reforged Potential both guard the refund with "m_breakReturnIngreientsAmount > 0" and then
+        /// multiply by that same field, so only the calls between those two reads are swapped - nothing else
+        /// DoCrafting prices, or another mod's transpiler adds, is touched. expectedCalls is how many GetAmount calls
+        /// replacement's formula has there: any other count means the formula changed and replacement would price it
+        /// wrongly, so nothing is swapped.
         /// </summary>
-        internal static IEnumerable<CodeInstruction> CapBreakRefund(IEnumerable<CodeInstruction> instructions, string target) {
+        internal static IEnumerable<CodeInstruction> CapBreakRefund(IEnumerable<CodeInstruction> instructions, string target, MethodInfo replacement, int expectedCalls) {
             CodeMatcher codeMatcher = new CodeMatcher(instructions);
             if (codeMatcher.TryMatchEndForward($"Unable to cap the break refund in {target}.", new CodeMatch(OpCodes.Ldfld, BreakRefundField)) == false) {
                 return codeMatcher.Instructions();
             }
 
-            int replaced = 0;
+            List<int> calls = new List<int>();
             codeMatcher.Advance(1);
             while (codeMatcher.IsValid && codeMatcher.Instruction.LoadsField(BreakRefundField) == false) {
-                // Set rewrites the instruction in place, so any label on it stays put.
-                if (codeMatcher.Instruction.Calls(RequirementGetAmount)) {
-                    codeMatcher.Set(OpCodes.Call, BreakRefundAmountMethod);
-                    replaced++;
-                }
+                if (codeMatcher.Instruction.Calls(RequirementGetAmount)) { calls.Add(codeMatcher.Pos); }
                 codeMatcher.Advance(1);
             }
-            if (replaced == 0) {
-                Logger.LogWarning($"Unable to cap the break refund in {target}. It no longer prices the refund the way this mod expects, so items above their max level may return more than they are worth when they break.");
+            if (calls.Count != expectedCalls) {
+                Logger.LogWarning($"Unable to cap the break refund in {target}: found {calls.Count} GetAmount calls where {expectedCalls} were expected. It no longer prices the refund the way this mod expects, so items above their max level may return more than they are worth when they break.");
+                return codeMatcher.Instructions();
+            }
+            foreach (int pos in calls) {
+                // Set rewrites the instruction in place, so any label on it stays put.
+                codeMatcher.Start().Advance(pos).Set(OpCodes.Call, replacement);
             }
             return codeMatcher.Instructions();
         }
 
         /// <summary>
-        /// Vanilla's copy of the break refund. Reforged Potential carries its own, capped in
-        /// compatibility.ReforgedPotential.
+        /// Vanilla's copy of the break refund, one GetAmount call inside the loop over the item's levels. Reforged
+        /// Potential carries its own, capped in compatibility.ReforgedPotential.
         /// </summary>
         [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.DoCrafting))]
         private static class BreakRefundCapPatch
         {
             [HarmonyTranspiler]
             private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
-                return CapBreakRefund(instructions, "DoCrafting");
+                return CapBreakRefund(instructions, "DoCrafting", BreakRefundLevelAmountMethod, 1);
             }
         }
 
@@ -243,10 +257,10 @@ namespace ImpactfulSkills.patches
 
         /// <summary>
         /// Vanilla no longer rolls when the refinement is attempted. GetItemUpgradeChance seeds Unity's Random from a
-        /// seed the player keeps for each item and target level (the first one derived from the player's name), draws
-        /// the roll, and saves the next seed with the character - so every attempt's outcome is settled before it is
-        /// made, and a character's first attempt at a given item and level always lands the same way. Drawing a fresh
-        /// roll instead brings back the old behaviour, and leaves Unity's shared Random unseeded as well.
+        /// seed the player keeps for each item and target level (the first one derived from the time the character was
+        /// created), draws the roll, and saves the next seed with the character - so every attempt's outcome is settled
+        /// before it is made, and a character's first attempt at a given item and level always lands the same way.
+        /// Drawing a fresh roll instead brings back the old behaviour, and leaves Unity's shared Random unseeded as well.
         ///
         /// Not tied to EnableForging: it changes the roll, not the odds. Reforged Potential makes its own roll and
         /// never calls this, so it is unaffected either way.

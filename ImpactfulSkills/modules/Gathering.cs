@@ -13,7 +13,10 @@ namespace ImpactfulSkills.patches
 {
     public static class Gathering
     {
-        private static readonly int pickableMask = LayerMask.GetMask("piece_nonsolid", "item", "Default_small");
+        // Default is in here for pickables whose colliders are only on it, such as the lingonberry bush; the other
+        // berry bushes have one on Default_small. Default also holds plenty that is no pickable at all, so the sweep
+        // sorts what it finds into pickables before it counts or picks any.
+        private static readonly int pickableMask = LayerMask.GetMask("Default", "piece_nonsolid", "item", "Default_small");
         static readonly HashSet<string> UnallowedPickables = new HashSet<string>() { };
         static readonly HashSet<string> AllowedPickables = new HashSet<string>() { };
         // IsAllowedPickable's answer per pickable prefab, keyed by the ZDO prefab hash. Cleared whenever an item list
@@ -369,55 +372,54 @@ namespace ImpactfulSkills.patches
                     if ((player_skill_factor * 100f) >= ValConfig.FarmingRangeRequiredLevel.Value && enabled_aoe_gathering) {
                         float pickable_distance = ValConfig.GatheringRangeFactor.Value * SkillCaps.BonusFactor(player_skill_factor, ValConfig.FarmingBonusesPastLevel100);
                         Collider[] targets = Physics.OverlapSphere(__instance.transform.position, pickable_distance, pickableMask);
-                        Logger.LogDebug($"AOE Picking {targets.Count()} in harvest range {pickable_distance}.");
+                        List<Pickable> nearby = AllowedPickablesAmong(targets, __instance);
+                        Logger.LogDebug($"AOE Picking {nearby.Count} pickables from {targets.Length} colliders in harvest range {pickable_distance}.");
                         aoe_gathering_activated_at = Time.realtimeSinceStartup;
                         enabled_aoe_gathering = false;
-                        if (targets.Length <= 5) {
-                            foreach (Collider obj_collider in targets) {
-                                Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
-                                // Skip the pickable that triggered this, and invalid ZDOs; see PickAOE.
-                                if (pickable_item != null && pickable_item != __instance) {
-                                    Logger.LogDebug($"Checking {pickable_item.gameObject.name} in harvest range.");
-                                    if (pickable_item.m_itemPrefab != null && IsAllowedPickable(pickable_item)) {
-                                        if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
-                                            pickable_item.m_nview.ClaimOwnership();
-                                            pickable_item.Interact(Player.m_localPlayer, false, false);
-                                        }
-                                    }
-                                }
-                            }
+                        if (nearby.Count <= 5) {
+                            foreach (Pickable pickable_item in nearby) { PickNearby(pickable_item); }
                             enabled_aoe_gathering = true;
                         } else {
-                            Player.m_localPlayer.StartCoroutine(PickAOE(targets, __instance));
+                            Player.m_localPlayer.StartCoroutine(PickAOE(nearby));
                         }
                     }
-                    
+
                 }
             }
 
-            // Coroutine to handle the AOE gathering of large sets of pickables.
+            // Each allowed pickable the colliders belong to, once, leaving out `origin`. A pickable can have several
+            // colliders, and most colliders on the Default layer belong to no pickable.
             // `origin` is the pickable whose Interact triggered the sweep. Vanilla already sent its pick, so it is
             // skipped here: when another peer owns it that pick is still in flight and m_picked is still false, and
             // claiming ownership to pick it again would drop its items on both clients.
-            static IEnumerator PickAOE(Collider[] targets, Pickable origin) {
+            static List<Pickable> AllowedPickablesAmong(Collider[] colliders, Pickable origin) {
+                List<Pickable> found = new List<Pickable>();
+                HashSet<Pickable> seen = new HashSet<Pickable>();
+                foreach (Collider obj_collider in colliders) {
+                    Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
+                    if (pickable_item == null || pickable_item == origin || !seen.Add(pickable_item)) { continue; }
+                    if (pickable_item.m_itemPrefab != null && IsAllowedPickable(pickable_item)) { found.Add(pickable_item); }
+                }
+                return found;
+            }
+
+            static void PickNearby(Pickable pickable_item) {
+                // ClaimOwnership dereferences the ZDO without checking it; vanilla Interact checks IsValid first.
+                if (pickable_item == null || !pickable_item.m_nview.IsValid() || !pickable_item.CanBePicked()) { return; }
+                pickable_item.m_nview.ClaimOwnership();
+                pickable_item.Interact(Player.m_localPlayer, false, false);
+            }
+
+            // Coroutine to handle the AOE gathering of large sets of pickables. A pickable can be gone by the time
+            // its turn comes, which PickNearby checks.
+            static IEnumerator PickAOE(List<Pickable> pickables) {
                 int iterations = 0;
-                foreach (Collider obj_collider in targets) {
+                foreach (Pickable pickable_item in pickables) {
                     iterations++;
                     if (iterations % 10 == 0) {
                         yield return new WaitForSeconds(0.1f);
                     }
-                    if (obj_collider == null) { continue; }
-                    Pickable pickable_item = obj_collider.GetComponent<Pickable>() ?? obj_collider.GetComponentInParent<Pickable>();
-                    if (pickable_item != null && pickable_item != origin) {
-                        //Logger.LogDebug($"Async Checking {pickable_item.gameObject.name} in harvest range.");
-                        if (pickable_item.m_itemPrefab != null && IsAllowedPickable(pickable_item)) {
-                            // ClaimOwnership dereferences the ZDO without checking it; vanilla Interact checks IsValid first.
-                            if (pickable_item.m_nview.IsValid() && pickable_item.CanBePicked()) {
-                                pickable_item.m_nview.ClaimOwnership();
-                                pickable_item.Interact(Player.m_localPlayer, false, false);
-                            }
-                        }
-                    }
+                    PickNearby(pickable_item);
                 }
                 enabled_aoe_gathering = true;
                 yield break;

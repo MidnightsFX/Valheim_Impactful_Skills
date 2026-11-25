@@ -76,7 +76,7 @@ namespace ImpactfulSkills.patches {
 
         /// <summary>
         /// Clones an existing keyboard build-hint row ("Copy") under m_buildHints/Keyboard, reusing
-        /// its label + single-key layout. Hierarchy mirrors Advize PlantEasily's proven approach.
+        /// its label and first key. Hierarchy mirrors Advize PlantEasily's proven approach.
         /// </summary>
         private static bool TryCreateHint(KeyHints instance) {
             if (instance.m_buildHints == null) { return false; }
@@ -96,6 +96,10 @@ namespace ImpactfulSkills.patches {
             _hintObj.name = "AOEToggleHint";
 
             Transform hintRoot = _hintObj.transform;
+            // Copy is "Shift + Mouse-3": everything after its first key would read as part of the toggle key.
+            for (int i = 2; i < hintRoot.childCount; i++) {
+                hintRoot.GetChild(i).gameObject.SetActive(false);
+            }
             Transform labelTf = hintRoot.GetChild(0);
             TextMeshProUGUI label = labelTf.GetComponent<TextMeshProUGUI>();
             if (label != null) { label.text = Localization.instance.Localize("$aoe_features_hint"); }

@@ -1,3 +1,12 @@
+**0.27.0**
+---
+```
+- Updated for Valheim 1.0.30
+- AOE gathering now picks lingonberry bushes too.
+- items refined past their max level have their returns capped, which can be turned off in the config
+- The AOE toggle key hint while planting no longer shows an extra mouse button.
+```
+
 **0.26.0**
 ---
 ```

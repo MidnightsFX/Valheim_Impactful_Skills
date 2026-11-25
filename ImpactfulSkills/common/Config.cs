@@ -277,6 +277,7 @@ namespace ImpactfulSkills
         public static ConfigEntry<bool> EnableRefinementDecay;
         public static ConfigEntry<int> RefineDecayStartLevel;
         public static ConfigEntry<float> RefineDecayRate;
+        public static ConfigEntry<bool> CapRefinedBreakRefund;
         public static ConfigEntry<bool> RollRefinementsWhenAttempted;
         public static ConfigEntry<bool> EnableMasterwork;
         public static ConfigEntry<int> MasterworkLevel;
@@ -496,6 +497,7 @@ namespace ImpactfulSkills
             EnableRefinementDecay = BindServerConfig("Forging", "EnableRefinementDecay", true, "Refinements past RefineDecayStartLevel get harder with every level: a lower chance to succeed, fewer materials back when the item breaks, and forging's protection against breaking fades. Keeps items from being refined to absurd levels.");
             RefineDecayStartLevel = BindServerConfig("Forging", "RefineDecayStartLevel", 10, "Refining an item up to this level has the normal odds, every level beyond it is penalized by RefineDecayRate.", false, 1, 200);
             RefineDecayRate = BindServerConfig("Forging", "RefineDecayRate", 0.05f, "How much of the refinement odds is lost for each level past RefineDecayStartLevel, compounding. 0.05 leaves 95% one level past, 77% five levels past and 60% ten levels past. Applies to the success chance, the materials returned on a break and forging's protection against breaking.", false, 0f, 1f);
+            CapRefinedBreakRefund = BindServerConfig("Forging", "CapRefinedBreakRefund", true, "An item refined past its max level that breaks at the Forge of Potential returns only the materials of the levels up to that max. While disabled it returns the game's own amount, which grows with every level the item has.");
             RollRefinementsWhenAttempted = BindServerConfig("Forging", "RollRefinementsWhenAttempted", true, "The Forge of Potential decides each refinement with a fresh roll at the moment you attempt it. While disabled the game's own rolls are used, which are decided ahead of time for each character, item and level. Applies even while forging is disabled.");
             EnableMasterwork = BindServerConfig("Forging", "EnableMasterwork", true, "Enables masterwork equipment. Weapons, armor and shields crafted or upgraded by a skilled smith are improved.");
             MasterworkLevel = BindServerConfig("Forging", "MasterworkLevel", 75, "The forging level required to craft masterwork equipment.", false, 0, 100);

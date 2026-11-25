@@ -195,7 +195,7 @@ Forging improves your crafting stations and your odds at the Forge of Potential,
 
 Forging is trained by crafting at the workbench, forge, black forge and galdr table, with extra XP for crafting and upgrading weapons, armor and shields, and for every refinement attempt at the Forge of Potential (more when it succeeds). Wooden training weapons and Meadows gear give no forging XP, and anything made without metal gives half. Both can be changed in the config.
 
-- Innate - Better odds at the Forge of Potential (scales with level). At level 100 a refinement succeeds 85% of the time instead of 65%, a failed refinement lowers the item's level instead of destroying it, and an item that does break returns 70% of its materials instead of 35%. Refining past level 10 gets harder with every level: lower odds, fewer materials back, and failures increasingly destroy the item. An item above its normal max level returns materials as if it were at that max level. The odds are shown when you select an item at the forge.
+- Innate - Better odds at the Forge of Potential (scales with level). At level 100 a refinement succeeds 85% of the time instead of 65%, a failed refinement lowers the item's level instead of destroying it, and an item that does break returns 70% of the materials of all its levels instead of 35%. Refining past level 10 gets harder with every level: lower odds, fewer materials back, and failures increasingly destroy the item. An item above its normal max level returns only the materials of the levels up to that max (set CapRefinedBreakRefund to false to turn this off). The odds are shown when you select an item at the forge.
 - 25 - When you use a forge, or workbench it is considered 1 level higher.
 - 50 - When you use a black forge, or galdur table it is considered 1 level higher.
 - 75 - Masterwork: weapons you craft or upgrade deal 10% more damage, armor gives 10% more armor and shields 10% more block power
@@ -267,6 +267,11 @@ I am also always happy to talk ideas and suggestions in the discord!
 - [Cartography Skill](https://thunderstore.io/c/valheim/p/Advize/CartographySkill/) - A way to increase your exploration radius
 - [Deathlink](https://thunderstore.io/c/valheim/p/MidnightMods/Deathlink/) - Makes item loss, equipment loss and skill loss on death configurable
 - [FortifySkillsRedux](https://thunderstore.io/c/valheim/p/Searica/FortifySkillsRedux/) - Provides a system to prevent skill degredation but still provides risk.
+
+<!--
+AI_Assisted_Creation: This assembly was partially or fully created with the assistance of generative AI (Claude Code, using Anthropic's Claude models).
+AI_Model_Vendor: Anthropic
+-->
 
 ---
 

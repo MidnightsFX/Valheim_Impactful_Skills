@@ -25,8 +25,9 @@ namespace ImpactfulSkills.compatibility {
     /// and Reforged Potential saves its config file on every change (SaveOnConfigSet), which its file watcher then
     /// reloads - twice a refinement.
     ///
-    /// Its prefix also carries its own copy of vanilla's break refund, so the refund cap is transpiled into it too
-    /// (BreakRefundCap), and its own copy of the craft, so the crafting refund is too (CraftingRefund).
+    /// Its prefix also carries its own copy of the break refund (vanilla's from before 1.0.30), so the refund cap is
+    /// transpiled into it too (BreakRefundCap), and its own copy of the craft, so the crafting refund is too
+    /// (CraftingRefund).
     /// </summary>
     internal static class ReforgedPotential {
         internal const string PluginGUID = "akuichi.ReforgedPotential";
@@ -143,9 +144,9 @@ namespace ImpactfulSkills.compatibility {
         }
 
         /// <summary>
-        /// Reforged Potential's roll prices its break refund the way vanilla does, but off the level being attempted
-        /// rather than the item's current one, so it climbs past the item's max quality just the same. It gets the
-        /// same cap (ForgingRefinement.BreakRefundAmount).
+        /// Reforged Potential's roll prices its break refund the way vanilla did before 1.0.30, GetAmount(1) +
+        /// GetAmount(level), off the level being attempted rather than the item's current one, so it climbs past the
+        /// item's max quality too. Clamping that level to the max caps it (ForgingRefinement.BreakRefundClampedAmount).
         /// </summary>
         [HarmonyPatch]
         private static class BreakRefundCap {
@@ -162,7 +163,7 @@ namespace ImpactfulSkills.compatibility {
             private static MethodBase TargetMethod() { return RefinementRoll(); }
 
             private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
-                return ForgingRefinement.CapBreakRefund(instructions, "Reforged Potential");
+                return ForgingRefinement.CapBreakRefund(instructions, "Reforged Potential", ForgingRefinement.BreakRefundClampedAmountMethod, 2);
             }
         }
 
